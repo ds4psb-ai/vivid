@@ -696,59 +696,70 @@ export const getDepthStageLegacy = (score: number): 'exploration' | 'development
   return 'resolution';
 };
 
-// ===== 필드 기반 심도 계산 (레거시 심연의 거울 방식) =====
-export const calculateDepthFromFields = (persona: VibePhilosophyPersona): number => {
+// ===== 필드 기반 심도 계산 (레거시 심연의 거울 방식 - 대수술 버전) =====
+// 핵심 변경: turnCount 기반 베이스 + 필드 가중치 대폭 하향
+// 목표: 10턴 이상 채팅해야 50% 도달, 20턴 이상해야 80% 도달
+export const calculateDepthFromFields = (
+  persona: VibePhilosophyPersona,
+  turnCount: number = 0
+): number => {
   let depth = 0;
 
-  // Demographics: +15% (기본 정보)
-  if (persona.demographics.name) depth += 2;
-  if (persona.demographics.birth_date) depth += 3;
-  if (persona.demographics.mbti_self_report) depth += 3;
-  if (persona.demographics.blood_type) depth += 2;
-  if (persona.demographics.age) depth += 2;
-  if (persona.demographics.residence) depth += 1;
-  if (persona.demographics.gender) depth += 2;
+  // 🔥 턴 카운트: 20턴에 40점 (자연스러운 대화 흐름 보장)
+  // 단순 필드 채움으로는 심도가 빠르게 오르지 않음
+  const turnBonus = Math.min(turnCount * 2, 40);
 
-  // Face Reading: +10% (관상 분석)
-  if (persona.face_reading.raw_features) depth += 3;
-  if (persona.face_reading.eyes.shape) depth += 2;
-  if (persona.face_reading.overall_qi) depth += 3;
-  if (persona.face_reading.face_shape) depth += 2;
+  // Demographics: 5점 (기존 15점 → 대폭 하향)
+  if (persona.demographics.name) depth += 1;
+  if (persona.demographics.birth_date) depth += 1;
+  if (persona.demographics.mbti_self_report) depth += 1;
+  if (persona.demographics.blood_type) depth += 1;
+  if (persona.demographics.gender) depth += 1;
 
-  // Saju Analysis: +15% (사주 분석)
-  if (persona.saju_analysis.day_master) depth += 5;
-  if (persona.saju_analysis.five_elements_balance.wood > 0) depth += 3;
-  if (persona.saju_analysis.ten_gods.length > 0) depth += 4;
-  if (persona.saju_analysis.current_year_luck) depth += 3;
+  // Face/Saju: 8점 (기존 25점 → 하향)
+  if (persona.face_reading.raw_features) depth += 2;
+  if (persona.saju_analysis.day_master) depth += 3;
+  if (persona.saju_analysis.ten_gods.length > 0) depth += 3;
 
-  // Cognitive Architecture: +10%
-  if (persona.cognitive_architecture.mbti_analyzed) depth += 3;
-  if (persona.cognitive_architecture.cognitive_stack.length > 0) depth += 3;
-  if (persona.cognitive_architecture.attention_mechanism) depth += 2;
-  if (persona.cognitive_architecture.decision_heuristics) depth += 2;
+  // Life Trajectory: 10점 (신규 - 깊은 대화 필요)
+  if (persona.life_trajectory?.childhood_imprints?.length > 0) depth += 3;
+  if (persona.life_trajectory?.turning_points?.length > 0) depth += 4;
+  if (persona.life_trajectory?.family_history?.paternal_influence) depth += 3;
 
-  // Emotional Landscape: +15%
-  if (persona.emotional_landscape.core_values.length > 0) depth += 3;
-  if (persona.emotional_landscape.deepest_fears.length > 0) depth += 5;
+  // Emotional: 12점
+  if (persona.emotional_landscape.deepest_fears.length >= 2) depth += 4;
   if (persona.emotional_landscape.trauma_response) depth += 4;
-  if (persona.emotional_landscape.attachment_style) depth += 3;
+  if (persona.emotional_landscape.attachment_style) depth += 4;
 
-  // Psychological Entropy: +25% (가장 깊은 레벨)
-  if (persona.psychological_entropy.shadow_self.repressed_desires.length > 0) depth += 7;
+  // Psychological Entropy: 20점 (깊은 대화 필수)
+  if (persona.psychological_entropy.shadow_self.repressed_desires.length >= 2) depth += 5;
   if (persona.psychological_entropy.shadow_self.inferiority_complex) depth += 5;
-  if (persona.psychological_entropy.existential_paradox.conflict_a) depth += 4;
-  if (persona.psychological_entropy.defense_mechanisms.dominant_strategy) depth += 4;
+  // 🔥 핵심: specific_behaviors 배열 길이 기반 (레거시는 12개+)
+  const behaviorCount = persona.psychological_entropy.defense_mechanisms.specific_behaviors?.length || 0;
+  if (behaviorCount >= 3) depth += 5;
+  if (behaviorCount >= 6) depth += 3; // 추가 보너스
   if (persona.psychological_entropy.mythological_script.tragic_flaw) depth += 5;
 
-  // Subconscious Symbolism: +10%
-  if (persona.subconscious_symbolism.recurring_dreams.length > 0) depth += 4;
-  if (persona.subconscious_symbolism.archetypal_identification) depth += 3;
-  if (persona.subconscious_symbolism.liminal_patterns.length > 0) depth += 3;
+  // Primal Drives & Environmental Resistance: 5점 (신규)
+  if (persona.psychological_entropy.primal_drives?.libido_direction) depth += 2;
+  if (persona.psychological_entropy.primal_drives?.thanatos_manifestation) depth += 2;
+  if (persona.psychological_entropy.environmental_resistance?.rebellion_style) depth += 1;
 
-  return Math.min(depth, 100);
+  // Subconscious + Cultural: 5점
+  if (persona.subconscious_symbolism.archetypal_identification) depth += 3;
+  if (persona.cultural_context?.era_definition) depth += 2;
+
+  // 🔥 90% 이후: 퍼센트 거의 안 오르고 정합성만 개선
+  const rawTotal = depth + turnBonus;
+  if (rawTotal >= 90) {
+    // 90점 이후엔 로그 스케일로 아주 천천히 증가
+    return 90 + Math.min((rawTotal - 90) * 0.2, 10);
+  }
+
+  return Math.min(rawTotal, 100);
 };
 
-// ===== Persona 업데이트 스키마 (Google AI Studio responseSchema) =====
+// ===== Persona 업데이트 스키마 (Google AI Studio responseSchema) - 대수술 버전 =====
 export const VIBE_PERSONA_SCHEMA: Schema = {
   type: Type.OBJECT,
   properties: {
@@ -875,7 +886,26 @@ export const VIBE_PERSONA_SCHEMA: Schema = {
           type: Type.OBJECT,
           properties: {
             dominant_strategy: { type: Type.STRING },
+            specific_behaviors: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
+              description: '구체적 방어 행동 패턴 (최소 3개 이상, 행동 묘사로 작성)',
+            },
             vulnerability_trigger: { type: Type.STRING },
+          },
+        },
+        primal_drives: {
+          type: Type.OBJECT,
+          properties: {
+            libido_direction: { type: Type.STRING, description: '삶/창조/연결 에너지의 방향' },
+            thanatos_manifestation: { type: Type.STRING, description: '자기 파괴/분리/안식 본능의 표현' },
+          },
+        },
+        environmental_resistance: {
+          type: Type.OBJECT,
+          properties: {
+            trigger_points: { type: Type.ARRAY, items: { type: Type.STRING }, description: '감옥을 느끼게 하는 트리거' },
+            rebellion_style: { type: Type.STRING, description: '저항 양식' },
           },
         },
         mythological_script: {
@@ -884,6 +914,7 @@ export const VIBE_PERSONA_SCHEMA: Schema = {
             hero_journey_stage: { type: Type.STRING },
             tragic_flaw: { type: Type.STRING },
             redemption_arc: { type: Type.STRING },
+            current_enactment: { type: Type.STRING, description: '현재 연기 중인 신화' },
           },
         },
       },
@@ -894,6 +925,65 @@ export const VIBE_PERSONA_SCHEMA: Schema = {
         recurring_dreams: { type: Type.ARRAY, items: { type: Type.STRING } },
         archetypal_identification: { type: Type.STRING },
         liminal_patterns: { type: Type.ARRAY, items: { type: Type.STRING } },
+      },
+    },
+    // 🔥 레거시 확장 필드
+    life_trajectory: {
+      type: Type.OBJECT,
+      properties: {
+        childhood_imprints: { type: Type.ARRAY, items: { type: Type.STRING }, description: '직접 언급된 어린 시절 경험만' },
+        family_history: {
+          type: Type.OBJECT,
+          properties: {
+            paternal_influence: { type: Type.STRING },
+            maternal_influence: { type: Type.STRING },
+            genetic_factors: { type: Type.ARRAY, items: { type: Type.STRING } },
+          },
+        },
+        career_path: { type: Type.ARRAY, items: { type: Type.STRING } },
+        turning_points: { type: Type.ARRAY, items: { type: Type.STRING }, description: '명시적으로 언급된 인생 전환점' },
+        current_status: { type: Type.STRING },
+      },
+    },
+    cultural_context: {
+      type: Type.OBJECT,
+      properties: {
+        era_definition: { type: Type.STRING, description: '세대 정의' },
+        social_taboos_broken: { type: Type.ARRAY, items: { type: Type.STRING } },
+        legacy_archetype: { type: Type.STRING },
+        fandom_dynamics: { type: Type.STRING },
+      },
+    },
+    master_attributes: {
+      type: Type.OBJECT,
+      properties: {
+        artistic_methodology: {
+          type: Type.OBJECT,
+          properties: {
+            obsession_points: { type: Type.ARRAY, items: { type: Type.STRING } },
+            ritual_routine: { type: Type.ARRAY, items: { type: Type.STRING } },
+            perfectionism_scope: { type: Type.STRING },
+            collaboration_style: { type: Type.STRING },
+          },
+        },
+        signature_style: {
+          type: Type.OBJECT,
+          properties: {
+            visual_motifs: { type: Type.ARRAY, items: { type: Type.STRING } },
+            auditory_signatures: { type: Type.ARRAY, items: { type: Type.STRING } },
+            narrative_structure: { type: Type.STRING },
+            genre_fusion: { type: Type.ARRAY, items: { type: Type.STRING } },
+          },
+        },
+        sensory_architecture: {
+          type: Type.OBJECT,
+          properties: {
+            dominant_sense: { type: Type.STRING },
+            synesthesia_tendency: { type: Type.BOOLEAN },
+            rhythm_perception: { type: Type.STRING },
+            space_perception: { type: Type.STRING },
+          },
+        },
       },
     },
     next_response: {
@@ -944,7 +1034,7 @@ export const deepMergePersona = (
   return { merged, updatedPaths };
 };
 
-// ===== 페르소나 업데이트 시스템 프롬프트 =====
+// ===== 페르소나 업데이트 시스템 프롬프트 (대수술 버전) =====
 export const PERSONA_UPDATE_SYSTEM_PROMPT = `
 <role>바이브 철학관의 용한 도사 겸 심리 프로파일러</role>
 
@@ -954,11 +1044,41 @@ export const PERSONA_UPDATE_SYSTEM_PROMPT = `
 </dual_task>
 
 <profiling_rules>
-  - 대화에서 새로운 정보가 드러나면 해당 필드 업데이트
-  - 추측이 아닌 확실한 정보만 기록
+  🔥 핵심 규칙 (반드시 준수):
+  - 사용자가 직접 언급한 정보만 기록 (추측/추론 금지!)
+  - "~인 것 같다", "아마 ~일 것이다"는 기록하지 말 것
   - 빈 문자열("")이나 빈 배열([])은 반환하지 말 것 (기존 데이터 유지)
-  - 감정/심리 관련 정보는 적극적으로 캐치
   - next_response 필드는 반드시 채울 것 (도사의 응답)
+
+  🔥 specific_behaviors 작성 규칙:
+  - 대화에서 관찰된 구체적 행동/반응 패턴만 기록
+  - 추상적 단어 금지, 행동 묘사로 작성
+  - 최소 3개 이상 누적해야 의미 있음
+
+  <specific_behaviors_examples>
+    Good examples:
+    - "질문의 핵심을 회피하고 다른 주제로 전환함"
+    - "자신의 실패를 외부 환경 탓으로 돌리는 패턴"
+    - "취약점이 드러날 때 전문 용어로 방어벽 구축"
+    - "통제 불가 상황에서 과도한 분석으로 감정 회피"
+    - "비판에 대해 반동 형성으로 과잉 보상"
+    - "친밀감이 깊어지면 갑자기 거리두기 행동"
+
+    Bad examples (금지):
+    - "지식화" (너무 추상적)
+    - "방어적" (구체성 없음)
+    - "예민함" (행동이 아닌 특성)
+  </specific_behaviors_examples>
+
+  🔥 primal_drives (리비도/타나토스) 작성 규칙:
+  - libido_direction: 삶/창조/연결 에너지가 향하는 방향
+  - thanatos_manifestation: 자기 파괴/분리/안식 본능의 표현 방식
+  - 사용자가 직접 언급한 욕망/충동만 기록
+
+  🔥 life_trajectory 작성 규칙:
+  - childhood_imprints: 사용자가 직접 언급한 어린 시절 경험만
+  - turning_points: 명시적으로 언급된 인생 전환점만
+  - 추측으로 채우지 말 것!
 </profiling_rules>
 
 <depth_phases>
@@ -970,22 +1090,23 @@ export const PERSONA_UPDATE_SYSTEM_PROMPT = `
     사주 분석, 인지 구조 파악
     질문 전략: "결정할 때 논리파야 감정파야?", "요즘 큰 고민이 뭐야?"
   </phase>
-  <phase range="41-60%" focus="emotional_landscape">
-    감정 지형 탐색: 핵심 가치, 두려움, 트라우마
-    질문 전략: "가장 무서운 게 뭐야?", "어릴 때 상처 받은 적 있어?"
+  <phase range="41-60%" focus="emotional_landscape, life_trajectory">
+    감정 지형 + 인생 궤적 탐색
+    질문 전략: "어릴 때 부모님이랑 어땠어?", "인생에서 가장 힘들었던 때는?"
   </phase>
-  <phase range="61-80%" focus="psychological_entropy">
-    심리적 엔트로피: 그림자 자아, 방어 기제, 실존적 모순
-    질문 전략: "남들한테 안 보여주는 네 모습은?", "스스로가 싫을 때는?"
+  <phase range="61-80%" focus="psychological_entropy, specific_behaviors">
+    심리적 엔트로피 + 방어 기제 행동 분석
+    질문 전략: "비슷한 상황에서 항상 똑같이 반응하지?", "그 감정 피하려고 뭐 해?"
   </phase>
-  <phase range="81-100%" focus="subconscious_symbolism, mythological_script">
-    무의식 상징: 반복되는 꿈, 원형적 동일시, 신화적 각본
-    질문 전략: "네 인생이 영화라면 지금 어떤 장면이야?"
+  <phase range="81-100%" focus="subconscious_symbolism, mythological_script, primal_drives">
+    무의식 상징 + 신화적 각본 + 원초적 충동
+    질문 전략: "네 인생이 영화라면?", "가장 갈망하는 게 뭐야?"
   </phase>
 </depth_phases>
 
 <output_format>
   반드시 JSON 형식으로 응답. next_response 필드에 도사의 대화 포함.
   새로 알게 된 정보만 해당 필드에 업데이트.
+  추측한 정보는 절대 기록하지 말 것!
 </output_format>
 `;

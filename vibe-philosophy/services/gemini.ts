@@ -1,6 +1,6 @@
 
 
-import { GoogleGenAI, Chat, Content } from "@google/genai";
+import { GoogleGenAI, Chat, Content, ThinkingLevel } from "@google/genai";
 import { AnalysisMode, UserProfile, Message, DepthStage, StructuredFaceReading, SajuAnalysis, VibePhilosophyPersona } from "../types";
 import {
   GET_MODE_PROMPT,
@@ -236,7 +236,7 @@ export const analyzeSajuStructured = async (
       },
       config: {
         responseMimeType: "application/json",
-        thinkingConfig: { thinkingBudget: 1024 }
+        thinkingConfig: { thinkingLevel: ThinkingLevel.LOW }
       }
     });
 
@@ -303,7 +303,7 @@ export const initializeChat = (
     config: {
       systemInstruction: systemInstruction,
       temperature: isPro ? 0.7 : 0.85,
-      thinkingConfig: { thinkingBudget: isPro ? 1024 : 0 },
+      thinkingConfig: isPro ? { thinkingLevel: ThinkingLevel.LOW } : undefined,
     },
   });
 
@@ -417,7 +417,7 @@ export const generateDigitalTwin = async (profile: UserProfile, history: Message
       config: {
         responseMimeType: "application/json",
         // Thinking budget increased for deeper analysis
-        thinkingConfig: { thinkingBudget: 4096 }
+        thinkingConfig: { thinkingLevel: ThinkingLevel.HIGH }
       }
     });
 
@@ -433,20 +433,21 @@ export const getCurrentDepthStage = (): DepthStage => {
   return currentDepthStage;
 };
 
-// ===== 6. 페르소나 상태 업데이트 (레거시 심연의 거울 방식) =====
+// ===== 6. 페르소나 상태 업데이트 (레거시 심연의 거울 방식) - 대수술 버전 =====
 export const updatePersonaState = async (
   currentPersona: VibePhilosophyPersona,
   conversationHistory: string,
   userMessage: string,
-  isInitialConsultation: boolean = false
+  isInitialConsultation: boolean = false,
+  turnCount: number = 0  // 🔥 턴 카운트 파라미터 추가
 ): Promise<{
   persona: Partial<VibePhilosophyPersona>;
   response: string;
   updatedPaths: Set<string>;
 }> => {
   try {
-    // 현재 심도 계산
-    const currentDepth = calculateDepthFromFields(currentPersona);
+    // 현재 심도 계산 (턴 카운트 포함)
+    const currentDepth = calculateDepthFromFields(currentPersona, turnCount);
 
     // 모델 선택 (초기 분석 또는 40% 이상이면 Pro)
     const { model: selectedModel, type: modelType } = getModelForDepth(currentDepth, isInitialConsultation);
@@ -471,7 +472,7 @@ export const updatePersonaState = async (
       config: {
         responseMimeType: "application/json",
         responseSchema: VIBE_PERSONA_SCHEMA,
-        thinkingConfig: isPro ? { thinkingBudget: 1024 } : undefined,
+        thinkingConfig: isPro ? { thinkingLevel: ThinkingLevel.LOW } : undefined,
       }
     });
 
@@ -507,7 +508,92 @@ export const updatePersonaState = async (
   }
 };
 
-// ===== 7. 단계별 추가 컨텍스트 주입 (6단계 확장) =====
+// ===== 7. 다운로드 시점 빈 필드 추론 (대화 맥락 기반) =====
+export const inferEmptyFieldsForDownload = async (
+  currentPersona: VibePhilosophyPersona,
+  conversationHistory: string,
+  depthScore: number
+): Promise<VibePhilosophyPersona> => {
+  try {
+    // 50% 미만이면 추론 안 함
+    if (depthScore < 50) {
+      return currentPersona;
+    }
+
+    const personaContext = JSON.stringify(currentPersona, null, 2);
+
+    const inferPrompt = `
+<role>심리 프로파일 완성 전문가</role>
+
+<task>
+아래 대화 기록과 현재까지 수집된 페르소나 데이터를 바탕으로,
+**빈 필드들을 대화 맥락에서 추론하여 풍부하게 채워주세요.**
+</task>
+
+<rules>
+1. 빈 문자열(""), 빈 배열([]), 빈 객체({})인 필드들을 대화 맥락 기반으로 채울 것
+2. 이미 값이 있는 필드는 절대 수정하지 말 것
+3. 추론은 대화에서 드러난 성격, 말투, 가치관, 감정 패턴을 근거로 할 것
+4. 관상(face_reading)은 대화에서 드러난 성격 특성을 동양 관상학적으로 해석
+5. 각 필드는 구체적이고 풍부하게 작성 (1-2문장)
+6. 배열 필드는 최소 2-3개 항목으로 채울 것
+
+<inference_guidelines>
+- face_reading: 성격 → 관상 역추론 ("냉철한 분석력" → "심장형 눈매, 예리한 안광")
+- cognitive_architecture: 대화 패턴에서 인지 스타일 추론
+- emotional_landscape: 언급된 감정, 가치관, 두려움 기반
+- psychological_entropy: 방어 패턴, 갈등 구조 분석
+- life_trajectory: 언급된 가족, 경력, 전환점
+- cultural_context: 세대, 사회적 맥락
+- master_attributes: 관심사, 작업 스타일, 미적 취향
+</inference_guidelines>
+</rules>
+
+<current_persona>
+${personaContext}
+</current_persona>
+
+<conversation_history>
+${conversationHistory}
+</conversation_history>
+
+<output>
+완성된 전체 페르소나 JSON을 반환하세요. 기존 값은 유지하고 빈 필드만 채우세요.
+</output>
+`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-pro-preview',
+      contents: {
+        parts: [{ text: inferPrompt }]
+      },
+      config: {
+        responseMimeType: "application/json",
+        thinkingConfig: { thinkingLevel: ThinkingLevel.HIGH }
+      }
+    });
+
+    const jsonText = response.text;
+    if (!jsonText) {
+      console.warn("[inferEmptyFieldsForDownload] No response, returning original");
+      return currentPersona;
+    }
+
+    const inferred = JSON.parse(jsonText);
+
+    // 기존 데이터와 머지 (기존 값 우선 보존)
+    const { merged } = deepMergePersona(currentPersona, inferred);
+
+    console.log("[inferEmptyFieldsForDownload] Successfully inferred empty fields");
+    return merged;
+
+  } catch (error) {
+    console.error("[inferEmptyFieldsForDownload] Error:", error);
+    return currentPersona; // 에러 시 원본 반환
+  }
+};
+
+// ===== 8. 단계별 추가 컨텍스트 주입 (6단계 확장) =====
 export const getStageSpecificPromptAddition = (stage: DepthStage): string => {
   switch (stage) {
     case 'subconscious':

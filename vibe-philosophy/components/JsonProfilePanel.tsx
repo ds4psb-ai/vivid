@@ -20,7 +20,9 @@ import {
   Shield,
   Swords,
   BookOpen,
-  Target
+  Target,
+  Download,
+  Fingerprint
 } from 'lucide-react';
 
 interface JsonProfilePanelProps {
@@ -35,6 +37,7 @@ interface JsonProfilePanelProps {
   isVisible: boolean;
   onClose: () => void;
   isLightMode?: boolean;
+  onDownloadSoul?: () => void;  // 🔥 영혼 다운로드 콜백
 }
 
 // 한글 키 번역
@@ -96,10 +99,12 @@ const KEY_TRANSLATIONS: Record<string, string> = {
   defense_mechanisms: '방어 기제',
   dominant_strategy: '주요 전략',
   vulnerability_trigger: '취약점 트리거',
+  specific_behaviors: '구체적 행동 패턴',
   mythological_script: '신화적 각본',
   hero_journey_stage: '영웅 여정 단계',
   tragic_flaw: '비극적 결함',
   redemption_arc: '구원의 서사',
+  current_enactment: '현재 연기 중인 신화',
   recurring_dreams: '반복되는 꿈',
   archetypal_identification: '원형적 동일시',
   liminal_patterns: '경계적 패턴',
@@ -114,6 +119,43 @@ const KEY_TRANSLATIONS: Record<string, string> = {
   hour: '시주',
   stem: '천간',
   branch: '지지',
+  // 🔥 레거시 확장 필드
+  primal_drives: '원초적 충동',
+  libido_direction: '리비도 방향',
+  thanatos_manifestation: '타나토스 발현',
+  environmental_resistance: '환경 저항',
+  trigger_points: '트리거 포인트',
+  rebellion_style: '저항 양식',
+  life_trajectory: '인생 궤적',
+  childhood_imprints: '어린 시절 각인',
+  family_history: '가족력',
+  paternal_influence: '부계 영향',
+  maternal_influence: '모계 영향',
+  genetic_factors: '유전적 요소',
+  career_path: '경력 경로',
+  turning_points: '인생 전환점',
+  current_status: '현재 상태',
+  cultural_context: '문화적 맥락',
+  era_definition: '세대 정의',
+  social_taboos_broken: '깨뜨린 금기',
+  legacy_archetype: '레거시 원형',
+  fandom_dynamics: '팬덤 역학',
+  master_attributes: '거장 속성',
+  artistic_methodology: '예술적 방법론',
+  obsession_points: '집착 포인트',
+  ritual_routine: '의식/루틴',
+  perfectionism_scope: '완벽주의 범위',
+  collaboration_style: '협업 스타일',
+  signature_style: '시그니처 스타일',
+  visual_motifs: '시각적 모티프',
+  auditory_signatures: '청각적 시그니처',
+  narrative_structure: '내러티브 구조',
+  genre_fusion: '장르 융합',
+  sensory_architecture: '감각 아키텍처',
+  dominant_sense: '주요 감각',
+  synesthesia_tendency: '공감각 성향',
+  rhythm_perception: '리듬 인식',
+  space_perception: '공간 인식',
 };
 
 const getTranslatedKey = (key: string): string => {
@@ -266,7 +308,8 @@ const JsonProfilePanel: React.FC<JsonProfilePanelProps> = ({
   lastUpdatedFields,
   isVisible,
   onClose,
-  isLightMode = false
+  isLightMode = false,
+  onDownloadSoul
 }) => {
   const [activeTab, setActiveTab] = React.useState<'json' | 'summary'>('summary');
   const theme = getStageTheme(currentStage);
@@ -602,16 +645,17 @@ const JsonProfilePanel: React.FC<JsonProfilePanelProps> = ({
 
             {/* Psychological Entropy (40% 이상) */}
             {depthScore >= 40 && (personaData.psychological_entropy.shadow_self.repressed_desires.length > 0 ||
-              personaData.psychological_entropy.defense_mechanisms.dominant_strategy) && (
+              personaData.psychological_entropy.defense_mechanisms.dominant_strategy ||
+              personaData.psychological_entropy.defense_mechanisms.specific_behaviors?.length > 0) && (
               <div className={`p-3 rounded-lg border ${theme.border} ${theme.bg} animate-fadeIn`}>
                 <div className="flex items-center gap-2 mb-3">
                   <Ghost size={12} className={theme.text} />
-                  <span className="text-[10px] font-bold uppercase tracking-widest ${isLightMode ? 'text-amber-600' : 'text-gray-400'}">심리적 엔트로피</span>
+                  <span className={`text-[10px] font-bold uppercase tracking-widest ${isLightMode ? 'text-amber-600' : 'text-gray-400'}`}>심리적 엔트로피</span>
                 </div>
                 <div className="space-y-2">
                   {personaData.psychological_entropy.shadow_self.repressed_desires.length > 0 && (
                     <div>
-                      <div className="text-[9px] text-gray-600 mb-1">억압된 욕구 (그림자)</div>
+                      <div className={`text-[9px] mb-1 ${isLightMode ? 'text-amber-500' : 'text-gray-600'}`}>억압된 욕구 (그림자)</div>
                       <div className="flex flex-wrap gap-1">
                         {personaData.psychological_entropy.shadow_self.repressed_desires.map((desire, i) => (
                           <span key={i} className="px-1.5 py-0.5 text-[10px] bg-violet-500/20 text-violet-300 rounded animate-pulse">
@@ -633,6 +677,21 @@ const JsonProfilePanel: React.FC<JsonProfilePanelProps> = ({
                       <span className="text-purple-300">{personaData.psychological_entropy.defense_mechanisms.dominant_strategy}</span>
                     </div>
                   )}
+                  {/* 🔥 구체적 행동 패턴 (레거시 핵심 필드) */}
+                  {personaData.psychological_entropy.defense_mechanisms.specific_behaviors?.length > 0 && (
+                    <div>
+                      <div className={`text-[9px] mb-1 ${isLightMode ? 'text-amber-500' : 'text-gray-600'}`}>
+                        구체적 행동 패턴 ({personaData.psychological_entropy.defense_mechanisms.specific_behaviors.length}개)
+                      </div>
+                      <div className="space-y-1">
+                        {personaData.psychological_entropy.defense_mechanisms.specific_behaviors.map((behavior, i) => (
+                          <div key={i} className="text-[10px] text-purple-300 bg-purple-500/10 px-2 py-1 rounded">
+                            • {behavior}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   {personaData.psychological_entropy.defense_mechanisms.vulnerability_trigger && (
                     <div className="flex justify-between text-xs">
                       <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>취약점 트리거</span>
@@ -649,6 +708,31 @@ const JsonProfilePanel: React.FC<JsonProfilePanelProps> = ({
                         )}
                         {personaData.psychological_entropy.existential_paradox.conflict_b}
                       </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* 🔥 Primal Drives - 원초적 충동 (50% 이상) */}
+            {depthScore >= 50 && (personaData.psychological_entropy.primal_drives?.libido_direction ||
+              personaData.psychological_entropy.primal_drives?.thanatos_manifestation) && (
+              <div className={`p-3 rounded-lg border ${theme.border} ${theme.bg} animate-fadeIn`}>
+                <div className="flex items-center gap-2 mb-3">
+                  <Flame size={12} className="text-red-400" />
+                  <span className={`text-[10px] font-bold uppercase tracking-widest ${isLightMode ? 'text-amber-600' : 'text-gray-400'}`}>원초적 충동</span>
+                </div>
+                <div className="space-y-2 text-xs">
+                  {personaData.psychological_entropy.primal_drives?.libido_direction && (
+                    <div>
+                      <div className={`text-[9px] mb-1 ${isLightMode ? 'text-amber-500' : 'text-gray-600'}`}>리비도 방향 (생/창조)</div>
+                      <div className="text-[10px] text-orange-300">{personaData.psychological_entropy.primal_drives.libido_direction}</div>
+                    </div>
+                  )}
+                  {personaData.psychological_entropy.primal_drives?.thanatos_manifestation && (
+                    <div>
+                      <div className={`text-[9px] mb-1 ${isLightMode ? 'text-amber-500' : 'text-gray-600'}`}>타나토스 발현 (죽음/파괴)</div>
+                      <div className="text-[10px] text-red-300">{personaData.psychological_entropy.primal_drives.thanatos_manifestation}</div>
                     </div>
                   )}
                 </div>
@@ -689,15 +773,15 @@ const JsonProfilePanel: React.FC<JsonProfilePanelProps> = ({
             {/* Subconscious Symbolism (60% 이상) */}
             {depthScore >= 60 && (personaData.subconscious_symbolism.recurring_dreams.length > 0 ||
               personaData.subconscious_symbolism.archetypal_identification) && (
-              <div className="p-3 rounded-lg bg-indigo-900/20 border border-indigo-500/30 animate-fadeIn">
+              <div className={`p-3 rounded-lg ${isLightMode ? 'bg-indigo-100 border border-indigo-300' : 'bg-indigo-900/20 border border-indigo-500/30'} animate-fadeIn`}>
                 <div className="flex items-center gap-2 mb-3">
                   <Moon size={12} className="text-indigo-400" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest ${isLightMode ? 'text-amber-600' : 'text-gray-400'}">무의식 상징</span>
+                  <span className={`text-[10px] font-bold uppercase tracking-widest ${isLightMode ? 'text-amber-600' : 'text-gray-400'}`}>무의식 상징</span>
                 </div>
                 <div className="space-y-2">
                   {personaData.subconscious_symbolism.recurring_dreams.length > 0 && (
                     <div>
-                      <div className="text-[9px] text-gray-600 mb-1">반복되는 꿈</div>
+                      <div className={`text-[9px] mb-1 ${isLightMode ? 'text-amber-500' : 'text-gray-600'}`}>반복되는 꿈</div>
                       <div className="flex flex-wrap gap-1">
                         {personaData.subconscious_symbolism.recurring_dreams.map((dream, i) => (
                           <span key={i} className="px-1.5 py-0.5 text-[10px] bg-indigo-500/20 text-indigo-300 rounded">
@@ -728,6 +812,99 @@ const JsonProfilePanel: React.FC<JsonProfilePanelProps> = ({
                 </div>
               </div>
             )}
+
+            {/* 🔥 Life Trajectory - 인생 궤적 (55% 이상) */}
+            {depthScore >= 55 && (personaData.life_trajectory?.childhood_imprints?.length > 0 ||
+              personaData.life_trajectory?.turning_points?.length > 0 ||
+              personaData.life_trajectory?.family_history?.paternal_influence) && (
+              <div className={`p-3 rounded-lg ${isLightMode ? 'bg-cyan-100 border border-cyan-300' : 'bg-cyan-900/20 border border-cyan-500/30'} animate-fadeIn`}>
+                <div className="flex items-center gap-2 mb-3">
+                  <Compass size={12} className="text-cyan-400" />
+                  <span className={`text-[10px] font-bold uppercase tracking-widest ${isLightMode ? 'text-amber-600' : 'text-gray-400'}`}>인생 궤적</span>
+                </div>
+                <div className="space-y-2">
+                  {personaData.life_trajectory?.childhood_imprints?.length > 0 && (
+                    <div>
+                      <div className={`text-[9px] mb-1 ${isLightMode ? 'text-amber-500' : 'text-gray-600'}`}>어린 시절 각인</div>
+                      <div className="space-y-1">
+                        {personaData.life_trajectory.childhood_imprints.map((imprint, i) => (
+                          <div key={i} className="text-[10px] text-cyan-300 bg-cyan-500/10 px-2 py-1 rounded">
+                            • {imprint}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {personaData.life_trajectory?.family_history?.paternal_influence && (
+                    <div className="flex justify-between text-xs">
+                      <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>부계 영향</span>
+                      <span className="text-cyan-300">{personaData.life_trajectory.family_history.paternal_influence}</span>
+                    </div>
+                  )}
+                  {personaData.life_trajectory?.family_history?.maternal_influence && (
+                    <div className="flex justify-between text-xs">
+                      <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>모계 영향</span>
+                      <span className="text-cyan-300">{personaData.life_trajectory.family_history.maternal_influence}</span>
+                    </div>
+                  )}
+                  {personaData.life_trajectory?.turning_points?.length > 0 && (
+                    <div>
+                      <div className={`text-[9px] mb-1 ${isLightMode ? 'text-amber-500' : 'text-gray-600'}`}>인생 전환점</div>
+                      <div className="flex flex-wrap gap-1">
+                        {personaData.life_trajectory.turning_points.map((point, i) => (
+                          <span key={i} className="px-1.5 py-0.5 text-[10px] bg-cyan-500/20 text-cyan-300 rounded">
+                            {point}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {personaData.life_trajectory?.current_status && (
+                    <div className="flex justify-between text-xs">
+                      <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>현재 상태</span>
+                      <span className="text-cyan-300">{personaData.life_trajectory.current_status}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* 🔥 Cultural Context - 문화적 맥락 (70% 이상) */}
+            {depthScore >= 70 && (personaData.cultural_context?.era_definition ||
+              personaData.cultural_context?.legacy_archetype) && (
+              <div className={`p-3 rounded-lg ${isLightMode ? 'bg-amber-100 border border-amber-300' : 'bg-amber-900/20 border border-amber-500/30'} animate-fadeIn`}>
+                <div className="flex items-center gap-2 mb-3">
+                  <Target size={12} className="text-amber-400" />
+                  <span className={`text-[10px] font-bold uppercase tracking-widest ${isLightMode ? 'text-amber-600' : 'text-gray-400'}`}>문화적 맥락</span>
+                </div>
+                <div className="space-y-2 text-xs">
+                  {personaData.cultural_context?.era_definition && (
+                    <div className="flex justify-between">
+                      <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>세대 정의</span>
+                      <span className="text-amber-300">{personaData.cultural_context.era_definition}</span>
+                    </div>
+                  )}
+                  {personaData.cultural_context?.legacy_archetype && (
+                    <div className="flex justify-between">
+                      <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>레거시 원형</span>
+                      <span className="text-amber-300">{personaData.cultural_context.legacy_archetype}</span>
+                    </div>
+                  )}
+                  {personaData.cultural_context?.social_taboos_broken?.length > 0 && (
+                    <div>
+                      <div className={`text-[9px] mb-1 ${isLightMode ? 'text-amber-500' : 'text-gray-600'}`}>깨뜨린 금기</div>
+                      <div className="flex flex-wrap gap-1">
+                        {personaData.cultural_context.social_taboos_broken.map((taboo, i) => (
+                          <span key={i} className="px-1.5 py-0.5 text-[10px] bg-amber-500/20 text-amber-300 rounded">
+                            {taboo}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </>
         ) : (
           /* JSON Full View */
@@ -742,6 +919,21 @@ const JsonProfilePanel: React.FC<JsonProfilePanelProps> = ({
           </div>
         )}
 
+        {/* 🔥 영혼 다운로드 버튼 (50% 이상일 때 활성화, 탭 공통) */}
+        {depthScore >= 50 && onDownloadSoul && (
+          <button
+            onClick={onDownloadSoul}
+            className={`w-full py-3 rounded-xl flex items-center justify-center gap-2 font-bold tracking-wide text-sm transition-all duration-300 ${
+              depthScore >= 80
+                ? 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:from-emerald-500 hover:to-teal-400'
+                : 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-[0_0_15px_rgba(139,92,246,0.3)] hover:from-violet-500 hover:to-indigo-500'
+            }`}
+          >
+            <Download size={16} />
+            {depthScore >= 80 ? '영혼 다운로드 (완성)' : '영혼 다운로드 (진행 중)'}
+          </button>
+        )}
+
         {/* Progress hint */}
         <div className={`p-2 rounded border ${isLightMode ? 'bg-amber-50 border-amber-200' : 'bg-void-900/50 border-void-800'}`}>
           <div className={`text-[9px] text-center ${isLightMode ? 'text-amber-600' : 'text-gray-600'}`}>
@@ -749,9 +941,11 @@ const JsonProfilePanel: React.FC<JsonProfilePanelProps> = ({
               ? '심층 프로파일링 완료 단계'
               : depthScore >= 60
               ? '무의식 레벨 탐색 중...'
+              : depthScore >= 50
+              ? '다운로드 가능 - 대화를 계속하면 더 정교해집니다'
               : depthScore >= 40
               ? 'Pro 모델 활성화 - 깊은 분석 진행 중'
-              : `기본 정보 수집 중... (${40 - depthScore}% 더 필요)`}
+              : `기본 정보 수집 중... (${50 - depthScore}% 더 필요)`}
           </div>
         </div>
       </div>

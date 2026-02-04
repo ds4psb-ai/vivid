@@ -10,7 +10,9 @@ import {
   sendMessageToGemini,
   generateDigitalTwin,
   getCurrentDepthStage,
-  updatePersonaState
+  updatePersonaState,
+  inferEmptyFieldsForDownload,
+  analyzeSajuStructured
 } from './services/gemini';
 import { GET_GREETING_TRIGGER, getDepthStage, calculateDepthFromFields, deepMergePersona } from './constants';
 import { Sparkles, BrainCircuit, RefreshCcw, PanelRightOpen, PanelRightClose, Sun, Moon } from 'lucide-react';
@@ -117,6 +119,22 @@ const App: React.FC = () => {
     setDigitalTwinData(null);
     setIsJsonPanelVisible(true); // 세션 시작부터 항상 표시
 
+    // 🔥 생년월일이 있으면 사주 분석 실행
+    let sajuResult = profile.sajuAnalysis;
+    if (profile.birthDate && !sajuResult) {
+      try {
+        sajuResult = await analyzeSajuStructured(
+          profile.birthDate,
+          profile.calendarType,
+          profile.birthTime || null,
+          profile.birthPlace || null
+        );
+        console.log("[handleStartSession] Saju analysis completed");
+      } catch (error) {
+        console.error("[handleStartSession] Saju analysis failed:", error);
+      }
+    }
+
     // 페르소나 초기화 (프로필 정보 반영)
     const initialPersona: VibePhilosophyPersona = {
       ...INITIAL_PERSONA,
@@ -138,30 +156,60 @@ const App: React.FC = () => {
       face_reading: {
         ...INITIAL_PERSONA.face_reading,
         raw_features: profile.faceFeatures || '',
+        // 🔥 구조화된 관상 분석이 있으면 반영
+        ...(profile.structuredFaceReading && {
+          eyes: {
+            shape: profile.structuredFaceReading.eyes?.shape || '',
+            energy: profile.structuredFaceReading.eyes?.energy || '',
+            fortune: profile.structuredFaceReading.eyes?.fortuneIndicator || '',
+          },
+          nose: {
+            shape: profile.structuredFaceReading.nose?.shape || '',
+            energy: profile.structuredFaceReading.nose?.energy || '',
+            fortune: profile.structuredFaceReading.nose?.fortuneIndicator || '',
+          },
+          mouth: {
+            shape: profile.structuredFaceReading.mouth?.shape || '',
+            energy: profile.structuredFaceReading.mouth?.energy || '',
+            communication_style: profile.structuredFaceReading.mouth?.communicationStyle || '',
+          },
+          forehead: {
+            shape: profile.structuredFaceReading.forehead?.shape || '',
+            energy: profile.structuredFaceReading.forehead?.energy || '',
+            fortune: profile.structuredFaceReading.forehead?.fortuneIndicator || '',
+          },
+          chin: {
+            shape: profile.structuredFaceReading.chin?.shape || '',
+            energy: profile.structuredFaceReading.chin?.energy || '',
+            fortune: profile.structuredFaceReading.chin?.fortuneIndicator || '',
+          },
+          face_shape: profile.structuredFaceReading.faceShape || '',
+          overall_qi: profile.structuredFaceReading.overallQi || '',
+        }),
       },
     };
 
-    // 사주 분석이 있으면 반영
-    if (profile.sajuAnalysis) {
+    // 🔥 사주 분석 결과 반영
+    if (sajuResult) {
       initialPersona.saju_analysis = {
         four_pillars: {
-          year: profile.sajuAnalysis.fourPillars?.year ? { stem: profile.sajuAnalysis.fourPillars.year.stem, branch: profile.sajuAnalysis.fourPillars.year.branch } : null,
-          month: profile.sajuAnalysis.fourPillars?.month ? { stem: profile.sajuAnalysis.fourPillars.month.stem, branch: profile.sajuAnalysis.fourPillars.month.branch } : null,
-          day: profile.sajuAnalysis.fourPillars?.day ? { stem: profile.sajuAnalysis.fourPillars.day.stem, branch: profile.sajuAnalysis.fourPillars.day.branch } : null,
-          hour: profile.sajuAnalysis.fourPillars?.hour ? { stem: profile.sajuAnalysis.fourPillars.hour.stem, branch: profile.sajuAnalysis.fourPillars.hour.branch } : null,
+          year: sajuResult.fourPillars?.year ? { stem: sajuResult.fourPillars.year.stem, branch: sajuResult.fourPillars.year.branch } : null,
+          month: sajuResult.fourPillars?.month ? { stem: sajuResult.fourPillars.month.stem, branch: sajuResult.fourPillars.month.branch } : null,
+          day: sajuResult.fourPillars?.day ? { stem: sajuResult.fourPillars.day.stem, branch: sajuResult.fourPillars.day.branch } : null,
+          hour: sajuResult.fourPillars?.hour ? { stem: sajuResult.fourPillars.hour.stem, branch: sajuResult.fourPillars.hour.branch } : null,
         },
-        five_elements_balance: profile.sajuAnalysis.fiveElementsBalance || { wood: 0, fire: 0, earth: 0, metal: 0, water: 0 },
-        day_master: profile.sajuAnalysis.dayMaster || '',
-        day_master_strength: profile.sajuAnalysis.dayMasterStrength || '',
-        ten_gods: profile.sajuAnalysis.tenGods || [],
-        current_year_luck: profile.sajuAnalysis.currentYearLuck || '',
+        five_elements_balance: sajuResult.fiveElementsBalance || { wood: 0, fire: 0, earth: 0, metal: 0, water: 0 },
+        day_master: sajuResult.dayMaster || '',
+        day_master_strength: sajuResult.dayMasterStrength || '',
+        ten_gods: sajuResult.tenGods || [],
+        current_year_luck: sajuResult.currentYearLuck || '',
       };
     }
 
     setPersonaData(initialPersona);
 
-    // 필드 기반 심도 계산
-    const initialDepth = calculateDepthFromFields(initialPersona);
+    // 필드 기반 심도 계산 (턴 카운트 0으로 시작)
+    const initialDepth = calculateDepthFromFields(initialPersona, 0);
     setDepthScore(initialDepth);
     setCurrentStage(getDepthStage(initialDepth));
 
@@ -187,8 +235,8 @@ const App: React.FC = () => {
       setPersonaData(merged);
       setLastUpdatedFields(updatedPaths);
 
-      // 필드 기반 심도 재계산
-      const newDepth = calculateDepthFromFields(merged);
+      // 필드 기반 심도 재계산 (턴 카운트 포함)
+      const newDepth = calculateDepthFromFields(merged, 0);
       setDepthScore(newDepth);
 
       if (response) {
@@ -271,16 +319,52 @@ const App: React.FC = () => {
     setLastUpdatedFields(new Set()); // 업데이트 필드 리셋
   };
 
-  // Handle Digital Twin Extraction
+  // Handle Digital Twin Extraction (🔥 다운로드 시 빈 필드 추론 후 완성된 JSON 제공)
   const handleExtractEssence = async () => {
     if (depthScore < 50) return;
     setIsExtracting(true);
     try {
-      const jsonString = await generateDigitalTwin(profile, messagesRef.current);
-      setDigitalTwinData(jsonString);
+      // 대화 기록 생성
+      const conversationHistory = messagesRef.current
+        .map(m => `${m.role === 'user' ? '사용자' : '도사'}: ${m.text}`)
+        .join('\n');
+
+      // 🔥 빈 필드를 대화 맥락 기반으로 추론하여 채움
+      const completedPersona = await inferEmptyFieldsForDownload(
+        personaData,
+        conversationHistory,
+        depthScore
+      );
+
+      const timestamp = new Date().toISOString().split('T')[0];
+      const fileName = `vibe_soul_${completedPersona.demographics.name || 'unknown'}_${timestamp}.json`;
+
+      // meta에 최종 심도 및 턴 카운트 반영
+      const exportData = {
+        ...completedPersona,
+        meta: {
+          ...completedPersona.meta,
+          depth_level: depthScore,
+          turn_count: turnCount,
+          profiling_status: depthScore >= 80 ? 'complete' : 'in_progress',
+          exported_at: new Date().toISOString(),
+        },
+      };
+
+      const dataStr = JSON.stringify(exportData, null, 2);
+      setDigitalTwinData(dataStr); // 패널 표시용
+
+      // 자동 다운로드
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Extraction failed", error);
-      alert("영혼 추출에 실패했습니다. 아직 분석 데이터가 부족할 수 있습니다.");
+      alert("영혼 추출에 실패했습니다.");
     } finally {
       setIsExtracting(false);
     }
@@ -311,12 +395,13 @@ const App: React.FC = () => {
         .map(m => `${m.role === 'user' ? '사용자' : '도사'}: ${m.text}`)
         .join('\n');
 
-      // 페르소나 상태 업데이트 (새 방식)
+      // 페르소나 상태 업데이트 (턴 카운트 전달)
       const { persona, response, updatedPaths } = await updatePersonaState(
         personaData,
         conversationHistory,
         text,
-        false // 일반 대화는 isInitialConsultation = false
+        false, // 일반 대화는 isInitialConsultation = false
+        newTurnCount // 🔥 턴 카운트 전달
       );
 
       // 페르소나 병합
@@ -324,8 +409,8 @@ const App: React.FC = () => {
       setPersonaData(merged);
       setLastUpdatedFields(updatedPaths);
 
-      // 필드 기반 심도 계산
-      const newDepth = calculateDepthFromFields(merged);
+      // 필드 기반 심도 계산 (턴 카운트 포함)
+      const newDepth = calculateDepthFromFields(merged, newTurnCount);
       setDepthScore(newDepth);
 
       // 단계 변경 확인
@@ -510,9 +595,6 @@ const App: React.FC = () => {
         depthScore={depthScore}
         currentStage={currentStage}
         isSessionActive={isSessionActive}
-        onExtractEssence={handleExtractEssence}
-        isExtracting={isExtracting}
-        digitalTwinData={digitalTwinData}
         isLightMode={isLightMode}
       />
 
@@ -626,6 +708,7 @@ const App: React.FC = () => {
         isVisible={isJsonPanelVisible}
         onClose={() => setIsJsonPanelVisible(false)}
         isLightMode={isLightMode}
+        onDownloadSoul={handleExtractEssence}
       />
     </div>
   );

@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import { UserProfile, AnalysisMode, CalendarType, DepthStage } from '../types';
-import { Settings, User, ScrollText, Dna, Activity, ScanFace, Brain, Heart, Upload, CheckCircle, Loader2, Play, Sparkles, Fingerprint, Download, MapPin, Clock } from 'lucide-react';
-import { extractFaceFeatures } from '../services/gemini';
+import { Settings, User, ScrollText, Dna, Activity, ScanFace, Brain, Heart, Upload, CheckCircle, Loader2, Play, Sparkles, MapPin, Clock } from 'lucide-react';
+import { extractFaceFeatures, extractStructuredFaceReading } from '../services/gemini';
 
 interface ControlPanelProps {
   profile: UserProfile;
@@ -15,15 +15,12 @@ interface ControlPanelProps {
   depthScore: number;
   currentStage: DepthStage;
   isSessionActive: boolean;
-  onExtractEssence?: () => void;
-  isExtracting?: boolean;
-  digitalTwinData?: string | null;
   isLightMode?: boolean;
 }
 
 const ControlPanel: React.FC<ControlPanelProps> = ({
   profile, setProfile, mode, onModeChange, onStartSession, onReset, depthScore, currentStage, isSessionActive,
-  onExtractEssence, isExtracting, digitalTwinData, isLightMode = false
+  isLightMode = false
 }) => {
   const [isAnalyzingPartner, setIsAnalyzingPartner] = useState(false);
   const [isAnalyzingUser, setIsAnalyzingUser] = useState(false);
@@ -75,18 +72,6 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
     });
   };
 
-  const handleDownloadJson = () => {
-    if (!digitalTwinData) return;
-    const blob = new Blob([digitalTwinData], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `vibe_soul_${profile.name || 'user'}_${new Date().toISOString().slice(0, 10)}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   // --- Image Upload Handlers ---
 
   const processUserImage = async (file: File) => {
@@ -99,11 +84,16 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
     reader.onloadend = async () => {
       const base64 = reader.result as string;
       try {
-        const features = await extractFaceFeatures(base64);
-        // 함수형 업데이트로 최신 상태 보장 (클로저 문제 해결)
+        // 텍스트 설명 + 구조화된 관상 분석 동시 호출
+        const [features, structuredReading] = await Promise.all([
+          extractFaceFeatures(base64),
+          extractStructuredFaceReading(base64)
+        ]);
+
         setProfile(prev => ({
           ...prev,
           faceFeatures: features,
+          structuredFaceReading: structuredReading || undefined,
         }));
       } catch (error) {
         console.error("User Face Analysis Failed", error);
@@ -696,40 +686,6 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
       {/* START BUTTON - 분석 렌즈 위에 배치 */}
       <div className="mb-6 space-y-3 pt-4 border-t border-void-800">
-        {/* SOUL EXTRACTION - Visible when Depth >= 50 */}
-        {isSessionActive && depthScore >= 50 && (
-          <div className="mb-2 animate-fadeIn">
-            {digitalTwinData ? (
-              <button
-                onClick={handleDownloadJson}
-                className="w-full py-4 rounded-xl flex items-center justify-center gap-2 font-bold tracking-wide text-sm transition-all duration-500 bg-emerald-900/40 border border-emerald-500/50 text-emerald-400 hover:bg-emerald-800/50 shadow-[0_0_20px_rgba(16,185,129,0.2)]"
-              >
-                <Download size={18} />
-                영혼 다운로드
-              </button>
-            ) : (
-              <button
-                onClick={onExtractEssence}
-                disabled={isExtracting}
-                className="w-full py-4 rounded-xl flex items-center justify-center gap-2 font-bold tracking-wide text-sm transition-all duration-500 bg-gradient-to-r from-violet-600 to-indigo-600 border border-violet-400/30 text-white hover:from-violet-500 hover:to-indigo-500 shadow-[0_0_20px_rgba(139,92,246,0.3)] relative overflow-hidden group"
-              >
-                {isExtracting ? (
-                  <>
-                    <Loader2 size={18} className="animate-spin" />
-                    영혼 추출 중...
-                  </>
-                ) : (
-                  <>
-                    <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-in-out"></div>
-                    <Fingerprint size={18} />
-                    디지털 영혼 추출
-                  </>
-                )}
-              </button>
-            )}
-          </div>
-        )}
-
         {/* START BUTTON */}
         <button
           onClick={onStartSession}

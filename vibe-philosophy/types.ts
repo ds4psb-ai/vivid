@@ -215,6 +215,65 @@ export interface LiveProfileData {
   };
 }
 
+// ===== 레거시 심연의 거울 확장 타입 =====
+export interface PrimalDrives {
+  libido_direction: string;      // 삶/창조/성적 에너지의 방향
+  thanatos_manifestation: string; // 죽음/파괴/안식 본능의 발현
+}
+
+export interface EnvironmentalResistance {
+  trigger_points: string[];      // '감옥'을 느끼게 하는 트리거
+  rebellion_style: string;        // 저항 양식
+}
+
+export interface FamilyHistory {
+  paternal_influence: string;
+  maternal_influence: string;
+  genetic_factors: string[];
+}
+
+export interface LifeTrajectory {
+  childhood_imprints: string[];
+  family_history: FamilyHistory;
+  career_path: string[];
+  turning_points: string[];
+  current_status: string;
+}
+
+export interface CulturalContext {
+  era_definition: string;         // 세대 정의
+  social_taboos_broken: string[]; // 깨뜨린 금기들
+  legacy_archetype: string;       // 레거시 원형
+  fandom_dynamics: string;        // 추종 세력 역학
+}
+
+export interface ArtisticMethodology {
+  obsession_points: string[];
+  ritual_routine: string[];
+  perfectionism_scope: string;
+  collaboration_style: string;
+}
+
+export interface SignatureStyle {
+  visual_motifs: string[];
+  auditory_signatures: string[];
+  narrative_structure: string;
+  genre_fusion: string[];
+}
+
+export interface SensoryArchitecture {
+  dominant_sense: string;
+  synesthesia_tendency: boolean;
+  rhythm_perception: string;
+  space_perception: string;
+}
+
+export interface MasterAttributes {
+  artistic_methodology: ArtisticMethodology;
+  signature_style: SignatureStyle;
+  sensory_architecture: SensoryArchitecture;
+}
+
 // ===== 바이브 철학관 페르소나 (레거시 심연의 거울 방식) =====
 export interface VibePhilosophyPersona {
   meta: {
@@ -282,12 +341,16 @@ export interface VibePhilosophyPersona {
     };
     defense_mechanisms: {
       dominant_strategy: string;
+      specific_behaviors: string[];  // 🔥 레거시 핵심! 구체적 행동 분석 (최소 3개 이상)
       vulnerability_trigger: string;
     };
+    primal_drives: PrimalDrives;  // 🔥 리비도/타나토스 분석
+    environmental_resistance: EnvironmentalResistance;  // 🔥 환경 저항
     mythological_script: {
       hero_journey_stage: string;
       tragic_flaw: string;
       redemption_arc: string;
+      current_enactment: string;  // 🔥 현재 연기 중인 신화
     };
   };
   subconscious_symbolism: {
@@ -295,6 +358,10 @@ export interface VibePhilosophyPersona {
     archetypal_identification: string;
     liminal_patterns: string[];
   };
+  // 🔥 레거시 확장 필드
+  life_trajectory: LifeTrajectory;
+  cultural_context: CulturalContext;
+  master_attributes: MasterAttributes;
 }
 
 // 초기 페르소나 상태
@@ -359,18 +426,66 @@ export const INITIAL_PERSONA: VibePhilosophyPersona = {
     },
     defense_mechanisms: {
       dominant_strategy: '',
+      specific_behaviors: [],  // 🔥 구체적 행동 분석
       vulnerability_trigger: '',
+    },
+    primal_drives: {
+      libido_direction: '',
+      thanatos_manifestation: '',
+    },
+    environmental_resistance: {
+      trigger_points: [],
+      rebellion_style: '',
     },
     mythological_script: {
       hero_journey_stage: '',
       tragic_flaw: '',
       redemption_arc: '',
+      current_enactment: '',
     },
   },
   subconscious_symbolism: {
     recurring_dreams: [],
     archetypal_identification: '',
     liminal_patterns: [],
+  },
+  // 🔥 레거시 확장 필드
+  life_trajectory: {
+    childhood_imprints: [],
+    family_history: {
+      paternal_influence: '',
+      maternal_influence: '',
+      genetic_factors: [],
+    },
+    career_path: [],
+    turning_points: [],
+    current_status: '',
+  },
+  cultural_context: {
+    era_definition: '',
+    social_taboos_broken: [],
+    legacy_archetype: '',
+    fandom_dynamics: '',
+  },
+  master_attributes: {
+    artistic_methodology: {
+      obsession_points: [],
+      ritual_routine: [],
+      perfectionism_scope: '',
+      collaboration_style: '',
+    },
+    signature_style: {
+      visual_motifs: [],
+      auditory_signatures: [],
+      narrative_structure: '',
+      genre_fusion: [],
+    },
+    sensory_architecture: {
+      dominant_sense: '',
+      synesthesia_tendency: false,
+      rhythm_perception: '',
+      space_perception: '',
+    },
   },
 };
 
