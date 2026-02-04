@@ -662,7 +662,26 @@ function CreditContent() {
         <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
           <p className="text-purple-300 text-sm mb-2">앱 사이드바 하단 → <strong>"API Key"</strong> 버튼 클릭</p>
           <p className="text-purple-300 text-sm">→ 방금 복사한 키 붙여넣기</p>
-          <p className="text-purple-300 text-sm mt-2">🎉 완료! 이제 무제한으로 쓸 수 있어요</p>
+          <p className="text-purple-300 text-sm mt-2">🎉 완료!</p>
+        </div>
+      </ContentCard>
+
+      {/* 주의사항 */}
+      <ContentCard>
+        <h3 className="text-lg font-bold text-white mb-4">⚠️ 꼭 알아두세요</h3>
+        <div className="space-y-3 text-sm">
+          <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+            <p className="text-yellow-300">⏰ <strong>90일(3개월)</strong> 동안만 무료!</p>
+            <p className="text-yellow-300/70 text-xs mt-1">$300 다 쓰거나 90일 지나면 끝</p>
+          </div>
+          <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+            <p className="text-red-300">📊 사용량 반영에 <strong>시간차</strong> 있음!</p>
+            <p className="text-red-300/70 text-xs mt-1">실시간 아님 → 남은 크레딧 자주 확인하세요</p>
+          </div>
+          <div className="p-3 rounded-lg bg-gray-500/10 border border-gray-500/20">
+            <p className="text-gray-300">💡 크레딧 확인하는 곳</p>
+            <p className="text-gray-300/70 text-xs mt-1">Google Cloud Console → 결제 → 크레딧</p>
+          </div>
         </div>
       </ContentCard>
 
