@@ -1,4 +1,4 @@
-import { GoogleGenAI, Chat } from "@google/genai";
+import { GoogleGenAI, Chat, ThinkingMode } from "@google/genai";
 import { GEMINI_MODEL, SYSTEM_PROMPT_TEMPLATE } from "../constants";
 import { OutputMode } from "../types";
 
@@ -51,7 +51,7 @@ export const startAnalysisChat = async (
 
   const finalSystemPrompt = SYSTEM_PROMPT_TEMPLATE.replace("{{MODE}}", mode);
 
-  // Initialize Chat with Gemini 3 Pro optimized settings
+  // Initialize Chat with Gemini 3 Pro optimized settings + ThinkingMode
   currentChat = ai.chats.create({
     model: GEMINI_MODEL,
     config: {
@@ -59,6 +59,9 @@ export const startAnalysisChat = async (
       temperature: 0.2,
       maxOutputTokens: 32000, // Reduced from 64000 for input splitting
       mediaResolution: 'high', // Better frame analysis (10 FPS)
+      thinkingConfig: {
+        thinkingMode: ThinkingMode.ENABLED,
+      },
     },
   });
 
