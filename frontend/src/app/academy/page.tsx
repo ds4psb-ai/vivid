@@ -610,85 +610,86 @@ const FREE_TRIAL_URL = "https://console.cloud.google.com/freetrial/signup/tos?fa
 function CreditContent() {
   return (
     <div className="max-w-3xl mx-auto space-y-8">
-      <PageHeader title="$300 무료 크레딧" sub="Google Cloud 가입만 하면 40만원 상당 공짜!" />
+      <PageHeader title="$300 무료 크레딧" sub="Google Cloud 가입하면 90일간 40만원 상당 무료" />
 
       {/* Step 1 */}
       <ContentCard highlight>
-        <h3 className="text-lg font-bold text-white mb-4">1️⃣ 무료 크레딧 신청하기</h3>
-        <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20 mb-4">
-          <p className="text-emerald-300 text-sm">💡 왜 필요해요? → 사용량 제한 없이 가장 빠르게 AI 사용 가능!</p>
+        <div className="flex items-center gap-3 mb-4">
+          <span className="w-7 h-7 rounded-full bg-emerald-500/20 text-emerald-400 text-sm font-bold flex items-center justify-center">1</span>
+          <p className="text-white font-bold">무료 크레딧 신청</p>
         </div>
         <div className="space-y-3 text-sm text-gray-300 mb-4">
-          <p>1. 아래 버튼 클릭해서 신청 페이지로 이동</p>
-          <p>2. Google 계정으로 로그인</p>
-          <p>3. 결제 정보 입력 (걱정 마세요!)</p>
+          <div className="flex gap-3"><span className="text-emerald-400 font-bold">1.</span><span>아래 버튼 클릭해서 신청 페이지로 이동</span></div>
+          <div className="flex gap-3"><span className="text-emerald-400 font-bold">2.</span><span>Google 계정으로 로그인</span></div>
+          <div className="flex gap-3"><span className="text-emerald-400 font-bold">3.</span><span>결제 정보 입력</span></div>
         </div>
-        <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 mb-6">
-          <p className="text-blue-300 text-sm">🔒 결제 정보 입력해도 <strong>바로 결제 안 됨!</strong></p>
-          <p className="text-blue-300 text-sm">→ $300 무료 크레딧 다 쓸 때까지 0원</p>
-          <p className="text-blue-300 text-sm">→ 유료 전환 버튼 안 누르면 자동 결제 없음</p>
+        <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 mb-6">
+          <p className="text-emerald-300 text-sm">결제 정보 입력해도 바로 결제 안 됨</p>
+          <p className="text-emerald-300/70 text-xs mt-1">$300 크레딧 먼저 소진 / 유료 전환 버튼 안 누르면 자동 결제 없음</p>
         </div>
         <a
           href={FREE_TRIAL_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="block w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-center rounded-xl transition-all"
+          className="block w-full py-4 bg-white text-gray-900 font-bold text-center rounded-xl hover:bg-gray-100 transition-all"
         >
-          $300 무료 크레딧 받으러 가기 →
+          $300 무료 크레딧 받기
         </a>
       </ContentCard>
 
       {/* Step 2 */}
       <ContentCard>
-        <h3 className="text-lg font-bold text-white mb-4">2️⃣ API Key 만들기</h3>
+        <div className="flex items-center gap-3 mb-4">
+          <span className="w-7 h-7 rounded-full bg-purple-500/20 text-purple-400 text-sm font-bold flex items-center justify-center">2</span>
+          <p className="text-white font-bold">API Key 만들기</p>
+        </div>
         <div className="space-y-3 text-sm text-gray-300 mb-4">
-          <div className="flex gap-3"><span className="text-emerald-400 font-bold">1.</span><span>아래 버튼 클릭 → Google AI Studio 이동</span></div>
-          <div className="flex gap-3"><span className="text-emerald-400 font-bold">2.</span><span>왼쪽 위 파란색 "Create API Key" 버튼 클릭</span></div>
-          <div className="flex gap-3"><span className="text-emerald-400 font-bold">3.</span><span>생성된 키(AIza...) 복사</span></div>
+          <div className="flex gap-3"><span className="text-purple-400 font-bold">1.</span><span>아래 버튼 클릭 → Google AI Studio 이동</span></div>
+          <div className="flex gap-3"><span className="text-purple-400 font-bold">2.</span><span>왼쪽 위 파란색 "Create API Key" 버튼 클릭</span></div>
+          <div className="flex gap-3"><span className="text-purple-400 font-bold">3.</span><span>생성된 키(AIza...) 복사</span></div>
         </div>
         <a
           href="https://aistudio.google.com/app/apikey"
           target="_blank"
           rel="noopener noreferrer"
-          className="block w-full py-3 bg-white/10 hover:bg-white/20 text-white font-medium text-center rounded-xl transition-all border border-white/20"
+          className="block w-full py-3 bg-white text-gray-900 font-bold text-center rounded-xl hover:bg-gray-100 transition-all"
         >
-          Google AI Studio 열기 →
+          Google AI Studio 열기
         </a>
       </ContentCard>
 
       {/* Step 3 */}
       <ContentCard>
-        <h3 className="text-lg font-bold text-white mb-4">3️⃣ 키 입력하면 끝!</h3>
-        <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
-          <p className="text-purple-300 text-sm mb-2">앱 사이드바 하단 → <strong>"API Key"</strong> 버튼 클릭</p>
-          <p className="text-purple-300 text-sm">→ 방금 복사한 키 붙여넣기</p>
-          <p className="text-purple-300 text-sm mt-2">🎉 완료!</p>
+        <div className="flex items-center gap-3 mb-4">
+          <span className="w-7 h-7 rounded-full bg-pink-500/20 text-pink-400 text-sm font-bold flex items-center justify-center">3</span>
+          <p className="text-white font-bold">키 입력</p>
+        </div>
+        <div className="space-y-2 text-sm text-gray-300">
+          <p>앱 사이드바 하단 → <span className="text-white font-medium">API Key</span> 버튼 클릭</p>
+          <p>→ 복사한 키 붙여넣기</p>
         </div>
       </ContentCard>
 
       {/* 주의사항 */}
       <ContentCard>
-        <h3 className="text-lg font-bold text-white mb-4">⚠️ 꼭 알아두세요</h3>
+        <h3 className="text-lg font-bold text-white mb-4">주의사항</h3>
         <div className="space-y-3 text-sm">
           <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
-            <p className="text-yellow-300">⏰ <strong>90일(3개월)</strong> 동안만 무료!</p>
-            <p className="text-yellow-300/70 text-xs mt-1">$300 다 쓰거나 90일 지나면 끝</p>
+            <p className="text-yellow-300 font-medium">90일(3개월) 한정</p>
+            <p className="text-yellow-300/70 text-xs mt-1">$300 다 쓰거나 90일 지나면 종료</p>
           </div>
           <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-            <p className="text-red-300">📊 사용량 반영에 <strong>시간차</strong> 있음!</p>
-            <p className="text-red-300/70 text-xs mt-1">실시간 아님 → 남은 크레딧 자주 확인하세요</p>
+            <p className="text-red-300 font-medium">사용량 반영 시간차 있음</p>
+            <p className="text-red-300/70 text-xs mt-1">실시간 아님 → 남은 크레딧 자주 확인</p>
           </div>
           <div className="p-3 rounded-lg bg-gray-500/10 border border-gray-500/20">
-            <p className="text-gray-300">💡 크레딧 확인하는 곳</p>
+            <p className="text-gray-300 font-medium">크레딧 확인</p>
             <p className="text-gray-300/70 text-xs mt-1">Google Cloud Console → 결제 → 크레딧</p>
           </div>
         </div>
       </ContentCard>
 
-      {/* Footer */}
-      <div className="text-center text-xs text-gray-500">
-        🔒 API Key는 내 브라우저에만 저장되고 서버로 안 감
-      </div>
+      <p className="text-center text-xs text-gray-600">API Key는 브라우저에만 저장되고 서버로 전송되지 않음</p>
     </div>
   );
 }
