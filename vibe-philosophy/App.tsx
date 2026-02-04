@@ -62,8 +62,8 @@ const App: React.FC = () => {
   const [personaData, setPersonaData] = useState<VibePhilosophyPersona>(INITIAL_PERSONA);
   const [lastUpdatedFields, setLastUpdatedFields] = useState<Set<string>>(new Set());
 
-  // 테마 상태 (라이트/다크)
-  const [isLightMode, setIsLightMode] = useState(false);
+  // 테마 상태 (라이트/다크) - 밝은 모드가 디폴트
+  const [isLightMode, setIsLightMode] = useState(true);
 
   // Track previous mode to detect changes
   const prevModeRef = useRef<AnalysisMode>('integrated');
@@ -513,6 +513,7 @@ const App: React.FC = () => {
         onExtractEssence={handleExtractEssence}
         isExtracting={isExtracting}
         digitalTwinData={digitalTwinData}
+        isLightMode={isLightMode}
       />
 
       {/* Main Chat Area */}
@@ -624,6 +625,7 @@ const App: React.FC = () => {
         lastUpdatedFields={lastUpdatedFields}
         isVisible={isJsonPanelVisible}
         onClose={() => setIsJsonPanelVisible(false)}
+        isLightMode={isLightMode}
       />
     </div>
   );

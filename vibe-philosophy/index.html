@@ -107,6 +107,30 @@
         border-color: #D4AF37;
         box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
       }
+      /* Light mode inputs */
+      .light-input {
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid #fcd34d;
+        color: #1f2937;
+        transition: all 0.3s ease;
+      }
+      .light-input:focus {
+        background: white;
+        border-color: #f59e0b;
+        box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
+      }
+      .light-input::placeholder {
+        color: #d97706;
+        opacity: 0.6;
+      }
+      /* Light mode glass panel */
+      .glass-panel-light {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(251, 191, 36, 0.3);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+      }
     </style>
   <script type="importmap">
 {

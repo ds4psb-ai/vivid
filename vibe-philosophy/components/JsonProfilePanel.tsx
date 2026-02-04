@@ -28,6 +28,7 @@ interface JsonProfilePanelProps {
   lastUpdatedFields: Set<string>;
   isVisible: boolean;
   onClose: () => void;
+  isLightMode?: boolean;
 }
 
 // 한글 키 번역
@@ -174,7 +175,7 @@ const RecursiveJson: React.FC<{
     }
     return (
       <div className="ml-2">
-        <span className="text-gray-500">[</span>
+        <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>[</span>
         {data.map((item, index) => (
           <div key={index} className="ml-2">
             <RecursiveJson
@@ -183,10 +184,10 @@ const RecursiveJson: React.FC<{
               updatedFields={updatedFields}
               depth={depth + 1}
             />
-            {index < data.length - 1 && <span className="text-gray-500">,</span>}
+            {index < data.length - 1 && <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>,</span>}
           </div>
         ))}
-        <span className="text-gray-500">]</span>
+        <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>]</span>
       </div>
     );
   }
@@ -225,14 +226,14 @@ const RecursiveJson: React.FC<{
                   className={`py-0.5 ${isChildUpdated ? 'bg-violet-500/20 rounded px-1' : ''}`}
                 >
                   <span className="text-gold-400 text-[11px]">"{getTranslatedKey(key)}"</span>
-                  <span className="text-gray-500">: </span>
+                  <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>: </span>
                   <RecursiveJson
                     data={data[key]}
                     path={childPath}
                     updatedFields={updatedFields}
                     depth={depth + 1}
                   />
-                  {index < keys.length - 1 && <span className="text-gray-500">,</span>}
+                  {index < keys.length - 1 && <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>,</span>}
                 </div>
               );
             })}
@@ -255,7 +256,8 @@ const JsonProfilePanel: React.FC<JsonProfilePanelProps> = ({
   personaData,
   lastUpdatedFields,
   isVisible,
-  onClose
+  onClose,
+  isLightMode = false
 }) => {
   const [activeTab, setActiveTab] = React.useState<'json' | 'summary'>('summary');
   const theme = getStageTheme(currentStage);
@@ -263,13 +265,17 @@ const JsonProfilePanel: React.FC<JsonProfilePanelProps> = ({
   if (!isVisible) return null;
 
   return (
-    <div className={`w-[400px] xl:w-[450px] flex-shrink-0 flex flex-col h-full bg-void-950/95 backdrop-blur-xl border-l border-void-800 overflow-hidden z-20 transition-all duration-500 ${depthScore >= 40 ? 'border-l-violet-500/30' : ''}`}>
+    <div className={`w-[400px] xl:w-[450px] flex-shrink-0 flex flex-col h-full backdrop-blur-xl overflow-hidden z-20 transition-all duration-500 ${
+      isLightMode
+        ? `bg-white/95 border-l border-amber-200 ${depthScore >= 40 ? 'border-l-violet-400/50' : ''}`
+        : `bg-void-950/95 border-l border-void-800 ${depthScore >= 40 ? 'border-l-violet-500/30' : ''}`
+    }`}>
       {/* Header */}
       <div className={`sticky top-0 z-10 p-4 border-b ${theme.border} ${theme.bg} backdrop-blur-xl`}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Braces size={16} className={theme.text} />
-            <span className="text-xs font-bold tracking-widest uppercase text-gray-300">페르소나 프로필</span>
+            <span className={`text-xs font-bold tracking-widest uppercase ${isLightMode ? 'text-amber-800' : 'text-gray-300'}`}>페르소나 프로필</span>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -311,25 +317,25 @@ const JsonProfilePanel: React.FC<JsonProfilePanelProps> = ({
         <div className={`p-3 rounded-lg ${theme.bg} border ${theme.border}`}>
           <div className="flex items-center gap-2 mb-3">
             <Activity size={12} className={theme.text} />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">세션 상태</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest ${isLightMode ? 'text-amber-600' : 'text-gray-400'}">세션 상태</span>
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="flex justify-between">
-              <span className="text-gray-500">심도</span>
+              <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>심도</span>
               <span className={`font-mono font-bold ${theme.text}`}>{depthScore}%</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">단계</span>
+              <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>단계</span>
               <span className={`font-medium ${theme.text}`}>{getStageName(currentStage)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">모델</span>
+              <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>모델</span>
               <span className={`font-mono ${currentModel === 'pro' ? 'text-violet-400' : 'text-gray-400'}`}>
                 {currentModel === 'pro' ? 'Pro' : 'Flash'}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">턴</span>
+              <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>턴</span>
               <span className="font-mono text-gray-300">{turnCount}</span>
             </div>
           </div>
@@ -339,28 +345,28 @@ const JsonProfilePanel: React.FC<JsonProfilePanelProps> = ({
           <>
             {/* Demographics */}
             {(personaData.demographics.name || personaData.demographics.birth_date) && (
-              <div className="p-3 rounded-lg bg-void-900 border border-void-700">
+              <div className="p-3 rounded-lg ${isLightMode ? 'bg-amber-50 border border-amber-200' : 'bg-void-900 border border-void-700'}">
                 <div className="flex items-center gap-2 mb-3">
                   <Brain size={12} className="text-gold-400" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">기본 정보</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest ${isLightMode ? 'text-amber-600' : 'text-gray-400'}">기본 정보</span>
                 </div>
                 <div className="space-y-1 text-xs">
                   {personaData.demographics.name && (
                     <div className="flex justify-between">
-                      <span className="text-gray-500">이름</span>
-                      <span className="text-gray-300">{personaData.demographics.name}</span>
+                      <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>이름</span>
+                      <span className={isLightMode ? 'text-amber-800' : 'text-gray-300'}>{personaData.demographics.name}</span>
                     </div>
                   )}
                   {personaData.demographics.mbti_self_report && (
                     <div className="flex justify-between">
-                      <span className="text-gray-500">MBTI</span>
-                      <span className="text-gray-300">{personaData.demographics.mbti_self_report}</span>
+                      <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>MBTI</span>
+                      <span className={isLightMode ? 'text-amber-800' : 'text-gray-300'}>{personaData.demographics.mbti_self_report}</span>
                     </div>
                   )}
                   {personaData.demographics.blood_type && (
                     <div className="flex justify-between">
-                      <span className="text-gray-500">혈액형</span>
-                      <span className="text-gray-300">{personaData.demographics.blood_type}형</span>
+                      <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>혈액형</span>
+                      <span className={isLightMode ? 'text-amber-800' : 'text-gray-300'}>{personaData.demographics.blood_type}형</span>
                     </div>
                   )}
                 </div>
@@ -369,15 +375,15 @@ const JsonProfilePanel: React.FC<JsonProfilePanelProps> = ({
 
             {/* Saju Analysis */}
             {personaData.saju_analysis.day_master && (
-              <div className="p-3 rounded-lg bg-void-900 border border-void-700">
+              <div className="p-3 rounded-lg ${isLightMode ? 'bg-amber-50 border border-amber-200' : 'bg-void-900 border border-void-700'}">
                 <div className="flex items-center gap-2 mb-3">
                   <Flame size={12} className="text-orange-400" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">사주 분석</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest ${isLightMode ? 'text-amber-600' : 'text-gray-400'}">사주 분석</span>
                 </div>
                 <div className="space-y-1 text-xs">
                   <div className="flex justify-between">
-                    <span className="text-gray-500">일주</span>
-                    <span className="text-gray-300">
+                    <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>일주</span>
+                    <span className={isLightMode ? 'text-amber-800' : 'text-gray-300'}>
                       {personaData.saju_analysis.day_master}
                       {personaData.saju_analysis.day_master_strength && ` (${personaData.saju_analysis.day_master_strength})`}
                     </span>
@@ -419,10 +425,10 @@ const JsonProfilePanel: React.FC<JsonProfilePanelProps> = ({
             {/* Emotional Landscape */}
             {(personaData.emotional_landscape.core_values.length > 0 ||
               personaData.emotional_landscape.deepest_fears.length > 0) && (
-              <div className="p-3 rounded-lg bg-void-900 border border-void-700">
+              <div className="p-3 rounded-lg ${isLightMode ? 'bg-amber-50 border border-amber-200' : 'bg-void-900 border border-void-700'}">
                 <div className="flex items-center gap-2 mb-3">
                   <Heart size={12} className="text-pink-400" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">감정 지형</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest ${isLightMode ? 'text-amber-600' : 'text-gray-400'}">감정 지형</span>
                 </div>
                 <div className="space-y-2">
                   {personaData.emotional_landscape.core_values.length > 0 && (
@@ -451,7 +457,7 @@ const JsonProfilePanel: React.FC<JsonProfilePanelProps> = ({
                   )}
                   {personaData.emotional_landscape.attachment_style && (
                     <div className="flex justify-between text-xs">
-                      <span className="text-gray-500">애착 유형</span>
+                      <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>애착 유형</span>
                       <span className="text-pink-300">{personaData.emotional_landscape.attachment_style}</span>
                     </div>
                   )}
@@ -465,7 +471,7 @@ const JsonProfilePanel: React.FC<JsonProfilePanelProps> = ({
               <div className={`p-3 rounded-lg border ${theme.border} ${theme.bg} animate-fadeIn`}>
                 <div className="flex items-center gap-2 mb-3">
                   <Ghost size={12} className={theme.text} />
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">심리적 엔트로피</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest ${isLightMode ? 'text-amber-600' : 'text-gray-400'}">심리적 엔트로피</span>
                 </div>
                 <div className="space-y-2">
                   {personaData.psychological_entropy.shadow_self.repressed_desires.length > 0 && (
@@ -482,13 +488,13 @@ const JsonProfilePanel: React.FC<JsonProfilePanelProps> = ({
                   )}
                   {personaData.psychological_entropy.shadow_self.inferiority_complex && (
                     <div className="flex justify-between text-xs">
-                      <span className="text-gray-500">열등감</span>
+                      <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>열등감</span>
                       <span className="text-indigo-300">{personaData.psychological_entropy.shadow_self.inferiority_complex}</span>
                     </div>
                   )}
                   {personaData.psychological_entropy.defense_mechanisms.dominant_strategy && (
                     <div className="flex justify-between text-xs">
-                      <span className="text-gray-500">방어 기제</span>
+                      <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>방어 기제</span>
                       <span className="text-purple-300">{personaData.psychological_entropy.defense_mechanisms.dominant_strategy}</span>
                     </div>
                   )}
@@ -502,7 +508,7 @@ const JsonProfilePanel: React.FC<JsonProfilePanelProps> = ({
               <div className="p-3 rounded-lg bg-indigo-900/20 border border-indigo-500/30 animate-fadeIn">
                 <div className="flex items-center gap-2 mb-3">
                   <Moon size={12} className="text-indigo-400" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">무의식 상징</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest ${isLightMode ? 'text-amber-600' : 'text-gray-400'}">무의식 상징</span>
                 </div>
                 <div className="space-y-2">
                   {personaData.subconscious_symbolism.recurring_dreams.length > 0 && (
@@ -519,7 +525,7 @@ const JsonProfilePanel: React.FC<JsonProfilePanelProps> = ({
                   )}
                   {personaData.subconscious_symbolism.archetypal_identification && (
                     <div className="flex justify-between text-xs">
-                      <span className="text-gray-500">원형적 동일시</span>
+                      <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>원형적 동일시</span>
                       <span className="text-indigo-300">{personaData.subconscious_symbolism.archetypal_identification}</span>
                     </div>
                   )}
@@ -529,7 +535,7 @@ const JsonProfilePanel: React.FC<JsonProfilePanelProps> = ({
           </>
         ) : (
           /* JSON Full View */
-          <div className="p-3 rounded-lg bg-void-900 border border-void-700 font-mono text-[11px] overflow-x-auto">
+          <div className="p-3 rounded-lg ${isLightMode ? 'bg-amber-50 border border-amber-200' : 'bg-void-900 border border-void-700'} font-mono text-[11px] overflow-x-auto">
             <RecursiveJson
               data={personaData}
               path=""
@@ -540,8 +546,8 @@ const JsonProfilePanel: React.FC<JsonProfilePanelProps> = ({
         )}
 
         {/* Progress hint */}
-        <div className="p-2 rounded bg-void-900/50 border border-void-800">
-          <div className="text-[9px] text-gray-600 text-center">
+        <div className={`p-2 rounded border ${isLightMode ? 'bg-amber-50 border-amber-200' : 'bg-void-900/50 border-void-800'}`}>
+          <div className={`text-[9px] text-center ${isLightMode ? 'text-amber-600' : 'text-gray-600'}`}>
             {depthScore >= 80
               ? '심층 프로파일링 완료 단계'
               : depthScore >= 60
