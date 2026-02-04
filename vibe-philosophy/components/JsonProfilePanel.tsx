@@ -14,7 +14,13 @@ import {
   X,
   Ghost,
   Flame,
-  Moon
+  Moon,
+  ScanFace,
+  Compass,
+  Shield,
+  Swords,
+  BookOpen,
+  Target
 } from 'lucide-react';
 
 interface JsonProfilePanelProps {
@@ -376,6 +382,48 @@ const JsonProfilePanel: React.FC<JsonProfilePanelProps> = ({
               </div>
             )}
 
+            {/* Face Reading - 관상 분석 */}
+            {(personaData.face_reading.overall_qi || personaData.face_reading.eyes.shape) && (
+              <div className={`p-3 rounded-lg ${isLightMode ? 'bg-amber-50 border border-amber-200' : 'bg-void-900 border border-void-700'}`}>
+                <div className="flex items-center gap-2 mb-3">
+                  <ScanFace size={12} className={isLightMode ? 'text-amber-500' : 'text-gold-400'} />
+                  <span className={`text-[10px] font-bold uppercase tracking-widest ${isLightMode ? 'text-amber-600' : 'text-gray-400'}`}>관상 분석</span>
+                </div>
+                <div className="space-y-2 text-xs">
+                  {personaData.face_reading.overall_qi && (
+                    <div className="flex justify-between">
+                      <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>전체 기운</span>
+                      <span className={isLightMode ? 'text-amber-800' : 'text-gray-300'}>{personaData.face_reading.overall_qi}</span>
+                    </div>
+                  )}
+                  {personaData.face_reading.face_shape && (
+                    <div className="flex justify-between">
+                      <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>얼굴형</span>
+                      <span className={isLightMode ? 'text-amber-800' : 'text-gray-300'}>{personaData.face_reading.face_shape}</span>
+                    </div>
+                  )}
+                  {personaData.face_reading.eyes.shape && (
+                    <div className="flex justify-between">
+                      <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>눈</span>
+                      <span className={isLightMode ? 'text-amber-800' : 'text-gray-300'}>{personaData.face_reading.eyes.shape} ({personaData.face_reading.eyes.energy})</span>
+                    </div>
+                  )}
+                  {personaData.face_reading.nose.shape && (
+                    <div className="flex justify-between">
+                      <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>코</span>
+                      <span className={isLightMode ? 'text-amber-800' : 'text-gray-300'}>{personaData.face_reading.nose.shape}</span>
+                    </div>
+                  )}
+                  {personaData.face_reading.mouth.shape && (
+                    <div className="flex justify-between">
+                      <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>입</span>
+                      <span className={isLightMode ? 'text-amber-800' : 'text-gray-300'}>{personaData.face_reading.mouth.shape}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Saju Analysis */}
             {personaData.saju_analysis.day_master && (
               <div className="p-3 rounded-lg ${isLightMode ? 'bg-amber-50 border border-amber-200' : 'bg-void-900 border border-void-700'}">
@@ -425,6 +473,48 @@ const JsonProfilePanel: React.FC<JsonProfilePanelProps> = ({
               </div>
             )}
 
+            {/* Cognitive Architecture - 인지 구조 */}
+            {(personaData.cognitive_architecture.mbti_analyzed || personaData.cognitive_architecture.cognitive_stack.length > 0) && (
+              <div className={`p-3 rounded-lg ${isLightMode ? 'bg-amber-50 border border-amber-200' : 'bg-void-900 border border-void-700'}`}>
+                <div className="flex items-center gap-2 mb-3">
+                  <Compass size={12} className={isLightMode ? 'text-blue-500' : 'text-blue-400'} />
+                  <span className={`text-[10px] font-bold uppercase tracking-widest ${isLightMode ? 'text-amber-600' : 'text-gray-400'}`}>인지 구조</span>
+                </div>
+                <div className="space-y-2 text-xs">
+                  {personaData.cognitive_architecture.mbti_analyzed && (
+                    <div className="flex justify-between">
+                      <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>MBTI (분석)</span>
+                      <span className="text-blue-400 font-medium">{personaData.cognitive_architecture.mbti_analyzed}</span>
+                    </div>
+                  )}
+                  {personaData.cognitive_architecture.cognitive_stack.length > 0 && (
+                    <div>
+                      <div className={`text-[9px] mb-1 ${isLightMode ? 'text-amber-500' : 'text-gray-600'}`}>인지 스택</div>
+                      <div className="flex flex-wrap gap-1">
+                        {personaData.cognitive_architecture.cognitive_stack.map((fn, i) => (
+                          <span key={i} className="px-1.5 py-0.5 text-[10px] bg-blue-500/20 text-blue-300 rounded">
+                            {fn}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {personaData.cognitive_architecture.attention_mechanism && (
+                    <div className="flex justify-between">
+                      <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>주의력</span>
+                      <span className={isLightMode ? 'text-amber-800' : 'text-gray-300'}>{personaData.cognitive_architecture.attention_mechanism}</span>
+                    </div>
+                  )}
+                  {personaData.cognitive_architecture.decision_heuristics && (
+                    <div className="flex justify-between">
+                      <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>결정 방식</span>
+                      <span className={isLightMode ? 'text-amber-800' : 'text-gray-300'}>{personaData.cognitive_architecture.decision_heuristics}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Emotional Landscape */}
             {(personaData.emotional_landscape.core_values.length > 0 ||
               personaData.emotional_landscape.deepest_fears.length > 0) && (
@@ -464,6 +554,48 @@ const JsonProfilePanel: React.FC<JsonProfilePanelProps> = ({
                       <span className="text-pink-300">{personaData.emotional_landscape.attachment_style}</span>
                     </div>
                   )}
+                  {personaData.emotional_landscape.primary_desires.length > 0 && (
+                    <div>
+                      <div className={`text-[9px] mb-1 ${isLightMode ? 'text-amber-500' : 'text-gray-600'}`}>주요 욕구</div>
+                      <div className="flex flex-wrap gap-1">
+                        {personaData.emotional_landscape.primary_desires.map((desire, i) => (
+                          <span key={i} className="px-1.5 py-0.5 text-[10px] bg-orange-500/20 text-orange-300 rounded">
+                            {desire}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {personaData.emotional_landscape.emotional_triggers_positive.length > 0 && (
+                    <div>
+                      <div className={`text-[9px] mb-1 ${isLightMode ? 'text-amber-500' : 'text-gray-600'}`}>긍정 트리거</div>
+                      <div className="flex flex-wrap gap-1">
+                        {personaData.emotional_landscape.emotional_triggers_positive.map((t, i) => (
+                          <span key={i} className="px-1.5 py-0.5 text-[10px] bg-green-500/20 text-green-300 rounded">
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {personaData.emotional_landscape.emotional_triggers_negative.length > 0 && (
+                    <div>
+                      <div className={`text-[9px] mb-1 ${isLightMode ? 'text-amber-500' : 'text-gray-600'}`}>부정 트리거</div>
+                      <div className="flex flex-wrap gap-1">
+                        {personaData.emotional_landscape.emotional_triggers_negative.map((t, i) => (
+                          <span key={i} className="px-1.5 py-0.5 text-[10px] bg-red-500/20 text-red-300 rounded">
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {personaData.emotional_landscape.trauma_response && (
+                    <div className="flex justify-between text-xs">
+                      <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>트라우마 반응</span>
+                      <span className="text-pink-300">{personaData.emotional_landscape.trauma_response}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -501,6 +633,55 @@ const JsonProfilePanel: React.FC<JsonProfilePanelProps> = ({
                       <span className="text-purple-300">{personaData.psychological_entropy.defense_mechanisms.dominant_strategy}</span>
                     </div>
                   )}
+                  {personaData.psychological_entropy.defense_mechanisms.vulnerability_trigger && (
+                    <div className="flex justify-between text-xs">
+                      <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>취약점 트리거</span>
+                      <span className="text-purple-300">{personaData.psychological_entropy.defense_mechanisms.vulnerability_trigger}</span>
+                    </div>
+                  )}
+                  {(personaData.psychological_entropy.existential_paradox.conflict_a || personaData.psychological_entropy.existential_paradox.conflict_b) && (
+                    <div>
+                      <div className={`text-[9px] mb-1 ${isLightMode ? 'text-amber-500' : 'text-gray-600'}`}>실존적 역설</div>
+                      <div className="text-[10px] text-indigo-300 italic">
+                        {personaData.psychological_entropy.existential_paradox.conflict_a}
+                        {personaData.psychological_entropy.existential_paradox.conflict_b && (
+                          <span className="text-gray-500"> vs </span>
+                        )}
+                        {personaData.psychological_entropy.existential_paradox.conflict_b}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Mythological Script - 신화적 각본 (50% 이상) */}
+            {depthScore >= 50 && (personaData.psychological_entropy.mythological_script.hero_journey_stage ||
+              personaData.psychological_entropy.mythological_script.tragic_flaw) && (
+              <div className={`p-3 rounded-lg border ${theme.border} ${theme.bg} animate-fadeIn`}>
+                <div className="flex items-center gap-2 mb-3">
+                  <BookOpen size={12} className={theme.text} />
+                  <span className={`text-[10px] font-bold uppercase tracking-widest ${isLightMode ? 'text-amber-600' : 'text-gray-400'}`}>신화적 각본</span>
+                </div>
+                <div className="space-y-2 text-xs">
+                  {personaData.psychological_entropy.mythological_script.hero_journey_stage && (
+                    <div className="flex justify-between">
+                      <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>영웅 여정</span>
+                      <span className="text-amber-300">{personaData.psychological_entropy.mythological_script.hero_journey_stage}</span>
+                    </div>
+                  )}
+                  {personaData.psychological_entropy.mythological_script.tragic_flaw && (
+                    <div className="flex justify-between">
+                      <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>비극적 결함</span>
+                      <span className="text-red-300">{personaData.psychological_entropy.mythological_script.tragic_flaw}</span>
+                    </div>
+                  )}
+                  {personaData.psychological_entropy.mythological_script.redemption_arc && (
+                    <div className="flex justify-between">
+                      <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>구원의 서사</span>
+                      <span className="text-emerald-300">{personaData.psychological_entropy.mythological_script.redemption_arc}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -530,6 +711,18 @@ const JsonProfilePanel: React.FC<JsonProfilePanelProps> = ({
                     <div className="flex justify-between text-xs">
                       <span className={isLightMode ? 'text-amber-600' : 'text-gray-500'}>원형적 동일시</span>
                       <span className="text-indigo-300">{personaData.subconscious_symbolism.archetypal_identification}</span>
+                    </div>
+                  )}
+                  {personaData.subconscious_symbolism.liminal_patterns.length > 0 && (
+                    <div>
+                      <div className={`text-[9px] mb-1 ${isLightMode ? 'text-amber-500' : 'text-gray-600'}`}>경계적 패턴</div>
+                      <div className="flex flex-wrap gap-1">
+                        {personaData.subconscious_symbolism.liminal_patterns.map((pattern, i) => (
+                          <span key={i} className="px-1.5 py-0.5 text-[10px] bg-indigo-500/20 text-indigo-300 rounded">
+                            {pattern}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
