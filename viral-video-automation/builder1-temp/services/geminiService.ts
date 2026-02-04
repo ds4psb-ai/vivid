@@ -1,4 +1,4 @@
-import { GoogleGenAI, Chat, ThinkingMode } from "@google/genai";
+import { GoogleGenAI, Chat, ThinkingLevel } from "@google/genai";
 import { GEMINI_MODEL, SYSTEM_PROMPT_TEMPLATE } from "../constants";
 // OutputMode 삭제됨 - 항상 MINIMAL 모드 사용
 
@@ -47,9 +47,7 @@ export const startAnalysisChat = async (
       systemInstruction: finalSystemPrompt,
       temperature: 0.2,
       maxOutputTokens: 32768, // RAW 출력 잘림 방지
-      thinkingConfig: {
-        thinkingMode: ThinkingMode.ENABLED,
-      },
+      thinkingConfig: { thinkingLevel: ThinkingLevel.HIGH },
     },
   });
 

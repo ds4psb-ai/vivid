@@ -1,4 +1,4 @@
-import { GoogleGenAI, Chat, ThinkingMode } from "@google/genai";
+import { GoogleGenAI, Chat, ThinkingLevel } from "@google/genai";
 import { GEMINI_MODEL, SYSTEM_PROMPT_TEMPLATE } from "../constants";
 import { OutputMode } from "../types";
 
@@ -59,9 +59,7 @@ export const startAnalysisChat = async (
       temperature: 0.2,
       maxOutputTokens: 32000, // Reduced from 64000 for input splitting
       mediaResolution: 'high', // Better frame analysis (10 FPS)
-      thinkingConfig: {
-        thinkingMode: ThinkingMode.ENABLED,
-      },
+      thinkingConfig: { thinkingLevel: ThinkingLevel.HIGH },
     },
   });
 
