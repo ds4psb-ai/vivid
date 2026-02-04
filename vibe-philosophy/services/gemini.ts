@@ -1,14 +1,18 @@
 
 
 import { GoogleGenAI, Chat, Content } from "@google/genai";
-import { AnalysisMode, UserProfile, Message, DepthStage, StructuredFaceReading, SajuAnalysis } from "../types";
+import { AnalysisMode, UserProfile, Message, DepthStage, StructuredFaceReading, SajuAnalysis, VibePhilosophyPersona } from "../types";
 import {
   GET_MODE_PROMPT,
   DIGITAL_TWIN_PROMPT_TEMPLATE,
   FACE_ANALYSIS_STRUCTURED_PROMPT,
   getSajuAnalysisPrompt,
   EMOTIONAL_KEYWORDS,
-  getDepthStage
+  getDepthStage,
+  VIBE_PERSONA_SCHEMA,
+  PERSONA_UPDATE_SYSTEM_PROMPT,
+  deepMergePersona,
+  calculateDepthFromFields
 } from "../constants";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -17,13 +21,17 @@ let chatSession: Chat | null = null;
 let currentDepthStage: DepthStage = 'exploration';
 let currentModelType: 'flash' | 'pro' = 'flash';
 
-// ===== 심도에 따른 모델 선택 =====
-export const getModelForDepth = (depthScore: number): { model: string; type: 'flash' | 'pro' } => {
-  // 50% 이상: Pro 모델 (깊은 분석)
-  if (depthScore >= 50) {
+// ===== 심도에 따른 모델 선택 (40% 임계값, 초기 분석 Pro 강제) =====
+export const getModelForDepth = (depthScore: number, isInitialAnalysis: boolean = false): { model: string; type: 'flash' | 'pro' } => {
+  // 초기 분석(관상/사주/MBTI)은 Pro 강제
+  if (isInitialAnalysis) {
     return { model: 'gemini-3-pro-preview', type: 'pro' };
   }
-  // 50% 미만: Flash 모델 (빠른 응답)
+  // 40% 이상: Pro 모델 (깊은 분석) - 기존 50%에서 변경
+  if (depthScore >= 40) {
+    return { model: 'gemini-3-pro-preview', type: 'pro' };
+  }
+  // 40% 미만: Flash 모델 (빠른 응답)
   return { model: 'gemini-3-flash-preview', type: 'flash' };
 };
 
@@ -425,7 +433,81 @@ export const getCurrentDepthStage = (): DepthStage => {
   return currentDepthStage;
 };
 
-// ===== 6. 단계별 추가 컨텍스트 주입 (6단계 확장) =====
+// ===== 6. 페르소나 상태 업데이트 (레거시 심연의 거울 방식) =====
+export const updatePersonaState = async (
+  currentPersona: VibePhilosophyPersona,
+  conversationHistory: string,
+  userMessage: string,
+  isInitialConsultation: boolean = false
+): Promise<{
+  persona: Partial<VibePhilosophyPersona>;
+  response: string;
+  updatedPaths: Set<string>;
+}> => {
+  try {
+    // 현재 심도 계산
+    const currentDepth = calculateDepthFromFields(currentPersona);
+
+    // 모델 선택 (초기 분석 또는 40% 이상이면 Pro)
+    const { model: selectedModel, type: modelType } = getModelForDepth(currentDepth, isInitialConsultation);
+    const isPro = modelType === 'pro';
+
+    console.log(`[updatePersonaState] Model: ${selectedModel}, Depth: ${currentDepth}, isInitial: ${isInitialConsultation}`);
+
+    // 현재 페르소나 상태를 컨텍스트에 포함
+    const personaContext = JSON.stringify(currentPersona, null, 2);
+
+    const response = await ai.models.generateContent({
+      model: selectedModel,
+      contents: {
+        parts: [
+          { text: PERSONA_UPDATE_SYSTEM_PROMPT },
+          { text: `\n\n[현재 페르소나 상태]\n${personaContext}` },
+          { text: `\n\n[대화 기록]\n${conversationHistory}` },
+          { text: `\n\n[사용자 최신 메시지]\n${userMessage}` },
+          { text: `\n\n[지시] 위 정보를 바탕으로 페르소나를 업데이트하고, next_response에 도사의 응답을 작성하세요.` }
+        ]
+      },
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: VIBE_PERSONA_SCHEMA,
+        thinkingConfig: isPro ? { thinkingBudget: 1024 } : undefined,
+      }
+    });
+
+    const jsonText = response.text;
+    if (!jsonText) {
+      return {
+        persona: {},
+        response: "기가 약해서 목소리가 잘 안 들리네... 다시 한 번 말해줄래?",
+        updatedPaths: new Set()
+      };
+    }
+
+    const parsed = JSON.parse(jsonText);
+    const nextResponse = parsed.next_response || "음... 좀 더 생각해볼게.";
+    delete parsed.next_response;
+
+    // 업데이트된 경로 추적
+    const { merged, updatedPaths } = deepMergePersona(currentPersona, parsed);
+
+    return {
+      persona: parsed,
+      response: nextResponse,
+      updatedPaths
+    };
+
+  } catch (error) {
+    console.error("updatePersonaState Error:", error);
+    return {
+      persona: {},
+      response: "통신 상태가 불안정합니다. 잠시 후 다시 시도해주세요.",
+      updatedPaths: new Set()
+    };
+  }
+};
+
+// ===== 7. 단계별 추가 컨텍스트 주입 (6단계 확장) =====
 export const getStageSpecificPromptAddition = (stage: DepthStage): string => {
   switch (stage) {
     case 'subconscious':

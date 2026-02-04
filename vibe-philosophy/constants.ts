@@ -1,6 +1,7 @@
 
 
-import { AnalysisMode, UserProfile, PersonData, DepthStage } from './types';
+import { AnalysisMode, UserProfile, PersonData, DepthStage, VibePhilosophyPersona } from './types';
+import { Type, Schema } from '@google/genai';
 
 // ===== 심도 단계별 프롬프트 (XML 구조화) - 6단계 확장 =====
 export const DEPTH_STAGE_PROMPTS: Record<DepthStage, string> = {
@@ -694,3 +695,297 @@ export const getDepthStageLegacy = (score: number): 'exploration' | 'development
   if (score <= 85) return 'deep';
   return 'resolution';
 };
+
+// ===== 필드 기반 심도 계산 (레거시 심연의 거울 방식) =====
+export const calculateDepthFromFields = (persona: VibePhilosophyPersona): number => {
+  let depth = 0;
+
+  // Demographics: +15% (기본 정보)
+  if (persona.demographics.name) depth += 2;
+  if (persona.demographics.birth_date) depth += 3;
+  if (persona.demographics.mbti_self_report) depth += 3;
+  if (persona.demographics.blood_type) depth += 2;
+  if (persona.demographics.age) depth += 2;
+  if (persona.demographics.residence) depth += 1;
+  if (persona.demographics.gender) depth += 2;
+
+  // Face Reading: +10% (관상 분석)
+  if (persona.face_reading.raw_features) depth += 3;
+  if (persona.face_reading.eyes.shape) depth += 2;
+  if (persona.face_reading.overall_qi) depth += 3;
+  if (persona.face_reading.face_shape) depth += 2;
+
+  // Saju Analysis: +15% (사주 분석)
+  if (persona.saju_analysis.day_master) depth += 5;
+  if (persona.saju_analysis.five_elements_balance.wood > 0) depth += 3;
+  if (persona.saju_analysis.ten_gods.length > 0) depth += 4;
+  if (persona.saju_analysis.current_year_luck) depth += 3;
+
+  // Cognitive Architecture: +10%
+  if (persona.cognitive_architecture.mbti_analyzed) depth += 3;
+  if (persona.cognitive_architecture.cognitive_stack.length > 0) depth += 3;
+  if (persona.cognitive_architecture.attention_mechanism) depth += 2;
+  if (persona.cognitive_architecture.decision_heuristics) depth += 2;
+
+  // Emotional Landscape: +15%
+  if (persona.emotional_landscape.core_values.length > 0) depth += 3;
+  if (persona.emotional_landscape.deepest_fears.length > 0) depth += 5;
+  if (persona.emotional_landscape.trauma_response) depth += 4;
+  if (persona.emotional_landscape.attachment_style) depth += 3;
+
+  // Psychological Entropy: +25% (가장 깊은 레벨)
+  if (persona.psychological_entropy.shadow_self.repressed_desires.length > 0) depth += 7;
+  if (persona.psychological_entropy.shadow_self.inferiority_complex) depth += 5;
+  if (persona.psychological_entropy.existential_paradox.conflict_a) depth += 4;
+  if (persona.psychological_entropy.defense_mechanisms.dominant_strategy) depth += 4;
+  if (persona.psychological_entropy.mythological_script.tragic_flaw) depth += 5;
+
+  // Subconscious Symbolism: +10%
+  if (persona.subconscious_symbolism.recurring_dreams.length > 0) depth += 4;
+  if (persona.subconscious_symbolism.archetypal_identification) depth += 3;
+  if (persona.subconscious_symbolism.liminal_patterns.length > 0) depth += 3;
+
+  return Math.min(depth, 100);
+};
+
+// ===== Persona 업데이트 스키마 (Google AI Studio responseSchema) =====
+export const VIBE_PERSONA_SCHEMA: Schema = {
+  type: Type.OBJECT,
+  properties: {
+    // 메타 정보는 서버에서 관리하므로 응답에서 제외
+    demographics: {
+      type: Type.OBJECT,
+      properties: {
+        name: { type: Type.STRING, description: '사용자 이름' },
+        age: { type: Type.NUMBER, description: '나이', nullable: true },
+        birth_date: { type: Type.STRING, description: '생년월일' },
+        blood_type: { type: Type.STRING, description: '혈액형' },
+        mbti_self_report: { type: Type.STRING, description: '사용자가 말한 MBTI' },
+        mbti_analyzed: { type: Type.STRING, description: '분석된 MBTI' },
+        gender: { type: Type.STRING, description: '성별' },
+        residence: { type: Type.STRING, description: '거주지' },
+      },
+    },
+    face_reading: {
+      type: Type.OBJECT,
+      properties: {
+        raw_features: { type: Type.STRING, description: '관상 특징 원본' },
+        eyes: {
+          type: Type.OBJECT,
+          properties: {
+            shape: { type: Type.STRING },
+            energy: { type: Type.STRING },
+            fortune: { type: Type.STRING },
+          },
+        },
+        nose: {
+          type: Type.OBJECT,
+          properties: {
+            shape: { type: Type.STRING },
+            energy: { type: Type.STRING },
+            fortune: { type: Type.STRING },
+          },
+        },
+        mouth: {
+          type: Type.OBJECT,
+          properties: {
+            shape: { type: Type.STRING },
+            energy: { type: Type.STRING },
+            communication_style: { type: Type.STRING },
+          },
+        },
+        forehead: {
+          type: Type.OBJECT,
+          properties: {
+            shape: { type: Type.STRING },
+            energy: { type: Type.STRING },
+            fortune: { type: Type.STRING },
+          },
+        },
+        chin: {
+          type: Type.OBJECT,
+          properties: {
+            shape: { type: Type.STRING },
+            energy: { type: Type.STRING },
+            fortune: { type: Type.STRING },
+          },
+        },
+        face_shape: { type: Type.STRING },
+        overall_qi: { type: Type.STRING },
+      },
+    },
+    saju_analysis: {
+      type: Type.OBJECT,
+      properties: {
+        day_master: { type: Type.STRING },
+        day_master_strength: { type: Type.STRING },
+        five_elements_balance: {
+          type: Type.OBJECT,
+          properties: {
+            wood: { type: Type.NUMBER },
+            fire: { type: Type.NUMBER },
+            earth: { type: Type.NUMBER },
+            metal: { type: Type.NUMBER },
+            water: { type: Type.NUMBER },
+          },
+        },
+        ten_gods: { type: Type.ARRAY, items: { type: Type.STRING } },
+        current_year_luck: { type: Type.STRING },
+      },
+    },
+    cognitive_architecture: {
+      type: Type.OBJECT,
+      properties: {
+        mbti_analyzed: { type: Type.STRING },
+        cognitive_stack: { type: Type.ARRAY, items: { type: Type.STRING } },
+        attention_mechanism: { type: Type.STRING },
+        decision_heuristics: { type: Type.STRING },
+      },
+    },
+    emotional_landscape: {
+      type: Type.OBJECT,
+      properties: {
+        core_values: { type: Type.ARRAY, items: { type: Type.STRING } },
+        deepest_fears: { type: Type.ARRAY, items: { type: Type.STRING } },
+        emotional_triggers_positive: { type: Type.ARRAY, items: { type: Type.STRING } },
+        emotional_triggers_negative: { type: Type.ARRAY, items: { type: Type.STRING } },
+        primary_desires: { type: Type.ARRAY, items: { type: Type.STRING } },
+        trauma_response: { type: Type.STRING },
+        attachment_style: { type: Type.STRING },
+      },
+    },
+    psychological_entropy: {
+      type: Type.OBJECT,
+      properties: {
+        shadow_self: {
+          type: Type.OBJECT,
+          properties: {
+            repressed_desires: { type: Type.ARRAY, items: { type: Type.STRING } },
+            inferiority_complex: { type: Type.STRING },
+          },
+        },
+        existential_paradox: {
+          type: Type.OBJECT,
+          properties: {
+            conflict_a: { type: Type.STRING },
+            conflict_b: { type: Type.STRING },
+          },
+        },
+        defense_mechanisms: {
+          type: Type.OBJECT,
+          properties: {
+            dominant_strategy: { type: Type.STRING },
+            vulnerability_trigger: { type: Type.STRING },
+          },
+        },
+        mythological_script: {
+          type: Type.OBJECT,
+          properties: {
+            hero_journey_stage: { type: Type.STRING },
+            tragic_flaw: { type: Type.STRING },
+            redemption_arc: { type: Type.STRING },
+          },
+        },
+      },
+    },
+    subconscious_symbolism: {
+      type: Type.OBJECT,
+      properties: {
+        recurring_dreams: { type: Type.ARRAY, items: { type: Type.STRING } },
+        archetypal_identification: { type: Type.STRING },
+        liminal_patterns: { type: Type.ARRAY, items: { type: Type.STRING } },
+      },
+    },
+    next_response: {
+      type: Type.STRING,
+      description: '도사의 다음 대화 응답 (필수)',
+    },
+  },
+  required: ['next_response'],
+};
+
+// ===== Deep Merge 유틸 (데이터 손실 방지) =====
+export const deepMergePersona = (
+  target: VibePhilosophyPersona,
+  source: Partial<VibePhilosophyPersona>
+): { merged: VibePhilosophyPersona; updatedPaths: Set<string> } => {
+  const updatedPaths = new Set<string>();
+
+  const merge = (t: any, s: any, path: string = ''): any => {
+    if (s === null || s === undefined) return t;
+
+    // 빈 배열이면 기존 데이터 유지
+    if (Array.isArray(s) && s.length === 0) return t;
+
+    // 빈 문자열이면 기존 데이터 유지
+    if (typeof s === 'string' && s.trim() === '') return t;
+
+    // 숫자 0은 유효한 값이므로 체크하지 않음
+
+    // 객체인 경우 재귀 병합
+    if (typeof s === 'object' && !Array.isArray(s)) {
+      const result: any = { ...t };
+      for (const key of Object.keys(s)) {
+        const newPath = path ? `${path}.${key}` : key;
+        result[key] = merge(t?.[key], s[key], newPath);
+      }
+      return result;
+    }
+
+    // 값이 변경된 경우 경로 기록
+    if (JSON.stringify(t) !== JSON.stringify(s)) {
+      updatedPaths.add(path);
+    }
+
+    return s;
+  };
+
+  const merged = merge(target, source) as VibePhilosophyPersona;
+  return { merged, updatedPaths };
+};
+
+// ===== 페르소나 업데이트 시스템 프롬프트 =====
+export const PERSONA_UPDATE_SYSTEM_PROMPT = `
+<role>바이브 철학관의 용한 도사 겸 심리 프로파일러</role>
+
+<dual_task>
+  1. 대화 응답: 도사 페르소나로 사용자와 대화
+  2. 프로파일 업데이트: 대화에서 드러난 정보로 persona JSON 필드 업데이트
+</dual_task>
+
+<profiling_rules>
+  - 대화에서 새로운 정보가 드러나면 해당 필드 업데이트
+  - 추측이 아닌 확실한 정보만 기록
+  - 빈 문자열("")이나 빈 배열([])은 반환하지 말 것 (기존 데이터 유지)
+  - 감정/심리 관련 정보는 적극적으로 캐치
+  - next_response 필드는 반드시 채울 것 (도사의 응답)
+</profiling_rules>
+
+<depth_phases>
+  <phase range="0-25%" focus="demographics, face_reading">
+    기본 정보 수집: 이름, 나이, MBTI, 혈액형, 관상 분석
+    질문 전략: "이름이 뭐야?", "생년월일은?", "MBTI 알아?"
+  </phase>
+  <phase range="26-40%" focus="saju_analysis, cognitive_architecture">
+    사주 분석, 인지 구조 파악
+    질문 전략: "결정할 때 논리파야 감정파야?", "요즘 큰 고민이 뭐야?"
+  </phase>
+  <phase range="41-60%" focus="emotional_landscape">
+    감정 지형 탐색: 핵심 가치, 두려움, 트라우마
+    질문 전략: "가장 무서운 게 뭐야?", "어릴 때 상처 받은 적 있어?"
+  </phase>
+  <phase range="61-80%" focus="psychological_entropy">
+    심리적 엔트로피: 그림자 자아, 방어 기제, 실존적 모순
+    질문 전략: "남들한테 안 보여주는 네 모습은?", "스스로가 싫을 때는?"
+  </phase>
+  <phase range="81-100%" focus="subconscious_symbolism, mythological_script">
+    무의식 상징: 반복되는 꿈, 원형적 동일시, 신화적 각본
+    질문 전략: "네 인생이 영화라면 지금 어떤 장면이야?"
+  </phase>
+</depth_phases>
+
+<output_format>
+  반드시 JSON 형식으로 응답. next_response 필드에 도사의 대화 포함.
+  새로 알게 된 정보만 해당 필드에 업데이트.
+</output_format>
+`;

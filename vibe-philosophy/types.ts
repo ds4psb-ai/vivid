@@ -215,6 +215,165 @@ export interface LiveProfileData {
   };
 }
 
+// ===== 바이브 철학관 페르소나 (레거시 심연의 거울 방식) =====
+export interface VibePhilosophyPersona {
+  meta: {
+    depth_level: number;
+    profiling_status: 'not_started' | 'in_progress' | 'complete';
+    current_model: 'flash' | 'pro';
+    turn_count: number;
+  };
+  demographics: {
+    name: string;
+    age: number | null;
+    birth_date: string;
+    blood_type: string;
+    mbti_self_report: string;
+    mbti_analyzed: string;
+    gender: 'male' | 'female' | 'other' | '';
+    residence: string;
+  };
+  face_reading: {
+    raw_features: string;
+    eyes: { shape: string; energy: string; fortune: string };
+    nose: { shape: string; energy: string; fortune: string };
+    mouth: { shape: string; energy: string; communication_style: string };
+    forehead: { shape: string; energy: string; fortune: string };
+    chin: { shape: string; energy: string; fortune: string };
+    face_shape: string;
+    overall_qi: string;
+  };
+  saju_analysis: {
+    four_pillars: {
+      year: { stem: string; branch: string } | null;
+      month: { stem: string; branch: string } | null;
+      day: { stem: string; branch: string } | null;
+      hour: { stem: string; branch: string } | null;
+    };
+    five_elements_balance: { wood: number; fire: number; earth: number; metal: number; water: number };
+    day_master: string;
+    day_master_strength: 'strong' | 'weak' | 'balanced' | '';
+    ten_gods: string[];
+    current_year_luck: string;
+  };
+  cognitive_architecture: {
+    mbti_analyzed: string;
+    cognitive_stack: string[];
+    attention_mechanism: string;
+    decision_heuristics: string;
+  };
+  emotional_landscape: {
+    core_values: string[];
+    deepest_fears: string[];
+    emotional_triggers_positive: string[];
+    emotional_triggers_negative: string[];
+    primary_desires: string[];
+    trauma_response: string;
+    attachment_style: 'secure' | 'anxious' | 'avoidant' | 'disorganized' | '';
+  };
+  psychological_entropy: {
+    shadow_self: {
+      repressed_desires: string[];
+      inferiority_complex: string;
+    };
+    existential_paradox: {
+      conflict_a: string;
+      conflict_b: string;
+    };
+    defense_mechanisms: {
+      dominant_strategy: string;
+      vulnerability_trigger: string;
+    };
+    mythological_script: {
+      hero_journey_stage: string;
+      tragic_flaw: string;
+      redemption_arc: string;
+    };
+  };
+  subconscious_symbolism: {
+    recurring_dreams: string[];
+    archetypal_identification: string;
+    liminal_patterns: string[];
+  };
+}
+
+// 초기 페르소나 상태
+export const INITIAL_PERSONA: VibePhilosophyPersona = {
+  meta: {
+    depth_level: 0,
+    profiling_status: 'not_started',
+    current_model: 'flash',
+    turn_count: 0,
+  },
+  demographics: {
+    name: '',
+    age: null,
+    birth_date: '',
+    blood_type: '',
+    mbti_self_report: '',
+    mbti_analyzed: '',
+    gender: '',
+    residence: '',
+  },
+  face_reading: {
+    raw_features: '',
+    eyes: { shape: '', energy: '', fortune: '' },
+    nose: { shape: '', energy: '', fortune: '' },
+    mouth: { shape: '', energy: '', communication_style: '' },
+    forehead: { shape: '', energy: '', fortune: '' },
+    chin: { shape: '', energy: '', fortune: '' },
+    face_shape: '',
+    overall_qi: '',
+  },
+  saju_analysis: {
+    four_pillars: { year: null, month: null, day: null, hour: null },
+    five_elements_balance: { wood: 0, fire: 0, earth: 0, metal: 0, water: 0 },
+    day_master: '',
+    day_master_strength: '',
+    ten_gods: [],
+    current_year_luck: '',
+  },
+  cognitive_architecture: {
+    mbti_analyzed: '',
+    cognitive_stack: [],
+    attention_mechanism: '',
+    decision_heuristics: '',
+  },
+  emotional_landscape: {
+    core_values: [],
+    deepest_fears: [],
+    emotional_triggers_positive: [],
+    emotional_triggers_negative: [],
+    primary_desires: [],
+    trauma_response: '',
+    attachment_style: '',
+  },
+  psychological_entropy: {
+    shadow_self: {
+      repressed_desires: [],
+      inferiority_complex: '',
+    },
+    existential_paradox: {
+      conflict_a: '',
+      conflict_b: '',
+    },
+    defense_mechanisms: {
+      dominant_strategy: '',
+      vulnerability_trigger: '',
+    },
+    mythological_script: {
+      hero_journey_stage: '',
+      tragic_flaw: '',
+      redemption_arc: '',
+    },
+  },
+  subconscious_symbolism: {
+    recurring_dreams: [],
+    archetypal_identification: '',
+    liminal_patterns: [],
+  },
+};
+
 // ===== 확장된 디지털 트윈 V2 (무의식/잠재의식 레벨) =====
 export interface NeurologicalSignature {
   dominantHemisphere: 'left' | 'right' | 'balanced';

@@ -4,14 +4,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import ControlPanel from './components/ControlPanel';
 import ChatInterface from './components/ChatInterface';
 import JsonProfilePanel from './components/JsonProfilePanel';
-import { Message, UserProfile, AnalysisMode, DepthStage } from './types';
+import { Message, UserProfile, AnalysisMode, DepthStage, VibePhilosophyPersona, INITIAL_PERSONA } from './types';
 import {
   initializeChat,
   sendMessageToGemini,
   generateDigitalTwin,
-  getCurrentDepthStage
+  getCurrentDepthStage,
+  updatePersonaState
 } from './services/gemini';
-import { GET_GREETING_TRIGGER, getDepthStage } from './constants';
+import { GET_GREETING_TRIGGER, getDepthStage, calculateDepthFromFields, deepMergePersona } from './constants';
 import { Sparkles, BrainCircuit, RefreshCcw, PanelRightOpen, PanelRightClose } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -55,7 +56,11 @@ const App: React.FC = () => {
 
   // Model & Panel States
   const [currentModel, setCurrentModel] = useState<'flash' | 'pro'>('flash');
-  const [isJsonPanelVisible, setIsJsonPanelVisible] = useState(false);
+  const [isJsonPanelVisible, setIsJsonPanelVisible] = useState(true); // 항상 표시로 변경
+
+  // 페르소나 상태 (레거시 심연의 거울 방식)
+  const [personaData, setPersonaData] = useState<VibePhilosophyPersona>(INITIAL_PERSONA);
+  const [lastUpdatedFields, setLastUpdatedFields] = useState<Set<string>>(new Set());
 
   // Track previous mode to detect changes
   const prevModeRef = useRef<AnalysisMode>('integrated');
@@ -71,10 +76,10 @@ const App: React.FC = () => {
     messagesRef.current = messages;
   }, [messages]);
 
-  // 심도 점수 변경 시 단계 업데이트 및 모델 전환 (Google AI Builder 패턴 적용)
+  // 심도 점수 변경 시 단계 업데이트 및 모델 전환 (40% 임계값으로 변경)
   useEffect(() => {
     const newStage = getDepthStage(depthScore);
-    const shouldBePro = depthScore >= 50;
+    const shouldBePro = depthScore >= 40; // 50% -> 40% 변경
 
     // 단계 또는 모델 티어 변경 확인
     const stageChanged = newStage !== currentStage;
@@ -90,15 +95,9 @@ const App: React.FC = () => {
         console.log(`[App] Model tier switching: ${isProModelActiveRef.current ? 'Pro' : 'Flash'} -> ${shouldBePro ? 'Pro' : 'Flash'}`);
         isProModelActiveRef.current = shouldBePro;
         setCurrentModel(shouldBePro ? 'pro' : 'flash');
-
-        // 50% 도달 시 JSON 패널 자동 표시
-        if (shouldBePro) {
-          setIsJsonPanelVisible(true);
-        }
       }
 
       // 단계 전환 또는 모델 업그레이드 시 채팅 세션 재초기화
-      // initializeChat 함수 내부에서 depthScore >= 50 여부를 확인하여 모델 선택
       if (isSessionActive) {
         initializeChat(mode, profile, messagesRef.current, depthScore);
       }
@@ -109,34 +108,93 @@ const App: React.FC = () => {
   const handleStartSession = async () => {
     setIsLoading(true);
     setIsSessionActive(true);
-    setDepthScore(10);
-    setCurrentStage('exploration');
     setTurnCount(0);
     setMessages([]);
     messagesRef.current = [];
     setDigitalTwinData(null);
-    setCurrentModel('flash');
-    isProModelActiveRef.current = false; // 모델 티어 추적 리셋
+    setIsJsonPanelVisible(true); // 세션 시작부터 항상 표시
+
+    // 페르소나 초기화 (프로필 정보 반영)
+    const initialPersona: VibePhilosophyPersona = {
+      ...INITIAL_PERSONA,
+      meta: {
+        ...INITIAL_PERSONA.meta,
+        profiling_status: 'in_progress',
+        current_model: 'pro', // 초기 분석은 Pro 강제
+        turn_count: 0,
+      },
+      demographics: {
+        ...INITIAL_PERSONA.demographics,
+        name: profile.name || '',
+        birth_date: profile.birthDate || '',
+        blood_type: profile.bloodType || '',
+        mbti_self_report: profile.mbti || '',
+        gender: profile.gender || '',
+        residence: profile.residence || '',
+      },
+      face_reading: {
+        ...INITIAL_PERSONA.face_reading,
+        raw_features: profile.faceFeatures || '',
+      },
+    };
+
+    // 사주 분석이 있으면 반영
+    if (profile.sajuAnalysis) {
+      initialPersona.saju_analysis = {
+        four_pillars: {
+          year: profile.sajuAnalysis.fourPillars?.year ? { stem: profile.sajuAnalysis.fourPillars.year.stem, branch: profile.sajuAnalysis.fourPillars.year.branch } : null,
+          month: profile.sajuAnalysis.fourPillars?.month ? { stem: profile.sajuAnalysis.fourPillars.month.stem, branch: profile.sajuAnalysis.fourPillars.month.branch } : null,
+          day: profile.sajuAnalysis.fourPillars?.day ? { stem: profile.sajuAnalysis.fourPillars.day.stem, branch: profile.sajuAnalysis.fourPillars.day.branch } : null,
+          hour: profile.sajuAnalysis.fourPillars?.hour ? { stem: profile.sajuAnalysis.fourPillars.hour.stem, branch: profile.sajuAnalysis.fourPillars.hour.branch } : null,
+        },
+        five_elements_balance: profile.sajuAnalysis.fiveElementsBalance || { wood: 0, fire: 0, earth: 0, metal: 0, water: 0 },
+        day_master: profile.sajuAnalysis.dayMaster || '',
+        day_master_strength: profile.sajuAnalysis.dayMasterStrength || '',
+        ten_gods: profile.sajuAnalysis.tenGods || [],
+        current_year_luck: profile.sajuAnalysis.currentYearLuck || '',
+      };
+    }
+
+    setPersonaData(initialPersona);
+
+    // 필드 기반 심도 계산
+    const initialDepth = calculateDepthFromFields(initialPersona);
+    setDepthScore(initialDepth);
+    setCurrentStage(getDepthStage(initialDepth));
+
+    // 초기 분석은 Pro 모델 강제
+    const shouldBePro = true; // 초기 분석은 무조건 Pro
+    isProModelActiveRef.current = shouldBePro;
+    setCurrentModel('pro');
 
     try {
-      // 1. Initialize Chat with current profile
-      initializeChat(mode, profile, [], 10);
+      // 1. Initialize Chat with current profile (Pro 모델 사용)
+      initializeChat(mode, profile, [], initialDepth);
 
-      // 2. Generate Initial Dynamic Greeting based on the profile data
-      const triggerPrompt = GET_GREETING_TRIGGER(mode);
-      const response = await sendMessageToGemini(triggerPrompt, 10, 0);
+      // 2. Pro 모델로 초기 분석 및 인사 (updatePersonaState 사용)
+      const { persona, response, updatedPaths } = await updatePersonaState(
+        initialPersona,
+        "",
+        `세션 시작. 프로필 정보: ${JSON.stringify(profile)}`,
+        true // isInitialConsultation = true → Pro 강제
+      );
 
-      if (response.text) {
+      // 페르소나 병합
+      const { merged } = deepMergePersona(initialPersona, persona);
+      setPersonaData(merged);
+      setLastUpdatedFields(updatedPaths);
+
+      // 필드 기반 심도 재계산
+      const newDepth = calculateDepthFromFields(merged);
+      setDepthScore(newDepth);
+
+      if (response) {
         setMessages([{
           id: `init-greeting-${Date.now()}`,
           role: 'model',
-          text: response.text,
+          text: response,
           timestamp: new Date(),
         }]);
-        // 응답에서 받은 심도 적용
-        if (response.depth) {
-          setDepthScore(response.depth);
-        }
       }
     } catch (error) {
       console.error("Failed to start session", error);
@@ -202,10 +260,12 @@ const App: React.FC = () => {
     setTurnCount(0);
     setDigitalTwinData(null);
     setCurrentModel('flash');
-    setIsJsonPanelVisible(false);
+    setIsJsonPanelVisible(true); // 패널은 항상 표시 유지
     prevModeRef.current = 'integrated';
     prevStageRef.current = 'exploration';
-    isProModelActiveRef.current = false; // 모델 티어 추적 리셋
+    isProModelActiveRef.current = false;
+    setPersonaData(INITIAL_PERSONA); // 페르소나 리셋
+    setLastUpdatedFields(new Set()); // 업데이트 필드 리셋
   };
 
   // Handle Digital Twin Extraction
@@ -243,21 +303,38 @@ const App: React.FC = () => {
         setIsSessionActive(true);
       }
 
-      // 현재 심도와 턴 카운트 전달
-      const response = await sendMessageToGemini(text, depthScore, newTurnCount);
+      // 대화 기록 생성
+      const conversationHistory = messagesRef.current
+        .map(m => `${m.role === 'user' ? '사용자' : '도사'}: ${m.text}`)
+        .join('\n');
 
-      // 심도 업데이트
-      setDepthScore(response.depth);
+      // 페르소나 상태 업데이트 (새 방식)
+      const { persona, response, updatedPaths } = await updatePersonaState(
+        personaData,
+        conversationHistory,
+        text,
+        false // 일반 대화는 isInitialConsultation = false
+      );
 
-      // 단계 변경 시 로그
-      if (response.stageChanged) {
-        console.log(`[App] Stage changed after message. New stage: ${getCurrentDepthStage()}`);
+      // 페르소나 병합
+      const { merged } = deepMergePersona(personaData, persona);
+      setPersonaData(merged);
+      setLastUpdatedFields(updatedPaths);
+
+      // 필드 기반 심도 계산
+      const newDepth = calculateDepthFromFields(merged);
+      setDepthScore(newDepth);
+
+      // 단계 변경 확인
+      const newStage = getDepthStage(newDepth);
+      if (newStage !== currentStage) {
+        console.log(`[App] Stage changed after message: ${currentStage} -> ${newStage}`);
       }
 
       const newModelMsg: Message = {
         id: `model-${Date.now()}`,
         role: 'model',
-        text: response.text,
+        text: response,
         timestamp: new Date(),
       };
 
@@ -300,28 +377,43 @@ const App: React.FC = () => {
     }
   };
 
-  // 심도에 따른 배경 테마
+  // 심도에 따른 배경 테마 (40%부터 변화 시작)
   const getBackgroundTheme = (depth: number) => {
-    if (depth < 50) {
-      // 기본 다크 테마
+    if (depth < 40) {
+      // 기본 다크 테마 (0-39%)
       return {
         topLeft: 'bg-violet-900/10',
         bottomRight: 'bg-gold-600/5',
         accent: 'bg-indigo-900/10',
+        particles: false,
+        glow: false,
       };
-    } else if (depth < 85) {
-      // 무의식 레벨: 바이올렛/인디고
+    } else if (depth < 60) {
+      // 40-59%: 바이올렛 각성
       return {
-        topLeft: 'bg-violet-600/20',
-        bottomRight: 'bg-indigo-600/15',
-        accent: 'bg-purple-900/15',
+        topLeft: 'bg-violet-600/25',
+        bottomRight: 'bg-indigo-600/20',
+        accent: 'bg-purple-500/20',
+        particles: true,
+        glow: true,
+      };
+    } else if (depth < 80) {
+      // 60-79%: 심연 진입 (인디고/퍼플)
+      return {
+        topLeft: 'bg-indigo-600/30',
+        bottomRight: 'bg-violet-700/25',
+        accent: 'bg-purple-600/25',
+        particles: true,
+        glow: true,
       };
     } else {
-      // 해결 단계: 에메랄드/틸
+      // 80-100%: 에메랄드/틸 합성
       return {
-        topLeft: 'bg-emerald-500/10',
-        bottomRight: 'bg-teal-950/30',
-        accent: 'bg-cyan-900/10',
+        topLeft: 'bg-emerald-500/20',
+        bottomRight: 'bg-teal-600/25',
+        accent: 'bg-cyan-500/15',
+        particles: true,
+        glow: true,
       };
     }
   };
@@ -332,9 +424,41 @@ const App: React.FC = () => {
     <div className="flex h-screen w-full bg-void-950 text-gray-100 overflow-hidden font-sans relative">
       {/* Global Background Ambience - 심도에 따라 동적 변경 */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden transition-all duration-1000">
+        {/* Main gradient blobs */}
         <div className={`absolute top-[-10%] left-[-10%] w-[40%] h-[40%] ${bgTheme.topLeft} rounded-full blur-[120px] transition-all duration-1000`}></div>
         <div className={`absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] ${bgTheme.bottomRight} rounded-full blur-[100px] transition-all duration-1000`}></div>
-        <div className={`absolute top-[20%] right-[20%] w-[20%] h-[20%] ${bgTheme.accent} rounded-full blur-[80px] transition-all duration-1000 ${depthScore >= 50 ? 'animate-pulse-slow' : ''}`}></div>
+        <div className={`absolute top-[20%] right-[20%] w-[20%] h-[20%] ${bgTheme.accent} rounded-full blur-[80px] transition-all duration-1000 ${depthScore >= 40 ? 'animate-pulse' : ''}`}></div>
+
+        {/* 40% 이상: 추가 효과 */}
+        {depthScore >= 40 && (
+          <>
+            {/* Floating orbs */}
+            <div className="absolute top-[50%] left-[10%] w-[15%] h-[15%] bg-violet-500/15 rounded-full blur-[60px] animate-float-slow"></div>
+            <div className="absolute top-[30%] right-[15%] w-[12%] h-[12%] bg-indigo-500/15 rounded-full blur-[50px] animate-float-slower"></div>
+
+            {/* Subtle grid overlay */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.3)_100%)]"></div>
+          </>
+        )}
+
+        {/* 60% 이상: 심연 진입 효과 */}
+        {depthScore >= 60 && (
+          <>
+            <div className="absolute top-[60%] right-[30%] w-[20%] h-[20%] bg-purple-600/20 rounded-full blur-[70px] animate-pulse"></div>
+            <div className="absolute bottom-[20%] left-[20%] w-[18%] h-[18%] bg-indigo-600/15 rounded-full blur-[60px] animate-float-slow"></div>
+
+            {/* Vignette effect */}
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(0,0,0,0.4)_100%)]"></div>
+          </>
+        )}
+
+        {/* 80% 이상: 합성 단계 - 에메랄드 글로우 */}
+        {depthScore >= 80 && (
+          <>
+            <div className="absolute top-[40%] left-[40%] w-[25%] h-[25%] bg-emerald-500/20 rounded-full blur-[80px] animate-pulse"></div>
+            <div className="absolute bottom-[10%] right-[40%] w-[15%] h-[15%] bg-teal-500/15 rounded-full blur-[50px] animate-float-slower"></div>
+          </>
+        )}
       </div>
 
       {/* Sidebar / Control Panel */}
@@ -418,7 +542,7 @@ const App: React.FC = () => {
         />
       </main>
 
-      {/* Right Panel - JSON Profile (Desktop only) */}
+      {/* Right Panel - JSON Profile (Desktop only, 항상 표시) */}
       <JsonProfilePanel
         messages={messages}
         depthScore={depthScore}
@@ -426,7 +550,9 @@ const App: React.FC = () => {
         currentModel={currentModel}
         turnCount={turnCount}
         profile={profile}
-        isVisible={isJsonPanelVisible && isSessionActive}
+        personaData={personaData}
+        lastUpdatedFields={lastUpdatedFields}
+        isVisible={isJsonPanelVisible}
         onClose={() => setIsJsonPanelVisible(false)}
       />
     </div>

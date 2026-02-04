@@ -337,13 +337,53 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                   음력
                 </button>
               </div>
-              <input
-                type="date"
-                name="birthDate"
-                value={profile.birthDate}
-                onChange={handleProfileChange}
-                className="w-full glass-input rounded-md px-2 py-2.5 text-[11px] focus:outline-none"
-              />
+              <div className="flex gap-1">
+                <select
+                  value={profile.birthDate ? profile.birthDate.split('-')[0] : ''}
+                  onChange={(e) => {
+                    const year = e.target.value;
+                    const month = profile.birthDate?.split('-')[1] || '01';
+                    const day = profile.birthDate?.split('-')[2] || '01';
+                    setProfile({ ...profile, birthDate: year ? `${year}-${month}-${day}` : '' });
+                  }}
+                  className="flex-[1.2] glass-input rounded-md px-1 py-2.5 text-[11px] focus:outline-none appearance-none text-center"
+                >
+                  <option value="">년도</option>
+                  {Array.from({ length: 80 }, (_, i) => 2010 - i).map((y) => (
+                    <option key={y} value={y} className="bg-void-900">{y}년</option>
+                  ))}
+                </select>
+                <select
+                  value={profile.birthDate ? profile.birthDate.split('-')[1] : ''}
+                  onChange={(e) => {
+                    const year = profile.birthDate?.split('-')[0] || '1990';
+                    const month = e.target.value;
+                    const day = profile.birthDate?.split('-')[2] || '01';
+                    setProfile({ ...profile, birthDate: month ? `${year}-${month}-${day}` : '' });
+                  }}
+                  className="flex-1 glass-input rounded-md px-1 py-2.5 text-[11px] focus:outline-none appearance-none text-center"
+                >
+                  <option value="">월</option>
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                    <option key={m} value={String(m).padStart(2, '0')} className="bg-void-900">{m}월</option>
+                  ))}
+                </select>
+                <select
+                  value={profile.birthDate ? profile.birthDate.split('-')[2] : ''}
+                  onChange={(e) => {
+                    const year = profile.birthDate?.split('-')[0] || '1990';
+                    const month = profile.birthDate?.split('-')[1] || '01';
+                    const day = e.target.value;
+                    setProfile({ ...profile, birthDate: day ? `${year}-${month}-${day}` : '' });
+                  }}
+                  className="flex-1 glass-input rounded-md px-1 py-2.5 text-[11px] focus:outline-none appearance-none text-center"
+                >
+                  <option value="">일</option>
+                  {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                    <option key={d} value={String(d).padStart(2, '0')} className="bg-void-900">{d}일</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 
@@ -352,14 +392,43 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               <label className="block text-[10px] text-gray-500 mb-1.5 ml-1 flex items-center gap-1">
                 <Clock size={10} /> 태어난 시간
               </label>
-              <input
-                type="time"
-                name="birthTime"
-                value={profile.birthTime}
-                onChange={handleProfileChange}
-                placeholder="모르면 비워두세요"
-                className="w-full glass-input rounded-md px-2 py-2.5 text-[11px] focus:outline-none"
-              />
+              <div className="flex gap-1">
+                <select
+                  name="birthTimeHour"
+                  value={profile.birthTime ? profile.birthTime.split(':')[0] : ''}
+                  onChange={(e) => {
+                    const hour = e.target.value;
+                    const min = profile.birthTime?.split(':')[1] || '00';
+                    setProfile({ ...profile, birthTime: hour ? `${hour}:${min}` : '' });
+                  }}
+                  className="flex-1 glass-input rounded-md px-1 py-2.5 text-[11px] focus:outline-none appearance-none text-center"
+                >
+                  <option value="">시</option>
+                  {Array.from({ length: 24 }, (_, i) => (
+                    <option key={i} value={String(i).padStart(2, '0')} className="bg-void-900">
+                      {i}시
+                    </option>
+                  ))}
+                </select>
+                <select
+                  name="birthTimeMin"
+                  value={profile.birthTime ? profile.birthTime.split(':')[1] : ''}
+                  onChange={(e) => {
+                    const hour = profile.birthTime?.split(':')[0] || '00';
+                    const min = e.target.value;
+                    setProfile({ ...profile, birthTime: min ? `${hour}:${min}` : '' });
+                  }}
+                  className="flex-1 glass-input rounded-md px-1 py-2.5 text-[11px] focus:outline-none appearance-none text-center"
+                >
+                  <option value="">분</option>
+                  {[0, 15, 30, 45].map((m) => (
+                    <option key={m} value={String(m).padStart(2, '0')} className="bg-void-900">
+                      {m}분
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <span className="text-[8px] text-gray-600 ml-1">모르면 비워두세요</span>
             </div>
             <div>
               <label className="block text-[10px] text-gray-500 mb-1.5 ml-1 flex items-center gap-1">
@@ -595,27 +664,8 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
         </div>
       )}
 
-      {/* Mode Selection */}
-      <div className="mb-8 space-y-3">
-        <SectionHeader icon={Activity} title="Analysis Lens" />
-        <div className="grid grid-cols-1 gap-2 pt-1">
-          {modes.map((m) => (
-            <button
-              key={m.id}
-              onClick={() => onModeChange(m.id)}
-              className={`flex items-center gap-3 px-3 py-3 rounded-lg text-xs transition-all duration-300 font-medium border ${mode === m.id
-                ? 'bg-void-800 border-gold-500/40 text-gold-200 shadow-[0_0_15px_rgba(212,175,55,0.1)]'
-                : 'bg-transparent border-transparent text-gray-500 hover:bg-void-800 hover:text-gray-300'
-                }`}
-            >
-              <span className={mode === m.id ? 'text-gold-400' : 'text-gray-600'}>{m.icon}</span>
-              {m.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-auto pt-6 border-t border-void-800 space-y-3">
+      {/* START BUTTON - 분석 렌즈 위에 배치 */}
+      <div className="mb-6 space-y-3 pt-2 border-t border-void-800">
         {/* SOUL EXTRACTION - Visible when Depth >= 50 */}
         {isSessionActive && depthScore >= 50 && (
           <div className="mb-2 animate-fadeIn">
@@ -625,7 +675,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 className="w-full py-3 rounded-lg flex items-center justify-center gap-2 font-bold tracking-widest text-xs transition-all duration-500 bg-emerald-900/40 border border-emerald-500/50 text-emerald-400 hover:bg-emerald-800/50 shadow-[0_0_20px_rgba(16,185,129,0.2)]"
               >
                 <Download size={14} />
-                DOWNLOAD SOUL.JSON
+                영혼 다운로드
               </button>
             ) : (
               <button
@@ -636,13 +686,13 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 {isExtracting ? (
                   <>
                     <Loader2 size={14} className="animate-spin" />
-                    EXTRACTING SOUL...
+                    영혼 추출 중...
                   </>
                 ) : (
                   <>
                     <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-in-out"></div>
                     <Fingerprint size={14} />
-                    DIGITAL SOUL HARDENING
+                    디지털 영혼 추출
                   </>
                 )}
               </button>
@@ -660,7 +710,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
             }`}
         >
           <Play size={12} fill="currentColor" />
-          {isSessionActive ? "UPDATE ANALYSIS" : "INITIATE CONSULTATION"}
+          {isSessionActive ? "분석 업데이트" : "상담 시작하기"}
         </button>
 
         {isSessionActive && (
@@ -668,9 +718,29 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
             onClick={onReset}
             className="w-full py-2 rounded-lg text-gray-600 hover:text-red-400 hover:bg-red-500/5 transition-all uppercase text-[10px] tracking-widest font-bold"
           >
-            RESET ALL
+            초기화
           </button>
         )}
+      </div>
+
+      {/* Mode Selection */}
+      <div className="mb-8 space-y-3">
+        <SectionHeader icon={Activity} title="분석 렌즈" />
+        <div className="grid grid-cols-1 gap-2 pt-1">
+          {modes.map((m) => (
+            <button
+              key={m.id}
+              onClick={() => onModeChange(m.id)}
+              className={`flex items-center gap-3 px-3 py-3 rounded-lg text-xs transition-all duration-300 font-medium border ${mode === m.id
+                ? 'bg-void-800 border-gold-500/40 text-gold-200 shadow-[0_0_15px_rgba(212,175,55,0.1)]'
+                : 'bg-transparent border-transparent text-gray-500 hover:bg-void-800 hover:text-gray-300'
+                }`}
+            >
+              <span className={mode === m.id ? 'text-gold-400' : 'text-gray-600'}>{m.icon}</span>
+              {m.label}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
