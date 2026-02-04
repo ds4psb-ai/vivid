@@ -13,7 +13,7 @@ import {
   updatePersonaState
 } from './services/gemini';
 import { GET_GREETING_TRIGGER, getDepthStage, calculateDepthFromFields, deepMergePersona } from './constants';
-import { Sparkles, BrainCircuit, RefreshCcw, PanelRightOpen, PanelRightClose } from 'lucide-react';
+import { Sparkles, BrainCircuit, RefreshCcw, PanelRightOpen, PanelRightClose, Sun, Moon } from 'lucide-react';
 
 const App: React.FC = () => {
   // State
@@ -61,6 +61,9 @@ const App: React.FC = () => {
   // 페르소나 상태 (레거시 심연의 거울 방식)
   const [personaData, setPersonaData] = useState<VibePhilosophyPersona>(INITIAL_PERSONA);
   const [lastUpdatedFields, setLastUpdatedFields] = useState<Set<string>>(new Set());
+
+  // 테마 상태 (라이트/다크)
+  const [isLightMode, setIsLightMode] = useState(false);
 
   // Track previous mode to detect changes
   const prevModeRef = useRef<AnalysisMode>('integrated');
@@ -420,14 +423,49 @@ const App: React.FC = () => {
 
   const bgTheme = getBackgroundTheme(depthScore);
 
+  // 라이트 모드용 배경 테마
+  const getLightBackgroundTheme = (depth: number) => {
+    if (depth < 40) {
+      return {
+        topLeft: 'bg-amber-200/40',
+        bottomRight: 'bg-yellow-200/30',
+        accent: 'bg-orange-200/30',
+      };
+    } else if (depth < 60) {
+      return {
+        topLeft: 'bg-violet-300/40',
+        bottomRight: 'bg-purple-200/35',
+        accent: 'bg-indigo-300/30',
+      };
+    } else if (depth < 80) {
+      return {
+        topLeft: 'bg-indigo-300/45',
+        bottomRight: 'bg-purple-300/40',
+        accent: 'bg-violet-300/35',
+      };
+    } else {
+      return {
+        topLeft: 'bg-emerald-300/40',
+        bottomRight: 'bg-teal-200/35',
+        accent: 'bg-cyan-300/30',
+      };
+    }
+  };
+
+  const lightBgTheme = getLightBackgroundTheme(depthScore);
+
   return (
-    <div className="flex h-screen w-full bg-void-950 text-gray-100 overflow-hidden font-sans relative">
+    <div className={`flex h-screen w-full overflow-hidden font-sans relative transition-colors duration-500 ${
+      isLightMode
+        ? 'bg-amber-50 text-gray-800'
+        : 'bg-void-950 text-gray-100'
+    }`}>
       {/* Global Background Ambience - 심도에 따라 동적 변경 */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden transition-all duration-1000">
         {/* Main gradient blobs */}
-        <div className={`absolute top-[-10%] left-[-10%] w-[40%] h-[40%] ${bgTheme.topLeft} rounded-full blur-[120px] transition-all duration-1000`}></div>
-        <div className={`absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] ${bgTheme.bottomRight} rounded-full blur-[100px] transition-all duration-1000`}></div>
-        <div className={`absolute top-[20%] right-[20%] w-[20%] h-[20%] ${bgTheme.accent} rounded-full blur-[80px] transition-all duration-1000 ${depthScore >= 40 ? 'animate-pulse' : ''}`}></div>
+        <div className={`absolute top-[-10%] left-[-10%] w-[40%] h-[40%] ${isLightMode ? lightBgTheme.topLeft : bgTheme.topLeft} rounded-full blur-[120px] transition-all duration-1000`}></div>
+        <div className={`absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] ${isLightMode ? lightBgTheme.bottomRight : bgTheme.bottomRight} rounded-full blur-[100px] transition-all duration-1000`}></div>
+        <div className={`absolute top-[20%] right-[20%] w-[20%] h-[20%] ${isLightMode ? lightBgTheme.accent : bgTheme.accent} rounded-full blur-[80px] transition-all duration-1000 ${depthScore >= 40 ? 'animate-pulse' : ''}`}></div>
 
         {/* 40% 이상: 추가 효과 */}
         {depthScore >= 40 && (
@@ -480,33 +518,62 @@ const App: React.FC = () => {
       {/* Main Chat Area */}
       <main className={`flex-1 flex flex-col relative z-10 ${!isSessionActive ? 'hidden md:flex' : 'flex'}`}>
         {/* Header */}
-        <header className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-void-950 via-void-950/80 to-transparent z-20 flex items-center justify-between px-6 pointer-events-none">
-          <div className="flex items-center gap-3 text-gold-200 pointer-events-auto">
-            <div className="w-8 h-8 rounded-full bg-gold-500/10 flex items-center justify-center border border-gold-500/20 shadow-[0_0_15px_rgba(212,175,55,0.15)]">
+        <header className={`absolute top-0 left-0 right-0 h-16 z-20 flex items-center justify-between px-6 pointer-events-none transition-colors duration-500 ${
+          isLightMode
+            ? 'bg-gradient-to-b from-amber-50 via-amber-50/80 to-transparent'
+            : 'bg-gradient-to-b from-void-950 via-void-950/80 to-transparent'
+        }`}>
+          <div className={`flex items-center gap-3 pointer-events-auto ${isLightMode ? 'text-amber-800' : 'text-gold-200'}`}>
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center border shadow-lg ${
+              isLightMode
+                ? 'bg-amber-100 border-amber-300'
+                : 'bg-gold-500/10 border-gold-500/20 shadow-[0_0_15px_rgba(212,175,55,0.15)]'
+            }`}>
               <BrainCircuit className="w-4 h-4" />
             </div>
             <div>
-              <h1 className="font-serif font-bold text-lg tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-gold-100 to-gold-400 drop-shadow-sm">바이브 철학관</h1>
-              <p className="text-[10px] text-gray-500 font-sans tracking-widest uppercase">Vibe Philosophy Agent 4.0</p>
+              <h1 className={`font-serif font-bold text-lg tracking-wider drop-shadow-sm ${
+                isLightMode
+                  ? 'text-amber-900'
+                  : 'text-transparent bg-clip-text bg-gradient-to-r from-gold-100 to-gold-400'
+              }`}>바이브 철학관</h1>
+              <p className={`text-[10px] font-sans tracking-widest uppercase ${isLightMode ? 'text-amber-600' : 'text-gray-500'}`}>Vibe Philosophy Agent 4.0</p>
             </div>
           </div>
 
           <div className="flex items-center gap-3 pointer-events-auto">
             {/* Depth Score with Stage Indicator */}
-            <div className="hidden md:flex items-center gap-3 glass-panel px-4 py-1.5 rounded-full">
-              <Sparkles size={14} className={depthScore >= 85 ? "text-emerald-400 animate-pulse" : "text-gold-400"} />
-              <span className="text-xs text-gray-300 font-medium tracking-wide">
+            <div className={`hidden md:flex items-center gap-3 px-4 py-1.5 rounded-full ${
+              isLightMode
+                ? 'bg-white/80 border border-amber-200 shadow-sm'
+                : 'glass-panel'
+            }`}>
+              <Sparkles size={14} className={depthScore >= 85 ? "text-emerald-500 animate-pulse" : isLightMode ? "text-amber-500" : "text-gold-400"} />
+              <span className={`text-xs font-medium tracking-wide ${isLightMode ? 'text-gray-600' : 'text-gray-300'}`}>
                 <span className={getStageColor(currentStage)}>{getStageName(currentStage)}</span>
-                <span className="mx-1 text-gray-600">|</span>
-                <span className={depthScore >= 85 ? "text-emerald-400 font-bold" : "text-gold-200"}>{depthScore}%</span>
+                <span className={`mx-1 ${isLightMode ? 'text-gray-400' : 'text-gray-600'}`}>|</span>
+                <span className={depthScore >= 85 ? "text-emerald-500 font-bold" : isLightMode ? "text-amber-700" : "text-gold-200"}>{depthScore}%</span>
                 {currentModel === 'pro' && (
                   <>
-                    <span className="mx-1 text-gray-600">|</span>
-                    <span className="text-violet-400 font-medium">Pro</span>
+                    <span className={`mx-1 ${isLightMode ? 'text-gray-400' : 'text-gray-600'}`}>|</span>
+                    <span className="text-violet-500 font-medium">Pro</span>
                   </>
                 )}
               </span>
             </div>
+
+            {/* Light/Dark Mode Toggle */}
+            <button
+              onClick={() => setIsLightMode(!isLightMode)}
+              className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all ${
+                isLightMode
+                  ? 'bg-amber-100 border-amber-300 text-amber-600 hover:bg-amber-200'
+                  : 'bg-void-800 border-void-700 text-gray-400 hover:text-white'
+              }`}
+              title={isLightMode ? '다크 모드로 전환' : '라이트 모드로 전환'}
+            >
+              {isLightMode ? <Moon size={14} /> : <Sun size={14} />}
+            </button>
 
             {/* JSON Panel Toggle Button (Desktop) */}
             {isSessionActive && (
@@ -515,7 +582,9 @@ const App: React.FC = () => {
                 className={`hidden lg:flex w-8 h-8 rounded-full items-center justify-center border transition-all ${
                   isJsonPanelVisible
                     ? 'bg-violet-500/20 border-violet-500/40 text-violet-400'
-                    : 'bg-void-800 border-void-700 text-gray-400 hover:text-white'
+                    : isLightMode
+                      ? 'bg-white border-gray-300 text-gray-500 hover:text-gray-800'
+                      : 'bg-void-800 border-void-700 text-gray-400 hover:text-white'
                 }`}
                 title="JSON 프로필 패널"
               >
@@ -539,6 +608,7 @@ const App: React.FC = () => {
           messages={messages}
           isLoading={isLoading}
           onSendMessage={handleSendMessage}
+          isLightMode={isLightMode}
         />
       </main>
 
