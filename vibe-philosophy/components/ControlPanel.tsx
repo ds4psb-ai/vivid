@@ -88,10 +88,11 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
       const base64 = reader.result as string;
       try {
         const features = await extractFaceFeatures(base64);
-        setProfile({
-          ...profile,
+        // 함수형 업데이트로 최신 상태 보장 (클로저 문제 해결)
+        setProfile(prev => ({
+          ...prev,
           faceFeatures: features,
-        });
+        }));
       } catch (error) {
         console.error("User Face Analysis Failed", error);
         alert("관상 분석에 실패했습니다.");
@@ -125,15 +126,16 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
       const base64 = reader.result as string;
       try {
         const features = await extractFaceFeatures(base64);
-        setProfile({
-          ...profile,
+        // 함수형 업데이트로 최신 상태 보장 (클로저 문제 해결)
+        setProfile(prev => ({
+          ...prev,
           partner: {
-            ...(profile.partner || {
+            ...(prev.partner || {
               name: '', birthDate: '', calendarType: 'solar', birthTime: '', birthPlace: '', bloodType: '', mbti: '', gender: 'other'
             }),
             faceFeatures: features
           }
-        });
+        }));
       } catch (error) {
         console.error("Partner Face Analysis Failed", error);
         alert("상대방 관상 분석에 실패했습니다.");
@@ -421,7 +423,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                   className="flex-1 glass-input rounded-lg px-1 py-3 text-sm focus:outline-none appearance-none text-center"
                 >
                   <option value="">분</option>
-                  {[0, 15, 30, 45].map((m) => (
+                  {Array.from({ length: 60 }, (_, i) => i).map((m) => (
                     <option key={m} value={String(m).padStart(2, '0')} className="bg-void-900">
                       {m}분
                     </option>
