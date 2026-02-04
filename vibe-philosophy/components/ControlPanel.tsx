@@ -294,7 +294,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
         <div className="space-y-4">
           {/* User Face Upload */}
           <div className="mb-4">
-            <label className="block text-xs ${labelClass} mb-2 ml-1">본인 관상 사진</label>
+            <label className={`block text-xs ${labelClass} mb-2 ml-1`}>본인 관상 사진</label>
             {isAnalyzingUser ? (
               <div className="w-full h-20 rounded-lg bg-gold-500/10 flex items-center justify-center border border-gold-500/30">
                 <Loader2 className="animate-spin text-gold-400" size={20} />
@@ -343,7 +343,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs ${labelClass} mb-2 ml-1">생년월일 (사주 필수)</label>
+            <label className={`block text-xs ${labelClass} mb-2 ml-1`}>생년월일 (사주 필수)</label>
             <div className="flex flex-col gap-2">
               <div className={`flex rounded-lg p-1 border w-full ${
                   isLightMode ? 'bg-amber-50 border-amber-200' : 'bg-void-900/50 border-void-700/50'
@@ -419,7 +419,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs ${labelClass} mb-2 ml-1 flex items-center gap-1">
+              <label className={`block text-xs ${labelClass} mb-2 ml-1 flex items-center gap-1`}>
                 <Clock size={12} /> 태어난 시간
               </label>
               <div className="flex gap-1">
@@ -461,7 +461,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               <span className="text-[10px] text-gray-600 ml-1">모르면 비워두세요</span>
             </div>
             <div>
-              <label className="block text-xs ${labelClass} mb-2 ml-1 flex items-center gap-1">
+              <label className={`block text-xs ${labelClass} mb-2 ml-1 flex items-center gap-1`}>
                 <MapPin size={12} /> 출생지
               </label>
               <input
@@ -476,7 +476,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs ${labelClass} mb-2 ml-1 flex items-center gap-1">
+            <label className={`block text-xs ${labelClass} mb-2 ml-1 flex items-center gap-1`}>
               <MapPin size={12} /> 현재 거주지
             </label>
             <input
@@ -491,7 +491,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs ${labelClass} mb-2 ml-1">혈액형</label>
+              <label className={`block text-xs ${labelClass} mb-2 ml-1`}>혈액형</label>
               <select
                 name="bloodType"
                 value={profile.bloodType}
@@ -506,20 +506,20 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               </select>
             </div>
             <div>
-              <label className="block text-xs ${labelClass} mb-2 ml-1">MBTI</label>
+              <label className={`block text-xs ${labelClass} mb-2 ml-1`}>MBTI</label>
               <input
                 type="text"
                 name="mbti"
                 value={profile.mbti}
                 onChange={handleProfileChange}
                 placeholder="예: INFP"
-                className="w-full glass-input rounded-lg px-4 py-3 text-sm focus:outline-none uppercase"
+                className={`w-full ${inputClass} uppercase`}
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs ${labelClass} mb-2 ml-1">성별</label>
+            <label className={`block text-xs ${labelClass} mb-2 ml-1`}>성별</label>
             <select
               name="gender"
               value={profile.gender}
@@ -581,7 +581,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs ${labelClass} mb-2 ml-1">이름</label>
+              <label className={`block text-xs ${labelClass} mb-2 ml-1`}>이름</label>
               <input
                 type="text"
                 name="name"
@@ -592,7 +592,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs ${labelClass} mb-2 ml-1">생년월일</label>
+              <label className={`block text-xs ${labelClass} mb-2 ml-1`}>생년월일</label>
               <div className="flex flex-col gap-2">
                 <div className="flex bg-void-900/50 rounded-lg p-1 border border-pink-500/20 w-full">
                   <button
@@ -626,7 +626,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs ${labelClass} mb-2 ml-1">태어난 시간</label>
+                <label className={`block text-xs ${labelClass} mb-2 ml-1`}>태어난 시간</label>
                 <input
                   type="time"
                   name="birthTime"
@@ -636,7 +636,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 />
               </div>
               <div>
-                <label className="block text-xs ${labelClass} mb-2 ml-1">출생지</label>
+                <label className={`block text-xs ${labelClass} mb-2 ml-1`}>출생지</label>
                 <input
                   type="text"
                   name="birthPlace"
@@ -650,7 +650,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs ${labelClass} mb-2 ml-1">성별</label>
+                <label className={`block text-xs ${labelClass} mb-2 ml-1`}>성별</label>
                 <select
                   name="gender"
                   value={profile.partner?.gender || 'other'}
@@ -663,20 +663,20 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 </select>
               </div>
               <div>
-                <label className="block text-xs ${labelClass} mb-2 ml-1">MBTI</label>
+                <label className={`block text-xs ${labelClass} mb-2 ml-1`}>MBTI</label>
                 <input
                   type="text"
                   name="mbti"
                   value={profile.partner?.mbti || ''}
                   onChange={handlePartnerChange}
                   placeholder="예: ENFJ"
-                  className="w-full glass-input rounded-lg px-4 py-3 text-sm focus:outline-none uppercase border-pink-500/20 focus:border-pink-500"
+                  className={`w-full ${inputClass} uppercase border-pink-500/20 focus:border-pink-500`}
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs ${labelClass} mb-2 ml-1">혈액형</label>
+              <label className={`block text-xs ${labelClass} mb-2 ml-1`}>혈액형</label>
               <select
                 name="bloodType"
                 value={profile.partner?.bloodType || ''}
