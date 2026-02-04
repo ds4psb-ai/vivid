@@ -236,7 +236,7 @@ export const analyzeSajuStructured = async (
       },
       config: {
         responseMimeType: "application/json",
-        thinkingConfig: { thinkingLevel: ThinkingLevel.LOW }
+        thinkingConfig: { thinkingLevel: ThinkingLevel.HIGH }  // 사주는 중요한 기초 분석
       }
     });
 
@@ -458,6 +458,9 @@ export const updatePersonaState = async (
     // 현재 페르소나 상태를 컨텍스트에 포함
     const personaContext = JSON.stringify(currentPersona, null, 2);
 
+    // 🔥 초기 상담은 HIGH, 일반 대화는 LOW
+    const thinkingLevel = isInitialConsultation ? ThinkingLevel.HIGH : ThinkingLevel.LOW;
+
     const response = await ai.models.generateContent({
       model: selectedModel,
       contents: {
@@ -472,7 +475,7 @@ export const updatePersonaState = async (
       config: {
         responseMimeType: "application/json",
         responseSchema: VIBE_PERSONA_SCHEMA,
-        thinkingConfig: isPro ? { thinkingLevel: ThinkingLevel.LOW } : undefined,
+        thinkingConfig: isPro ? { thinkingLevel } : undefined,
       }
     });
 
