@@ -470,7 +470,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 value={profile.birthPlace}
                 onChange={handleProfileChange}
                 placeholder="예: 서울"
-                className="w-full glass-input rounded-lg px-3 py-3 text-sm focus:outline-none"
+                className={`w-full ${isLightMode ? 'light-input' : 'glass-input'} rounded-lg px-3 py-3 text-sm focus:outline-none`}
               />
             </div>
           </div>
@@ -587,7 +587,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 name="name"
                 value={profile.partner?.name || ''}
                 onChange={handlePartnerChange}
-                className="w-full glass-input rounded-lg px-4 py-3 text-sm focus:outline-none border-pink-500/20 focus:border-pink-500"
+                className={`w-full ${isLightMode ? 'light-input' : 'glass-input'} rounded-lg px-4 py-3 text-sm focus:outline-none border-pink-500/20 focus:border-pink-500`}
               />
             </div>
 
@@ -619,7 +619,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                   name="birthDate"
                   value={profile.partner?.birthDate || ''}
                   onChange={handlePartnerChange}
-                  className="w-full glass-input rounded-lg px-3 py-3 text-sm focus:outline-none border-pink-500/20 focus:border-pink-500"
+                  className={`w-full ${isLightMode ? 'light-input' : 'glass-input'} rounded-lg px-3 py-3 text-sm focus:outline-none border-pink-500/20 focus:border-pink-500`}
                 />
               </div>
             </div>
@@ -632,7 +632,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                   name="birthTime"
                   value={profile.partner?.birthTime || ''}
                   onChange={handlePartnerChange}
-                  className="w-full glass-input rounded-lg px-3 py-3 text-sm focus:outline-none border-pink-500/20 focus:border-pink-500"
+                  className={`w-full ${isLightMode ? 'light-input' : 'glass-input'} rounded-lg px-3 py-3 text-sm focus:outline-none border-pink-500/20 focus:border-pink-500`}
                 />
               </div>
               <div>
@@ -643,7 +643,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                   value={profile.partner?.birthPlace || ''}
                   onChange={handlePartnerChange}
                   placeholder="예: 대전"
-                  className="w-full glass-input rounded-lg px-3 py-3 text-sm focus:outline-none border-pink-500/20 focus:border-pink-500"
+                  className={`w-full ${isLightMode ? 'light-input' : 'glass-input'} rounded-lg px-3 py-3 text-sm focus:outline-none border-pink-500/20 focus:border-pink-500`}
                 />
               </div>
             </div>
@@ -655,7 +655,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                   name="gender"
                   value={profile.partner?.gender || 'other'}
                   onChange={handlePartnerChange}
-                  className="w-full glass-input rounded-lg px-3 py-3 text-sm focus:outline-none appearance-none border-pink-500/20 focus:border-pink-500"
+                  className={`w-full ${isLightMode ? 'light-input' : 'glass-input'} rounded-lg px-3 py-3 text-sm focus:outline-none appearance-none border-pink-500/20 focus:border-pink-500`}
                 >
                   <option value="male" className={isLightMode ? 'bg-white' : 'bg-void-900'}>남성</option>
                   <option value="female" className={isLightMode ? 'bg-white' : 'bg-void-900'}>여성</option>
@@ -681,7 +681,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 name="bloodType"
                 value={profile.partner?.bloodType || ''}
                 onChange={handlePartnerChange}
-                className="w-full glass-input rounded-lg px-3 py-3 text-sm focus:outline-none appearance-none border-pink-500/20 focus:border-pink-500"
+                className={`w-full ${isLightMode ? 'light-input' : 'glass-input'} rounded-lg px-3 py-3 text-sm focus:outline-none appearance-none border-pink-500/20 focus:border-pink-500`}
               >
                 <option value="">선택</option>
                 <option value="A" className={isLightMode ? 'bg-white' : 'bg-void-900'}>A형</option>
