@@ -1,6 +1,6 @@
 export type OutputMode = 'MINIMAL' | 'EXPERT' | 'BOTH';
 
-export type AppStatus = 'IDLE' | 'UPLOADING' | 'THINKING' | 'WAITING_USER' | 'COMPLETE' | 'ERROR';
+export type AppStatus = 'IDLE' | 'THINKING' | 'WAITING_USER' | 'COMPLETE' | 'ERROR';
 
 export interface ChatMessage {
   role: 'user' | 'model';

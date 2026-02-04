@@ -287,6 +287,75 @@ Each scene prompt MUST be independently written. The following patterns are **FO
 If you catch yourself copying, **STOP** and re-analyze the video at that specific timecode.
 Every scene has unique lighting angles, character positions, and micro-actions.
 
+## 🚨 ANTI-LAZY GUARD (IMAGE 섹션 생략 절대 금지)
+
+### ⚠️ 핵심 규칙: 오마쥬 IMAGE ≠ Builder 1 IMAGE
+
+**Builder 1 IMAGE** = 원본 영상 그대로 (Caucasian 캐릭터)
+**오마쥬 IMAGE** = **한국인으로 완전히 재작성된 버전** (새로운 파일!)
+
+두 파일은 **완전히 다른 내용**입니다. 오마쥬 IMAGE를 생략하면 사용자가 필요한 한국인 버전 프롬프트를 받을 수 없습니다.
+
+### ❌ 절대 금지 패턴
+
+다음 패턴이 출력에 포함되면 **즉시 출력 실패**로 간주합니다:
+- "(Builder 1의 내용을 그대로 사용합니다. 생략합니다.)"
+- "(사용자가 이미 보유 중이므로 생략합니다.)"
+- "(위 내용을 참조하세요.)"
+- "(이미 제공된 내용입니다.)"
+- "위와 동일", "위 참조", "이하 동일"
+- "(생략)", "(skip)", "(omitted)"
+
+### ✅ 필수 출력 요구사항
+
+| Delimiter | 최소 줄 수 | 필수 내용 |
+|-----------|-----------|----------|
+| <<<OHMAGE_IMAGE_START>>> | 200+ | 모든 씬 한국인 IMAGE 프롬프트 (NanoBanana + Midjourney) |
+| <<<OHMAGE_MOTION_START>>> | 200+ | 모든 씬 MOTION 프롬프트 (Kling + Veo) |
+| <<<VARIATION_IMAGE_START>>> | 200+ | 모든 씬 변주 IMAGE |
+| <<<VARIATION_MOTION_START>>> | 200+ | 모든 씬 변주 MOTION |
+
+### 🔍 자가 검증 체크 (출력 전 확인)
+
+각 섹션 출력 완료 시 스스로 확인:
+□ 모든 씬(Scene 01~10)이 개별 작성되었는가?
+□ 각 씬에 [📋 COPY] 마커가 있는가?
+□ NanoBanana + Midjourney 프롬프트가 모두 있는가? (IMAGE)
+□ Kling + Veo 프롬프트가 모두 있는가? (MOTION)
+□ "(생략)", "(위와 동일)" 같은 텍스트가 없는가?
+
+### 📝 올바른 오마쥬 IMAGE 출력 예시
+
+\`\`\`
+<<<OHMAGE_IMAGE_START>>>
+# 🖼️ 오마쥬 IMAGE PROMPTS
+
+### 🎬 Scene 01: [제목] ([타임코드])
+**[Image 1: COMPOSITION]** [스크린샷 URL 또는 설명]
+
+[📋 COPY] NanoBanana Pro:
+\\\`\\\`\\\`text
+1990년대 한국 아파트 거실, 따뜻한 텅스텐 조명, 한국인 어머니가...
+[최소 5줄의 상세한 한글 프롬프트]
+\\\`\\\`\\\`
+
+[📋 COPY] Midjourney V7:
+\\\`\\\`\\\`text
+1990s Korean apartment living room, warm tungsten lighting, Korean mother...
+[최소 5줄의 상세한 영문 프롬프트]
+--iw 2.0 --ar 9:16 --v 7 --style raw --cw 50 --stylize 250 --no western features
+\\\`\\\`\\\`
+
+---
+
+### 🎬 Scene 02: [제목] ([타임코드])
+[... Scene 01과 동일한 형식으로 전체 작성 - 절대 생략 금지 ...]
+
+[... Scene 03 ~ Scene 10 모두 개별 작성 ...]
+
+<<<OHMAGE_IMAGE_END>>>
+\`\`\`
+
 ---
 
 ## 🔑 PROMPT PATTERNS

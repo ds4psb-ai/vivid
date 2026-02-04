@@ -83,6 +83,31 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     URL.revokeObjectURL(url);
   };
 
+  // Raw Download - 전체 채팅 원본 다운로드 (Fallback)
+  const handleRawDownload = () => {
+    let rawContent = `# 🎬 BUILDER 2 OUTPUT - RAW\n\n`;
+    rawContent += `> Generated: ${new Date().toLocaleString()}\n`;
+    rawContent += `> Version: Parody Engine V4.0\n\n`;
+
+    messages.forEach((msg, idx) => {
+      if (msg.role === 'model') {
+        rawContent += `\n---\n\n## 📍 STEP ${idx + 1}\n\n`;
+        rawContent += msg.text;
+        rawContent += `\n`;
+      }
+    });
+
+    const blob = new Blob([rawContent], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `BUILDER2_OUTPUT_${new Date().toISOString().slice(0, 10)}.md`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const handleSend = () => {
     if (!inputText.trim()) return;
     onSendMessage(inputText);
@@ -163,6 +188,17 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 </button>
               </div>
             </div>
+          )}
+          {/* Raw Download - 전체 채팅 원본 (Fallback) */}
+          {currentStep >= 4 && (
+            <button
+              onClick={handleRawDownload}
+              className="text-xs px-2 py-1 bg-gray-500/10 text-gray-400 border border-gray-500/30 rounded hover:bg-gray-500/20 flex items-center gap-1 transition-all self-end"
+              title="전체 채팅 원본 다운로드"
+            >
+              <Download className="w-3 h-3" />
+              RAW
+            </button>
           )}
           <button
             onClick={onReset}

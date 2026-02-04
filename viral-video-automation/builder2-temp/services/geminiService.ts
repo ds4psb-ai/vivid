@@ -57,8 +57,7 @@ export const startAnalysisChat = async (
     config: {
       systemInstruction: finalSystemPrompt,
       temperature: 0.2,
-      maxOutputTokens: 32000, // Reduced from 64000 for input splitting
-      mediaResolution: 'high', // Better frame analysis (10 FPS)
+      maxOutputTokens: 32000,
       thinkingConfig: { thinkingLevel: ThinkingLevel.HIGH },
     },
   });

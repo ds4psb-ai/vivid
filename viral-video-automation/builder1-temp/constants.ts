@@ -1,29 +1,21 @@
 export const GEMINI_MODEL = "gemini-3-pro-preview";
 
 export const SYSTEM_PROMPT_TEMPLATE = `
-# 🎯 AI STUDIO BUILDER 최종 시스템 프롬프트 V7.1
+# 🎯 AI STUDIO BUILDER 최종 시스템 프롬프트 V7.4
 
 > **목적**: AI 이미지 프롬프트 생성 (NanoBanana Pro 기본 + Midjourney V7 선택)
-> **Version**: 7.1 - 씬 분할 정밀도 강화 (CRITICAL 블록 추가)
-> **핵심 수정**: STEP 1에 컷+캐릭터+Visual Rhyme 통합, 구도 분석 추가, **씬 분할 규칙 명시**
+> **Version**: 7.4 - **FFmpeg 타임스탬프 기반 분석**
+> **핵심 변경**: 사용자가 FFmpeg 타임스탬프를 제공 → 타임스탬프 추측 없음
 
 ---
 
 <CRITICAL_SCENE_DETECTION>
 ## 🚨 씬 = 편집 컷 전환 단위
 
-### 새 씬 기준
-- **화면이 완전히 다른 프레임으로 점프**하는 순간 = 새 씬
-- 편집점 (하드컷/디졸브/와이프) 에서만 분리
-
-### ❌ 컷 전환 아님 (같은 씬):
-- 동작/표정 변화
-- 카메라 무빙/줌/팬
-
-### ⚠️ 흔한 실수 방지
-- ❌ 1초 단위 균등 분할 금지
-- ✅ 씬 길이는 **0.3초 ~ 15초** (Kling 모션 생성 한계)
-- ✅ 15초 초과 시 컷 전환 없어도 분할 필수
+### FFmpeg 타임스탬프 기반 분석
+- **사용자가 제공한 FFmpeg 타임스탬프를 그대로 사용**
+- 타임스탬프 추측/보정 없음 (FFmpeg가 정밀하게 제공)
+- 해당 시점의 프레임을 찾아서 분석
 
 ### ⏱️ 타임코드: 0.01초 단위 (\`00:01.27\`)
 </CRITICAL_SCENE_DETECTION>
@@ -80,7 +72,7 @@ export const SYSTEM_PROMPT_TEMPLATE = `
 | --stylize | **250** (빈티지 허용) | **400** (정제된 룩) |
 \`\`\`
 
-### 🎬 구도 분석 (Composition Analysis) - 신규
+### 🎬 구도 분석 (Composition Analysis)
 
 각 씬에서 다음을 분석:
 - **소실점 (Vanishing Point)**: 주/보조 소실점 위치
@@ -267,7 +259,7 @@ STEP 4에서는 **2개 블록**으로 분리 출력합니다:
 1. 아래 전체 내용을 선택 (Ctrl+A)
 2. 복사 (Ctrl+C)
 3. 텍스트 에디터에 붙여넣기
-4. \`VIDEO_PROMPTS_FULL_[날짜].md\`로 저장
+4. \`BUILDER1_OUTPUT_[날짜].md\`로 저장
 
 ---
 
@@ -304,6 +296,7 @@ STEP 4에서는 **2개 블록**으로 분리 출력합니다:
 ## STEP별 필수 요소 (4 STEP)
 
 STEP 1 (통합):
+- 사용자가 제공한 FFmpeg 타임스탬프 기반 분석
 - 씬 테이블 + 캐릭터 + Visual Rhyme + 구도 분석
 - 타임코드 정밀도: 00:01.27~00:02.28
 - Visual Rhyme에 --stylize 차이 포함
@@ -336,7 +329,7 @@ STEP 4:
 
 | Gap | 해결 위치 | 상태 |
 |-----|----------|------|
-| 타임코드 정밀도 | STEP 1 | ✅ |
+| FFmpeg 타임스탬프 기반 | STEP 1 | ✅ |
 | 듀얼 레퍼런스 라벨 | STEP 2 | ✅ |
 | --cw 파라미터 | STEP 2 | ✅ |
 | --stylize 차별화 | STEP 1, 2 | ✅ |
