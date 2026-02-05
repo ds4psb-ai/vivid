@@ -33,6 +33,17 @@ export interface Builder2Scene {
     veo: string;
   };
   isAnchor: boolean;
+  frameFile: string;           // "frame_01_00-00.00.jpg"
+  anchorRefs: string[];        // ["MALE"] - 이 씬에서 참조하는 앵커
+}
+
+export interface AnchorInfo {
+  key: string;           // "MALE", "FEMALE"
+  emoji: string;         // "👨", "👩"
+  sceneNum: number;      // 2, 5
+  title: string;         // "기다림", "미소"
+  character: string;     // "청자켓 입은 한국인 남성"
+  frameFile: string;     // "frame_02_00-01.67.jpg"
 }
 
 export interface Builder2ParseResult {
@@ -41,6 +52,7 @@ export interface Builder2ParseResult {
   hasOhmage: boolean;
   hasVariation: boolean;
   anchorSceneNum: number | null;
+  anchors: AnchorInfo[];  // 앵커 정보 목록
 }
 
 type TagName =
@@ -97,6 +109,48 @@ function extractCodeBlock(text: string): string {
 }
 
 /**
+ * Generate frame file name from scene number and timestamp
+ * timestamp: "00:00.00~00:01.67" → "frame_01_00-00.00.jpg"
+ */
+function generateFrameFileName(sceneNum: number, timestamp: string): string {
+  if (!timestamp) {
+    return `frame_${String(sceneNum).padStart(2, '0')}.jpg`;
+  }
+  // Extract start time from "00:01.67~00:04.56" format
+  const [start] = timestamp.split('~');
+  // Convert "00:01.67" to "00-01.67"
+  const formatted = start.replace(':', '-');
+  return `frame_${String(sceneNum).padStart(2, '0')}_${formatted}.jpg`;
+}
+
+/**
+ * Extract anchor references from scene block
+ * Returns array of anchor keys ("MALE", "FEMALE") that the scene references
+ */
+function extractAnchorRefs(block: string): string[] {
+  const refs: string[] = [];
+  // Check for various anchor reference patterns
+  if (block.includes('[MALE_ANCHOR') ||
+      block.includes('MALE ANCHOR') ||
+      block.includes('[Image 2: CHARACTER FACE]') && block.toLowerCase().includes('male')) {
+    refs.push('MALE');
+  }
+  if (block.includes('[FEMALE_ANCHOR') ||
+      block.includes('FEMALE ANCHOR') ||
+      block.includes('[Image 2: CHARACTER FACE]') && block.toLowerCase().includes('female')) {
+    refs.push('FEMALE');
+  }
+  // Generic anchor reference
+  if (refs.length === 0 &&
+      (block.includes('[ANCHOR') ||
+       block.includes('--cref') ||
+       (block.includes('[Image 2:') && block.includes('ANCHOR')))) {
+    refs.push('MALE'); // Default to MALE if generic anchor reference
+  }
+  return refs;
+}
+
+/**
  * Parse IMAGE prompts section into scenes
  */
 function parseImageSection(content: string): Map<number, Builder2Scene> {
@@ -149,6 +203,8 @@ function parseImageSection(content: string): Map<number, Builder2Scene> {
       imagePrompts: { nanoBanana, midjourney },
       motionPrompts: { kling: "", veo: "" },
       isAnchor,
+      frameFile: generateFrameFileName(sceneNum, timestamp),
+      anchorRefs: extractAnchorRefs(block),
     });
   }
 
@@ -203,15 +259,18 @@ function parseMotionSection(
       const titleMatch = block.match(
         /Scene\s*\d+[:\s]+([^(\n]+)(?:\(([^)]+)\))?/i
       );
+      const timestamp = titleMatch?.[2]?.trim() || "";
       existingScenes.set(sceneNum, {
         sceneNum,
         title: titleMatch?.[1]?.trim() || `Scene ${sceneNum}`,
-        beatTimestamp: titleMatch?.[2]?.trim() || "",
+        beatTimestamp: timestamp,
         imagePrompts: { nanoBanana: "", midjourney: "" },
         motionPrompts: { kling, veo },
         isAnchor:
           block.toUpperCase().includes("ANCHOR") ||
           block.includes("(ANCHOR)"),
+        frameFile: generateFrameFileName(sceneNum, timestamp),
+        anchorRefs: extractAnchorRefs(block),
       });
     }
   }
@@ -260,6 +319,146 @@ function parseUnifiedMotionPrompts(content: string): { kling: string; veo: strin
 }
 
 /**
+ * Extract character description from anchor section table or nearby text
+ * Table format: | 👨 MALE | Scene 02 | 청자켓 입은 한국인 남성 | 남자 레퍼런스 |
+ */
+function extractAnchorCharacter(content: string, anchorKey: string): string {
+  const emoji = anchorKey === 'MALE' ? '👨' : '👩';
+
+  // Pattern 1: Table row - extract 3rd column (character description)
+  // | 👨 MALE | Scene 02 | 청자켓 입은 남성 | 남자 레퍼런스 |
+  const tableRowPattern = new RegExp(
+    `\\|\\s*${emoji}\\s*${anchorKey}\\s*\\|\\s*Scene\\s*\\d+\\s*\\|\\s*([^|]+)\\s*\\|`,
+    'i'
+  );
+  const tableMatch = content.match(tableRowPattern);
+  if (tableMatch && tableMatch[1].trim()) {
+    return tableMatch[1].trim();
+  }
+
+  // Pattern 2: Header format ### 👨 MALE ANCHOR (Scene XX: title)
+  const headerPattern = new RegExp(
+    `${emoji}\\s*${anchorKey}.*?캐릭터[:\\s]*([^\\n]+)`,
+    'i'
+  );
+  const headerMatch = content.match(headerPattern);
+  if (headerMatch && headerMatch[1].trim()) {
+    return headerMatch[1].trim();
+  }
+
+  // Pattern 3: Extract from anchor scene content (fallback)
+  // Look for "한국인 남성/여성" pattern in content
+  const genderWord = anchorKey === 'MALE' ? '남성' : '여성';
+  const koreanPattern = new RegExp(`([^\\n]*한국인\\s*${genderWord}[^\\n]*)`, 'i');
+  const koreanMatch = content.match(koreanPattern);
+  if (koreanMatch) {
+    // Extract a reasonable description (up to 30 chars)
+    const desc = koreanMatch[1].trim();
+    if (desc.length <= 50) return desc;
+    return `한국인 ${genderWord}`;
+  }
+
+  return anchorKey === 'MALE' ? '남자 캐릭터' : '여자 캐릭터';
+}
+
+/**
+ * Parse anchor information from the ⭐ section
+ * Supports both header format and table format:
+ *
+ * Header: ### 👨 MALE ANCHOR (Scene XX: title)
+ * Table:  | 👨 MALE | Scene 02 | 청자켓 입은 남성 | 남자 레퍼런스 |
+ */
+function parseAnchorInfo(content: string, scenes: Builder2Scene[]): AnchorInfo[] {
+  const anchors: AnchorInfo[] = [];
+
+  // 1. Try header format: ### 👨 MALE ANCHOR (Scene XX: title)
+  const maleHeaderMatch = content.match(/###\s*👨\s*MALE\s*ANCHOR\s*\(Scene\s*(\d+)[:\s]*([^)]*)\)/i);
+  if (maleHeaderMatch) {
+    const sceneNum = parseInt(maleHeaderMatch[1], 10);
+    const title = maleHeaderMatch[2]?.trim() || '';
+    const scene = scenes.find(s => s.sceneNum === sceneNum);
+    anchors.push({
+      key: 'MALE',
+      emoji: '👨',
+      sceneNum,
+      title,
+      character: extractAnchorCharacter(content, 'MALE'),
+      frameFile: scene?.frameFile || generateFrameFileName(sceneNum, scene?.beatTimestamp || ''),
+    });
+  }
+
+  const femaleHeaderMatch = content.match(/###\s*👩\s*FEMALE\s*ANCHOR\s*\(Scene\s*(\d+)[:\s]*([^)]*)\)/i);
+  if (femaleHeaderMatch) {
+    const sceneNum = parseInt(femaleHeaderMatch[1], 10);
+    const title = femaleHeaderMatch[2]?.trim() || '';
+    const scene = scenes.find(s => s.sceneNum === sceneNum);
+    anchors.push({
+      key: 'FEMALE',
+      emoji: '👩',
+      sceneNum,
+      title,
+      character: extractAnchorCharacter(content, 'FEMALE'),
+      frameFile: scene?.frameFile || generateFrameFileName(sceneNum, scene?.beatTimestamp || ''),
+    });
+  }
+
+  // 2. Try table format: | 👨 MALE | Scene 02 | 청자켓 입은 남성 | 용도 |
+  if (anchors.length === 0) {
+    // Match MALE row in table
+    const maleTableMatch = content.match(/\|\s*👨\s*MALE\s*\|\s*Scene\s*(\d+)\s*\|\s*([^|]+)\s*\|/i);
+    if (maleTableMatch) {
+      const sceneNum = parseInt(maleTableMatch[1], 10);
+      const character = maleTableMatch[2]?.trim() || '';
+      const scene = scenes.find(s => s.sceneNum === sceneNum);
+      anchors.push({
+        key: 'MALE',
+        emoji: '👨',
+        sceneNum,
+        title: scene?.title || '',
+        character: character || extractAnchorCharacter(content, 'MALE'),
+        frameFile: scene?.frameFile || generateFrameFileName(sceneNum, scene?.beatTimestamp || ''),
+      });
+    }
+
+    // Match FEMALE row in table
+    const femaleTableMatch = content.match(/\|\s*👩\s*FEMALE\s*\|\s*Scene\s*(\d+)\s*\|\s*([^|]+)\s*\|/i);
+    if (femaleTableMatch) {
+      const sceneNum = parseInt(femaleTableMatch[1], 10);
+      const character = femaleTableMatch[2]?.trim() || '';
+      const scene = scenes.find(s => s.sceneNum === sceneNum);
+      anchors.push({
+        key: 'FEMALE',
+        emoji: '👩',
+        sceneNum,
+        title: scene?.title || '',
+        character: character || extractAnchorCharacter(content, 'FEMALE'),
+        frameFile: scene?.frameFile || generateFrameFileName(sceneNum, scene?.beatTimestamp || ''),
+      });
+    }
+  }
+
+  // 3. Fallback: Extract from isAnchor scenes if no explicit anchor info found
+  if (anchors.length === 0) {
+    const anchorScenes = scenes.filter(s => s.isAnchor);
+    for (const scene of anchorScenes) {
+      // Determine anchor key based on content or default to MALE for first anchor
+      const existingKeys = anchors.map(a => a.key);
+      const key = existingKeys.includes('MALE') ? 'FEMALE' : 'MALE';
+      anchors.push({
+        key,
+        emoji: key === 'MALE' ? '👨' : '👩',
+        sceneNum: scene.sceneNum,
+        title: scene.title,
+        character: extractAnchorCharacter(content, key),
+        frameFile: scene.frameFile,
+      });
+    }
+  }
+
+  return anchors;
+}
+
+/**
  * Parse unified workflow format (v8.0)
  * New format: ## 📍 Scene XX + ### 🖼️ IMAGE + ### 🎥 MOTION
  */
@@ -270,6 +469,7 @@ function parseUnifiedWorkflow(content: string): Builder2ParseResult {
     hasOhmage: false,
     hasVariation: false,
     anchorSceneNum: null,
+    anchors: [],
   };
 
   // Check if this is a variation workflow
@@ -301,7 +501,7 @@ function parseUnifiedWorkflow(content: string): Builder2ParseResult {
         if (!sceneMatch) continue;
 
         const sceneNum = parseInt(sceneMatch[1], 10);
-        const titleMatch = anchorBlock.match(/Scene\s*\d+[:\s]+([^\n(]+)/i);
+        const titleMatch = anchorBlock.match(/Scene\s*\d+[:\s]+([^\n()]+)/i);
         const title = titleMatch?.[1]?.trim() || `Anchor Scene ${sceneNum}`;
 
         // Extract prompts
@@ -315,6 +515,8 @@ function parseUnifiedWorkflow(content: string): Builder2ParseResult {
           imagePrompts,
           motionPrompts,
           isAnchor: true,
+          frameFile: generateFrameFileName(sceneNum, ''),
+          anchorRefs: [], // Anchor scenes don't reference other anchors
         };
 
         if (isVariation) {
@@ -373,6 +575,8 @@ function parseUnifiedWorkflow(content: string): Builder2ParseResult {
       imagePrompts,
       motionPrompts,
       isAnchor,
+      frameFile: generateFrameFileName(sceneNum, timestamp),
+      anchorRefs: isAnchor ? [] : extractAnchorRefs(block),
     };
 
     if (isVariation) {
@@ -389,6 +593,10 @@ function parseUnifiedWorkflow(content: string): Builder2ParseResult {
   result.hasOhmage = result.ohmageScenes.length > 0;
   result.hasVariation = result.variationScenes.length > 0;
 
+  // Parse anchor info after scenes are parsed (need scenes for frameFile lookup)
+  const allScenes = [...result.ohmageScenes, ...result.variationScenes];
+  result.anchors = parseAnchorInfo(content, allScenes);
+
   return result;
 }
 
@@ -403,6 +611,7 @@ export function parseBuilder2Output(content: string): Builder2ParseResult {
     hasOhmage: false,
     hasVariation: false,
     anchorSceneNum: null,
+    anchors: [],
   };
 
   // 1. Try legacy <<<TAG>>> format first (backward compatibility)
@@ -444,12 +653,13 @@ export function parseBuilder2Output(content: string): Builder2ParseResult {
       );
     }
 
-    // Find anchor scene
+    // Find anchor scene and parse anchor info for legacy format
     const allScenes = [...result.ohmageScenes, ...result.variationScenes];
     const anchorScene = allScenes.find((s) => s.isAnchor);
     if (anchorScene) {
       result.anchorSceneNum = anchorScene.sceneNum;
     }
+    result.anchors = parseAnchorInfo(content, allScenes);
 
     return result;
   }
