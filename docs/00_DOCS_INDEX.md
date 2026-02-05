@@ -1,7 +1,7 @@
 # Vivid Documentation Master Index
 
-> **Version**: 1.4
-> **Last Updated**: 2026-02-02
+> **Version**: 1.5
+> **Last Updated**: 2026-02-05
 > **Purpose**: 전체 문서 네비게이션 및 SSoT 참조
 
 ---
@@ -104,7 +104,16 @@
 
 ---
 
-## 5. API & Frontend
+## 5. Academy & Builder (영상 제작 워크플로우)
+
+| 문서 | 설명 | 상태 |
+|------|------|------|
+| [ACADEMY_WORKFLOW_GUIDE.md](./ACADEMY_WORKFLOW_GUIDE.md) | **Academy 페이지 워크플로우 (씬 감지, threshold 모드)** | ✅ Active |
+| [BUILDER1_HOMAGE_GENERATOR.md](./BUILDER1_HOMAGE_GENERATOR.md) | Builder1 오마주 공방 스펙 | ✅ Active |
+
+---
+
+## 6. API & Frontend
 
 | 문서 | 설명 | 상태 |
 |------|------|------|
@@ -120,7 +129,7 @@
 
 ---
 
-## 6. Security & Compliance
+## 7. Security & Compliance
 
 | 문서 | 설명 | 상태 |
 |------|------|------|
@@ -136,7 +145,7 @@
 
 ---
 
-## 7. Specifications (`/specs`)
+## 8. Specifications (`/specs`)
 
 | 문서 | 설명 |
 |------|------|
@@ -146,7 +155,7 @@
 
 ---
 
-## 8. Strategic Documents (`/strategic`)
+## 9. Strategic Documents (`/strategic`)
 
 | 문서 | 설명 |
 |------|------|
@@ -156,7 +165,7 @@
 
 ---
 
-## 9. Archive (`/archive`)
+## 10. Archive (`/archive`)
 
 과거 설계 문서 및 완료된 계획. 현재 개발에는 사용하지 않음.
 
@@ -179,7 +188,7 @@
 
 ---
 
-## 10. Related CLAUDE.md Files
+## 11. Related CLAUDE.md Files
 
 | 경로 | 내용 |
 |------|------|
