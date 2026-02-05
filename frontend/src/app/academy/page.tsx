@@ -511,6 +511,7 @@ function Builder1Content() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [detectedTimestamps, setDetectedTimestamps] = useState<string[]>([]);
   const [errorMessage, setErrorMessage] = useState("");
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
   // Parse timestamps from Antigravity output (formats: "00:01.67" or "0:00.00")
   const parseTimestamps = (input: string): string[] => {
@@ -594,6 +595,7 @@ ${allTimestamps.map((t, i) => `- Scene ${String(i + 1).padStart(2, '0')}: ${t}`)
     setUploadProgress(0);
     setErrorMessage("");
     setDetectedTimestamps([]);
+    setUploadedFile(file);
 
     const formData = new FormData();
     formData.append("video", file);
@@ -635,43 +637,42 @@ ${allTimestamps.map((t, i) => `- Scene ${String(i + 1).padStart(2, '0')}: ${t}`)
   };
 
   const downloadFrames = async () => {
-    // Trigger download with frames
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "video/*";
-    input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (!file) return;
+    if (!uploadedFile) {
+      setErrorMessage("먼저 영상을 업로드해주세요.");
+      return;
+    }
 
-      const formData = new FormData();
-      formData.append("video", file);
+    setUploadStatus("processing");
+    setErrorMessage("");
 
-      setUploadStatus("uploading");
-      try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || ''}/api/v1/scene-detect/with-frames`,
-          { method: "POST", body: formData }
-        );
+    const formData = new FormData();
+    formData.append("video", uploadedFile);
 
-        if (response.ok) {
-          const blob = await response.blob();
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = "scenes.zip";
-          a.click();
-          URL.revokeObjectURL(url);
-          setUploadStatus("done");
-        } else {
-          setErrorMessage("다운로드 실패");
-          setUploadStatus("error");
-        }
-      } catch {
-        setErrorMessage("네트워크 오류");
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || ''}/api/v1/scene-detect/with-frames`,
+        { method: "POST", body: formData }
+      );
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${uploadedFile.name.replace(/\.[^/.]+$/, "")}_scenes.zip`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        setUploadStatus("done");
+      } else {
+        setErrorMessage("프레임 추출 실패");
         setUploadStatus("error");
       }
-    };
-    input.click();
+    } catch {
+      setErrorMessage("네트워크 오류");
+      setUploadStatus("error");
+    }
   };
 
   const resetUpload = () => {
@@ -679,6 +680,7 @@ ${allTimestamps.map((t, i) => `- Scene ${String(i + 1).padStart(2, '0')}: ${t}`)
     setUploadProgress(0);
     setDetectedTimestamps([]);
     setErrorMessage("");
+    setUploadedFile(null);
   };
 
   return (
