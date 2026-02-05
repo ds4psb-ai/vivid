@@ -126,3 +126,158 @@ async def get_access_request_status(
         "created_at": request.created_at.isoformat(),
         "message": status_messages.get(request.status, "알 수 없는 상태"),
     })
+
+
+# ============================================
+# Admin Endpoints (Master Admin Only)
+# ============================================
+
+from app.config import settings
+
+
+async def require_admin_user(
+    user: dict = Depends(require_authenticated_user),
+) -> dict:
+    """Require master admin access."""
+    email = user.get("email", "").lower()
+    if email not in settings.MASTER_ADMIN_EMAIL_SET:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return user
+
+
+class AdminAccessRequestItem(BaseModel):
+    """Response item for admin list."""
+    id: str
+    user_id: str
+    email: str
+    name: Optional[str]
+    status: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class AdminListResponse(BaseModel):
+    """Response for admin list."""
+    requests: list[AdminAccessRequestItem]
+    total: int
+    pending_count: int
+
+
+class AdminActionRequest(BaseModel):
+    """Request for approve/reject action."""
+    notes: Optional[str] = None
+
+
+@router.get("/admin/list")
+async def admin_list_access_requests(
+    status: Optional[str] = None,
+    limit: int = 50,
+    offset: int = 0,
+    _admin: dict = Depends(require_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> JSONResponse:
+    """List all access requests (admin only)."""
+    from sqlalchemy import func
+    
+    # Build query
+    query = select(AccessRequest).order_by(AccessRequest.created_at.desc())
+    if status:
+        query = query.where(AccessRequest.status == status)
+    query = query.limit(limit).offset(offset)
+    
+    result = await db.execute(query)
+    requests = result.scalars().all()
+    
+    # Get counts
+    total_result = await db.execute(select(func.count(AccessRequest.id)))
+    total = total_result.scalar() or 0
+    
+    pending_result = await db.execute(
+        select(func.count(AccessRequest.id)).where(AccessRequest.status == "pending")
+    )
+    pending_count = pending_result.scalar() or 0
+    
+    return JSONResponse({
+        "requests": [
+            {
+                "id": str(r.id),
+                "user_id": r.user_id,
+                "email": r.email,
+                "name": r.name,
+                "status": r.status,
+                "created_at": r.created_at.isoformat(),
+                "updated_at": r.updated_at.isoformat(),
+            }
+            for r in requests
+        ],
+        "total": total,
+        "pending_count": pending_count,
+    })
+
+
+@router.patch("/admin/{request_id}/approve")
+async def admin_approve_request(
+    request_id: str,
+    body: AdminActionRequest = AdminActionRequest(),
+    _admin: dict = Depends(require_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> JSONResponse:
+    """Approve an access request (admin only)."""
+    from uuid import UUID
+    
+    try:
+        rid = UUID(request_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid request ID")
+    
+    result = await db.execute(
+        select(AccessRequest).where(AccessRequest.id == rid)
+    )
+    request = result.scalar_one_or_none()
+    
+    if not request:
+        raise HTTPException(status_code=404, detail="Request not found")
+    
+    request.status = "approved"
+    if body.notes:
+        request.admin_notes = body.notes
+    await db.commit()
+    
+    return JSONResponse({
+        "success": True,
+        "message": f"Request for {request.email} approved",
+    })
+
+
+@router.patch("/admin/{request_id}/reject")
+async def admin_reject_request(
+    request_id: str,
+    body: AdminActionRequest = AdminActionRequest(),
+    _admin: dict = Depends(require_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> JSONResponse:
+    """Reject an access request (admin only)."""
+    from uuid import UUID
+    
+    try:
+        rid = UUID(request_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid request ID")
+    
+    result = await db.execute(
+        select(AccessRequest).where(AccessRequest.id == rid)
+    )
+    request = result.scalar_one_or_none()
+    
+    if not request:
+        raise HTTPException(status_code=404, detail="Request not found")
+    
+    request.status = "rejected"
+    if body.notes:
+        request.admin_notes = body.notes
+    await db.commit()
+    
+    return JSONResponse({
+        "success": True,
+        "message": f"Request for {request.email} rejected",
+    })
