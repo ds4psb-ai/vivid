@@ -13,6 +13,13 @@ interface EnrollmentRequiredProps {
 
 type RequestStatus = "idle" | "loading" | "pending" | "approved" | "rejected" | "error";
 
+// CSRF 토큰을 쿠키에서 가져오는 헬퍼
+function getCsrfToken(): string | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(/csrf_token=([^;]+)/);
+  return match ? match[1] : null;
+}
+
 export function EnrollmentRequired({ isLoggedIn = false }: EnrollmentRequiredProps) {
   const [requestStatus, setRequestStatus] = useState<RequestStatus>("idle");
   const [errorMessage, setErrorMessage] = useState<string>("");
@@ -26,8 +33,10 @@ export function EnrollmentRequired({ isLoggedIn = false }: EnrollmentRequiredPro
 
   const checkRequestStatus = async () => {
     try {
+      const csrfToken = getCsrfToken();
       const response = await fetch("/api/v1/access-request/status", {
         credentials: "include",
+        headers: csrfToken ? { "X-CSRF-Token": csrfToken } : {},
       });
       if (response.ok) {
         const data = await response.json();
@@ -45,10 +54,12 @@ export function EnrollmentRequired({ isLoggedIn = false }: EnrollmentRequiredPro
     setErrorMessage("");
 
     try {
+      const csrfToken = getCsrfToken();
       const response = await fetch("/api/v1/access-request", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
         },
         credentials: "include",
         body: JSON.stringify({}),
