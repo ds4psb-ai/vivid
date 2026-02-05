@@ -331,8 +331,20 @@ async def get_csrf_token(request: Request) -> JSONResponse:
 @limiter.limit(RATE_LIMIT_AUTH_LOGIN)
 async def logout(request: Request) -> JSONResponse:
     response = JSONResponse({"success": True})
-    response.delete_cookie(settings.SESSION_COOKIE_NAME)
-    response.delete_cookie(CSRF_COOKIE_NAME)
+    response.delete_cookie(
+        settings.SESSION_COOKIE_NAME,
+        domain=settings.COOKIE_DOMAIN or None,
+        path="/",
+        secure=settings.COOKIE_SECURE,
+        samesite="lax",
+    )
+    response.delete_cookie(
+        CSRF_COOKIE_NAME,
+        domain=settings.COOKIE_DOMAIN or None,
+        path="/",
+        secure=settings.COOKIE_SECURE,
+        samesite="lax",
+    )
     return response
 
 
