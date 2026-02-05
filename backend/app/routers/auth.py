@@ -418,12 +418,17 @@ async def check_academy_access(
     can_access = is_admin or application is not None
 
     if not can_access:
+        # DEBUG: 임시 디버그 정보
         return JSONResponse({
             "can_access": False,
             "cohort": None,
             "track": None,
             "enrolled_at": None,
             "is_admin": False,
+            "_debug_email": user_email,
+            "_debug_admin_set": list(settings.MASTER_ADMIN_EMAIL_SET),
+            "_debug_user_id": user_id,
+            "_debug_has_app": application is not None,
         }, status_code=403)
 
     return JSONResponse({
