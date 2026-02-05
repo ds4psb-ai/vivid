@@ -854,10 +854,11 @@ async def link_academy_account(
     5. 수강생 /academy 접속 가능
 
     Args:
-        name: 수강 신청서에 적은 이름 (정확히 일치해야 함)
+        name: 수강 신청서에 적은 이름 (부분 일치 지원)
         google_email: 로그인용 Google 이메일
     """
     # 1. name으로 crebit_applications 찾기 (status=paid)
+    # 1차: 정확 매칭
     app_query = (
         select(CrebitApplication)
         .where(CrebitApplication.name == request.name)
@@ -866,11 +867,39 @@ async def link_academy_account(
     result = await db.execute(app_query)
     application = result.scalar_one_or_none()
 
+    # 2차: 정확 매칭 실패시 부분 매칭 + 후보 제시
     if not application:
-        return LinkAccountResponse(
-            success=False,
-            message=f"결제 완료된 수강 신청을 찾을 수 없습니다: '{request.name}'"
+        # 공백 제거 후 부분 매칭
+        name_clean = request.name.strip().replace(" ", "")
+        fuzzy_query = (
+            select(CrebitApplication)
+            .where(CrebitApplication.status == "paid")
+            .where(CrebitApplication.owner_id.is_(None))  # 미연결만
         )
+        fuzzy_result = await db.execute(fuzzy_query)
+        all_paid = fuzzy_result.scalars().all()
+        
+        # 부분 매칭 찾기
+        candidates = []
+        for app in all_paid:
+            app_name_clean = app.name.replace(" ", "")
+            if name_clean in app_name_clean or app_name_clean in name_clean:
+                application = app  # 부분 매칭 성공
+                break
+            # 후보 목록 (비슷한 이름)
+            if len(candidates) < 5:
+                candidates.append(app.name)
+        
+        if not application:
+            if candidates:
+                return LinkAccountResponse(
+                    success=False,
+                    message=f"'{request.name}' 미발견. 비슷한 이름: {', '.join(candidates)}"
+                )
+            return LinkAccountResponse(
+                success=False,
+                message=f"결제 완료된 수강 신청을 찾을 수 없습니다: '{request.name}'"
+            )
 
     # 이미 연결된 경우 확인
     if application.owner_id:
@@ -1056,6 +1085,112 @@ async def activate_academy_student(
         message=f"수강생 활성화 완료: {new_app.name} ({request.cohort})"
     )
 
+
+# --- Bulk Activation ---
+
+class BulkActivateRequest(BaseModel):
+    """여러 Gmail 한번에 활성화"""
+    emails: list[str]  # 최대 20개
+    cohort: str = "1기"
+
+
+class BulkActivateResult(BaseModel):
+    email: str
+    success: bool
+    message: str
+
+
+class BulkActivateResponse(BaseModel):
+    total: int
+    success_count: int
+    fail_count: int
+    results: list[BulkActivateResult]
+
+
+@router.post("/academy/activate-bulk", response_model=BulkActivateResponse)
+async def bulk_activate_academy_students(
+    request: BulkActivateRequest,
+    admin_id: str = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """관리자: 여러 Gmail 한번에 활성화 (최대 20개)"""
+    import uuid
+    from datetime import datetime
+
+    # 최대 20개 제한
+    emails = request.emails[:20]
+    results: list[BulkActivateResult] = []
+    success_count = 0
+
+    for email_raw in emails:
+        email = email_raw.strip().lower()
+        if not email:
+            continue
+
+        # 1. user_accounts에서 user_id 찾기
+        user_query = select(UserAccount).where(UserAccount.email == email)
+        user_result = await db.execute(user_query)
+        user_account = user_result.scalar_one_or_none()
+
+        if not user_account:
+            results.append(BulkActivateResult(
+                email=email,
+                success=False,
+                message="로그인 기록 없음"
+            ))
+            continue
+
+        # 2. 이미 paid 수강신청 있는지 확인
+        app_query = (
+            select(CrebitApplication)
+            .where(CrebitApplication.owner_id == user_account.user_id)
+            .where(CrebitApplication.status == "paid")
+        )
+        app_result = await db.execute(app_query)
+        existing_app = app_result.scalar_one_or_none()
+
+        if existing_app:
+            results.append(BulkActivateResult(
+                email=email,
+                success=True,
+                message="이미 활성화됨"
+            ))
+            success_count += 1
+            continue
+
+        # 3. 새 수강신청 생성
+        new_app = CrebitApplication(
+            id=uuid.uuid4(),
+            name=email.split("@")[0],
+            email=email,
+            phone="",
+            track="A",
+            status="paid",
+            cohort=request.cohort,
+            owner_id=user_account.user_id,
+            paid_at=datetime.utcnow(),
+            paid_amount=0,
+        )
+        db.add(new_app)
+        results.append(BulkActivateResult(
+            email=email,
+            success=True,
+            message="활성화 완료"
+        ))
+        success_count += 1
+
+    try:
+        await db.commit()
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"벌크 활성화 실패: {str(e)}")
+
+    return BulkActivateResponse(
+        total=len(results),
+        success_count=success_count,
+        fail_count=len(results) - success_count,
+        results=results
+    )
 
 @router.get("/circuit-breakers")
 async def list_circuit_breakers(
