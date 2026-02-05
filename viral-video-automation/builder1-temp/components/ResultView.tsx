@@ -35,8 +35,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const handleDownload = () => {
     let rawContent = `# 🎬 BUILDER 1 OUTPUT - RAW\n\n`;
     rawContent += `> Generated: ${new Date().toLocaleString()}\n`;
-    rawContent += `> Builder Version: v7.4\n`;
-    rawContent += `> Note: FFmpeg 타임스탬프 기반 분석\n\n`;
+    rawContent += `> Builder Version: v8.0\n`;
+    rawContent += `> Note: IMAGE + MOTION 통합 워크플로우\n\n`;
 
     messages.forEach((msg) => {
       if (msg.role === 'model') {
@@ -69,11 +69,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           </div>
           <span className="text-sm font-bold text-gray-200 flex items-center gap-2">
             <Terminal className="w-4 h-4 text-green-500" />
-            AI 이미지 프롬프트 생성기 (Step {currentStep}/4)
+            AI 프롬프트 생성기 (Step {currentStep}/6)
           </span>
         </div>
         <div className="flex items-center gap-3">
-          {currentStep >= 4 && (
+          {currentStep >= 5 && (
             <button
               onClick={handleDownload}
               className="text-xs px-3 py-1.5 bg-accent-blue/10 text-accent-blue border border-accent-blue/30 rounded-md hover:bg-accent-blue/20 flex items-center gap-2 transition-all font-medium"
@@ -95,7 +95,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       <div className="w-full h-1 bg-gray-800">
         <div
           className="h-full bg-gradient-to-r from-accent-blue via-accent-purple to-accent-cyan transition-all duration-500 ease-out"
-          style={{ width: `${(currentStep / 4) * 100}%` }}
+          style={{ width: `${(currentStep / 6) * 100}%` }}
         />
       </div>
 
@@ -148,14 +148,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       {/* Input Area - 버튼 기반 */}
       <div className="p-4 bg-gray-900 border-t border-gray-800">
         <div className="max-w-4xl mx-auto">
-          {currentStep <= 4 && !isLoading && (
+          {currentStep <= 6 && !isLoading && (
             <div className="flex gap-3 justify-center">
               <button
                 onClick={() => onSendMessage("네, 좋습니다. 다음 단계로 진행해주세요.")}
                 className="flex-1 max-w-xs py-4 px-6 rounded-xl font-bold text-lg bg-gradient-to-r from-accent-blue to-accent-purple text-white hover:shadow-[0_0_20px_rgba(59,130,246,0.5)] active:scale-95 transition-all flex items-center justify-center gap-2"
               >
                 <Play className="w-5 h-5" />
-                {currentStep === 4 ? "최종 리포트 생성" : "다음 단계"}
+                {currentStep === 5 ? "통합 워크플로우 생성" : currentStep === 6 ? "변주 생성 (선택)" : "다음 단계"}
               </button>
             </div>
           )}
@@ -169,7 +169,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               </div>
             </div>
           )}
-          {currentStep > 4 && (
+          {currentStep > 6 && (
             <p className="text-center text-xs text-green-500 font-bold animate-pulse">
               🎉 모든 작업이 완료되었습니다. 우측 상단의 [채팅 원본 다운로드] 버튼을 눌러 저장하세요.
             </p>

@@ -58,7 +58,7 @@ const App: React.FC = () => {
       const response = await sendUserFeedback(text);
 
       let nextStep = currentStep;
-      if (currentStep < 4) {
+      if (currentStep < 6) {
         nextStep = currentStep + 1;
       }
       setCurrentStep(nextStep);
@@ -68,7 +68,7 @@ const App: React.FC = () => {
         { role: 'model', text: response, step: nextStep }
       ]);
 
-      if (nextStep >= 4) {
+      if (nextStep >= 6) {
         setStatus('COMPLETE');
       } else {
         setStatus('WAITING_USER');
@@ -131,19 +131,19 @@ const App: React.FC = () => {
                   </div>
 
                   <div className="mt-8 pt-6 border-t border-gray-800">
-                    <h4 className="text-xs font-bold text-gray-500 uppercase mb-3">V7.4 Features</h4>
+                    <h4 className="text-xs font-bold text-gray-500 uppercase mb-3">V8.0 Features</h4>
                     <ul className="text-xs text-gray-400 space-y-2">
                       <li className="flex gap-2">
                         <span className="text-yellow-500">★</span>
-                        <b className="text-yellow-400">FFmpeg 타임스탬프 기반 분석</b>
+                        <b className="text-yellow-400">6 STEP 통합 워크플로우</b>
                       </li>
                       <li className="flex gap-2">
                         <span className="text-green-500">✓</span>
-                        타임코드 정밀도 (밀리초)
+                        IMAGE + MOTION 프롬프트 통합
                       </li>
                       <li className="flex gap-2">
                         <span className="text-green-500">✓</span>
-                        듀얼 레퍼런스 라벨
+                        Kling 3.0 + Veo 3.1 지원
                       </li>
                       <li className="flex gap-2">
                         <span className="text-green-500">✓</span>
@@ -151,7 +151,7 @@ const App: React.FC = () => {
                       </li>
                       <li className="flex gap-2">
                         <span className="text-green-500">✓</span>
-                        구도 분석 (소실점/삼분할)
+                        변주 생성 (선택)
                       </li>
                     </ul>
                   </div>

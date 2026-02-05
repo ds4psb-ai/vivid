@@ -53,16 +53,22 @@ export const startAnalysisChat = async (
 
   // First message: Send video with FFmpeg timestamps and trigger Step 1
   const timestampMessage = `
-분석을 시작해주세요. [STEP 1: 컷 분석] 결과를 보여주세요.
+분석을 시작해주세요. [STEP 1: 입력 정리] 결과를 보여주세요.
 
-## FFmpeg 타임스탬프 (사용자 제공)
-아래는 FFmpeg가 추출한 정밀 씬 전환 타임스탬프입니다. 이 타임스탬프를 그대로 사용하세요:
+## 씬 테이블 + 타임스탬프 (사용자 제공)
+아래는 이미 추출된 씬 전환 타임스탬프입니다. 이 타임스탬프를 그대로 사용하세요:
 
 \`\`\`
 ${timestamps}
 \`\`\`
 
-위 타임스탬프 기반으로 씬 테이블을 작성하고, 각 타임스탬프 시점의 프레임을 분석해주세요.
+위 타임스탬프 기반으로:
+1. 캐릭터 프로필 추출
+2. 앵커 씬 식별
+3. Visual Rhyme Phase 분류
+4. 구도 분석
+
+을 진행해주세요.
 `;
 
   try {
