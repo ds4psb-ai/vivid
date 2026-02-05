@@ -379,6 +379,12 @@ function UploadContent({ setActiveTab }: { setActiveTab: (tab: TabKey) => void }
   const [errorMessage, setErrorMessage] = useState("");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
+  // Threshold mode: "precise" (0.19) or "standard" (0.25)
+  type ThresholdMode = "precise" | "standard";
+  const [thresholdMode, setThresholdMode] = useState<ThresholdMode>("precise");
+  const [usedThresholdMode, setUsedThresholdMode] = useState<ThresholdMode>("precise");
+  const threshold = thresholdMode === "precise" ? 0.19 : 0.25;
+
   // Parse timestamps from Antigravity output (formats: "00:01.67" or "0:00.00")
   const parseTimestamps = (input: string): string[] => {
     const pattern = /\d{1,2}:\d{2}\.\d{2}/g;
@@ -490,7 +496,8 @@ function UploadContent({ setActiveTab }: { setActiveTab: (tab: TabKey) => void }
       });
 
       setUploadStatus("processing");
-      xhr.open("POST", `${process.env.NEXT_PUBLIC_API_URL || ''}/api/v1/scene-detect/`);
+      setUsedThresholdMode(thresholdMode);
+      xhr.open("POST", `${process.env.NEXT_PUBLIC_API_URL || ''}/api/v1/scene-detect/?threshold=${threshold}`);
       xhr.send(formData);
 
     } catch {
@@ -620,6 +627,73 @@ function UploadContent({ setActiveTab }: { setActiveTab: (tab: TabKey) => void }
           </div>
         </div>
 
+        {/* Threshold Mode Selector - Segmented Control */}
+        {uploadStatus === "idle" && (
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="material-symbols-outlined text-purple-400 text-sm">tune</span>
+              <span className="text-gray-400 text-sm font-medium">감지 모드 선택</span>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {/* 정밀 모드 */}
+              <button
+                onClick={() => setThresholdMode("precise")}
+                className={`relative p-4 rounded-xl border-2 transition-all text-left group ${
+                  thresholdMode === "precise"
+                    ? "border-purple-500 bg-purple-500/10"
+                    : "border-white/10 hover:border-purple-500/30 hover:bg-purple-500/5"
+                }`}
+              >
+                {thresholdMode === "precise" && (
+                  <div className="absolute top-2 right-2">
+                    <span className="material-symbols-outlined text-purple-400 text-lg">check_circle</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xl">⚡</span>
+                  <span className={`font-bold ${thresholdMode === "precise" ? "text-purple-400" : "text-white"}`}>
+                    정밀 모드
+                  </span>
+                </div>
+                <p className="text-gray-400 text-xs leading-relaxed">
+                  빠른 컷도 놓치지 않고 감지<br/>
+                  <span className="text-gray-500">빠른 편집 · 많은 장면 전환</span>
+                </p>
+              </button>
+
+              {/* 표준 모드 */}
+              <button
+                onClick={() => setThresholdMode("standard")}
+                className={`relative p-4 rounded-xl border-2 transition-all text-left group ${
+                  thresholdMode === "standard"
+                    ? "border-emerald-500 bg-emerald-500/10"
+                    : "border-white/10 hover:border-emerald-500/30 hover:bg-emerald-500/5"
+                }`}
+              >
+                {thresholdMode === "standard" && (
+                  <div className="absolute top-2 right-2">
+                    <span className="material-symbols-outlined text-emerald-400 text-lg">check_circle</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xl">🎯</span>
+                  <span className={`font-bold ${thresholdMode === "standard" ? "text-emerald-400" : "text-white"}`}>
+                    표준 모드
+                  </span>
+                </div>
+                <p className="text-gray-400 text-xs leading-relaxed">
+                  트랜지션 효과는 무시<br/>
+                  <span className="text-gray-500">일반 영상 · 페이드/디졸브 있는 영상</span>
+                </p>
+              </button>
+            </div>
+            <p className="mt-3 text-gray-500 text-xs flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-sm">info</span>
+              잘 모르겠다면 <span className="text-purple-400 font-medium">정밀 모드</span>로 시작하세요
+            </p>
+          </div>
+        )}
+
         {uploadStatus === "idle" && (
           <div
             onDragEnter={handleDragIn}
@@ -686,22 +760,46 @@ function UploadContent({ setActiveTab }: { setActiveTab: (tab: TabKey) => void }
         {uploadStatus === "done" && detectedTimestamps.length > 0 && (
           <div className="space-y-5">
             {/* Success header */}
-            <div className="flex items-center justify-between p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-emerald-400">check_circle</span>
+            <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-emerald-400">check_circle</span>
+                  </div>
+                  <div>
+                    <p className="text-emerald-400 font-bold">{detectedTimestamps.length}개 씬 감지 완료!</p>
+                    <p className="text-emerald-400/60 text-xs flex items-center gap-1.5 mt-0.5">
+                      {usedThresholdMode === "precise" ? "⚡ 정밀 모드" : "🎯 표준 모드"}로 분석됨
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-emerald-400 font-bold">{detectedTimestamps.length}개 씬 감지 완료!</p>
-                  <p className="text-emerald-400/60 text-xs">threshold 0.19 기준</p>
-                </div>
+                <button
+                  onClick={resetUpload}
+                  className="px-3 py-1.5 rounded-lg text-gray-400 text-sm hover:text-white hover:bg-white/5 transition-all"
+                >
+                  다시 업로드
+                </button>
               </div>
-              <button
-                onClick={resetUpload}
-                className="px-3 py-1.5 rounded-lg text-gray-400 text-sm hover:text-white hover:bg-white/5 transition-all"
-              >
-                다시 업로드
-              </button>
+
+              {/* Re-analyze with different mode */}
+              {uploadedFile && (
+                <button
+                  onClick={() => {
+                    const newMode = usedThresholdMode === "precise" ? "standard" : "precise";
+                    setThresholdMode(newMode);
+                    processVideo(uploadedFile);
+                  }}
+                  className="w-full py-2.5 rounded-lg bg-white/5 border border-white/10 text-gray-300 text-sm font-medium hover:bg-white/10 hover:border-white/20 transition-all flex items-center justify-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-base">refresh</span>
+                  {usedThresholdMode === "precise"
+                    ? "🎯 표준 모드로 다시 분석해보기"
+                    : "⚡ 정밀 모드로 다시 분석해보기"}
+                  <span className="text-gray-500 text-xs ml-1">
+                    ({usedThresholdMode === "precise" ? "트랜지션 무시" : "빠른 컷 감지"})
+                  </span>
+                </button>
+              )}
             </div>
 
             {/* Result preview */}
