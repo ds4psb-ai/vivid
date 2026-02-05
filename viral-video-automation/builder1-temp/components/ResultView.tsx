@@ -145,20 +145,103 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         )}
       </div>
 
-      {/* Input Area - 버튼 기반 */}
+      {/* Input Area */}
       <div className="p-4 bg-gray-900 border-t border-gray-800">
-        <div className="max-w-4xl mx-auto">
-          {currentStep <= 6 && !isLoading && (
-            <div className="flex gap-3 justify-center">
+        <div className="max-w-4xl mx-auto space-y-4">
+          {/* STEP 1: 문화권 선택 버튼 */}
+          {currentStep === 1 && !isLoading && (
+            <div className="space-y-3">
+              <p className="text-center text-sm text-gray-400 mb-3">
+                🌏 오마쥬 타겟 문화권을 선택하세요
+              </p>
+              <div className="grid grid-cols-5 gap-2">
+                <button
+                  onClick={() => onSendMessage("A")}
+                  className="py-3 px-2 rounded-lg font-medium text-sm bg-gradient-to-r from-accent-blue to-accent-purple text-white hover:shadow-[0_0_15px_rgba(59,130,246,0.5)] active:scale-95 transition-all flex flex-col items-center gap-1"
+                >
+                  <span className="text-lg">🇰🇷</span>
+                  <span>한국</span>
+                  <span className="text-xs opacity-70">(기본)</span>
+                </button>
+                <button
+                  onClick={() => onSendMessage("B")}
+                  className="py-3 px-2 rounded-lg font-medium text-sm bg-gray-800 border border-gray-700 text-gray-200 hover:bg-gray-700 hover:border-accent-purple active:scale-95 transition-all flex flex-col items-center gap-1"
+                >
+                  <span className="text-lg">🇯🇵</span>
+                  <span>일본</span>
+                </button>
+                <button
+                  onClick={() => onSendMessage("C")}
+                  className="py-3 px-2 rounded-lg font-medium text-sm bg-gray-800 border border-gray-700 text-gray-200 hover:bg-gray-700 hover:border-accent-purple active:scale-95 transition-all flex flex-col items-center gap-1"
+                >
+                  <span className="text-lg">🇺🇸</span>
+                  <span>서양</span>
+                </button>
+                <button
+                  onClick={() => onSendMessage("D")}
+                  className="py-3 px-2 rounded-lg font-medium text-sm bg-gray-800 border border-gray-700 text-gray-200 hover:bg-gray-700 hover:border-accent-purple active:scale-95 transition-all flex flex-col items-center gap-1"
+                >
+                  <span className="text-lg">🇹🇭</span>
+                  <span>동남아</span>
+                </button>
+                <button
+                  onClick={() => onSendMessage("E")}
+                  className="py-3 px-2 rounded-lg font-medium text-sm bg-gray-800 border border-gray-700 text-gray-200 hover:bg-gray-700 hover:border-accent-purple active:scale-95 transition-all flex flex-col items-center gap-1"
+                >
+                  <span className="text-lg">🌍</span>
+                  <span>원본</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 2-5: 다음 단계 버튼 + 텍스트 입력 */}
+          {currentStep > 1 && currentStep <= 6 && !isLoading && (
+            <div className="space-y-3">
+              {/* 텍스트 입력 */}
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="피드백이나 수정 요청을 입력하세요..."
+                  className="flex-1 px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue/50"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                      onSendMessage(e.currentTarget.value.trim());
+                      e.currentTarget.value = '';
+                    }
+                  }}
+                />
+                <button
+                  onClick={(e) => {
+                    const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                    if (input.value.trim()) {
+                      onSendMessage(input.value.trim());
+                      input.value = '';
+                    }
+                  }}
+                  className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-gray-400 hover:text-white hover:border-accent-blue transition-colors"
+                >
+                  전송
+                </button>
+              </div>
+
+              {/* 다음 단계 버튼 */}
               <button
                 onClick={() => onSendMessage("네, 좋습니다. 다음 단계로 진행해주세요.")}
-                className="flex-1 max-w-xs py-4 px-6 rounded-xl font-bold text-lg bg-gradient-to-r from-accent-blue to-accent-purple text-white hover:shadow-[0_0_20px_rgba(59,130,246,0.5)] active:scale-95 transition-all flex items-center justify-center gap-2"
+                className="w-full py-4 px-6 rounded-xl font-bold text-lg bg-gradient-to-r from-accent-blue to-accent-purple text-white hover:shadow-[0_0_20px_rgba(59,130,246,0.5)] active:scale-95 transition-all flex items-center justify-center gap-2"
               >
                 <Play className="w-5 h-5" />
                 {currentStep === 5 ? "통합 워크플로우 생성" : currentStep === 6 ? "변주 생성 (선택)" : "다음 단계"}
               </button>
+
+              {currentStep >= 5 && (
+                <p className="text-center text-xs text-gray-500">
+                  💡 수정이 필요하면 위 입력창에 피드백을 작성하세요
+                </p>
+              )}
             </div>
           )}
+
           {isLoading && (
             <div className="text-center text-gray-400 py-4">
               <div className="inline-flex items-center gap-2">
@@ -169,6 +252,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               </div>
             </div>
           )}
+
           {currentStep > 6 && (
             <p className="text-center text-xs text-green-500 font-bold animate-pulse">
               🎉 모든 작업이 완료되었습니다. 우측 상단의 [채팅 원본 다운로드] 버튼을 눌러 저장하세요.
