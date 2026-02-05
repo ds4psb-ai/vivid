@@ -119,7 +119,7 @@ def extract_frame(video_path: str, timestamp: str, output_path: str) -> bool:
 @router.post("/", response_model=SceneDetectResult)
 async def scene_detect_metadata(
     video: UploadFile = File(...),
-    threshold: float = Query(0.25, ge=0.05, le=0.5, description="Scene detection threshold"),
+    threshold: float = Query(0.19, ge=0.05, le=0.5, description="Scene detection threshold"),
 ):
     """
     씬 감지 메타데이터만 반환 (프레임 이미지 없이)
@@ -152,7 +152,7 @@ async def scene_detect_metadata(
 @router.post("/with-frames")
 async def scene_detect_with_frames(
     video: UploadFile = File(...),
-    threshold: float = Query(0.25, ge=0.05, le=0.5, description="Scene detection threshold"),
+    threshold: float = Query(0.19, ge=0.05, le=0.5, description="Scene detection threshold"),
 ):
     """
     씬 감지 + 프레임 이미지 추출 → ZIP 반환
