@@ -1,14 +1,23 @@
 /**
  * Builder2 MD Parser
  *
- * Parses Builder2 (Parody Engine) output format.
- * Extracts scenes with IMAGE/MOTION prompts from delimited sections.
+ * Parses Builder output format (supports both legacy and v8.0 unified format).
+ * Extracts scenes with IMAGE/MOTION prompts.
  *
- * Delimiter Tags:
- * - <<<OHMAGE_IMAGE_START>>> ~ <<<OHMAGE_IMAGE_END>>>
- * - <<<OHMAGE_MOTION_START>>> ~ <<<OHMAGE_MOTION_END>>>
- * - <<<VARIATION_IMAGE_START>>> ~ <<<VARIATION_IMAGE_END>>>
- * - <<<VARIATION_MOTION_START>>> ~ <<<VARIATION_MOTION_END>>>
+ * Supported Formats:
+ *
+ * 1. Legacy <<<TAG>>> format:
+ *    - <<<OHMAGE_IMAGE_START>>> ~ <<<OHMAGE_IMAGE_END>>>
+ *    - <<<OHMAGE_MOTION_START>>> ~ <<<OHMAGE_MOTION_END>>>
+ *    - <<<VARIATION_IMAGE_START>>> ~ <<<VARIATION_IMAGE_END>>>
+ *    - <<<VARIATION_MOTION_START>>> ~ <<<VARIATION_MOTION_END>>>
+ *
+ * 2. v8.0 Unified format (Builder1 v8.0):
+ *    - ## ⭐ 앵커 이미지 먼저 생성 (anchor section)
+ *    - ## 📍 Scene XX: [Title] (scene sections)
+ *    - ### 🖼️ IMAGE (image prompts)
+ *    - ### 🎥 MOTION (motion prompts)
+ *    - [📋 COPY] markers for easy copy
  */
 
 export interface Builder2Scene {
@@ -212,13 +221,16 @@ function parseMotionSection(
 
 /**
  * Parse IMAGE prompts from unified format block
+ * Supports both direct tool names and [📋 COPY] markers
  */
 function parseUnifiedImagePrompts(content: string): { nanoBanana: string; midjourney: string } {
+  // Try [📋 COPY] NanoBanana format first, then direct NanoBanana
   const nanoBananaMatch = content.match(
-    /NanoBanana[^\n]*\n```(?:text)?\s*\n?([\s\S]*?)```/i
+    /(?:\[📋\s*COPY\]\s*)?NanoBanana[^\n]*\n```(?:text)?\s*\n?([\s\S]*?)```/i
   );
+  // Try [📋 COPY] Midjourney format first, then direct Midjourney/MJ
   const midjourneyMatch = content.match(
-    /Midjourney[^\n]*\n```(?:text)?\s*\n?([\s\S]*?)```/i
+    /(?:\[📋\s*COPY\]\s*)?(?:Midjourney|MJ)[^\n]*\n```(?:text)?\s*\n?([\s\S]*?)```/i
   );
 
   return {
@@ -229,13 +241,16 @@ function parseUnifiedImagePrompts(content: string): { nanoBanana: string; midjou
 
 /**
  * Parse MOTION prompts from unified format block
+ * Supports both direct tool names and [📋 COPY] markers
  */
 function parseUnifiedMotionPrompts(content: string): { kling: string; veo: string } {
+  // Try [📋 COPY] Kling format first, then direct Kling
   const klingMatch = content.match(
-    /Kling[^\n]*\n```(?:text)?\s*\n?([\s\S]*?)```/i
+    /(?:\[📋\s*COPY\]\s*)?Kling[^\n]*\n```(?:text)?\s*\n?([\s\S]*?)```/i
   );
+  // Try [📋 COPY] Veo format first, then direct Veo
   const veoMatch = content.match(
-    /Veo[^\n]*\n```(?:text)?\s*\n?([\s\S]*?)```/i
+    /(?:\[📋\s*COPY\]\s*)?Veo[^\n]*\n```(?:text)?\s*\n?([\s\S]*?)```/i
   );
 
   return {
@@ -321,11 +336,18 @@ function parseUnifiedWorkflow(content: string): Builder2ParseResult {
     const sceneNum = parseInt(headerMatch[1], 10);
     const title = headerMatch[2].trim();
 
-    // Extract timecode
+    // Extract timecode - supports both "타임코드:" and inline "(00:00.00~00:01.67)" formats
+    let timestamp = '';
     const timestampMatch = block.match(/타임코드[:\s]*(\d+:\d+\.\d+)~(\d+:\d+\.\d+)/i);
-    const timestamp = timestampMatch
-      ? `${timestampMatch[1]}~${timestampMatch[2]}`
-      : '';
+    if (timestampMatch) {
+      timestamp = `${timestampMatch[1]}~${timestampMatch[2]}`;
+    } else {
+      // Try inline format: Scene 01: Title (00:00.00~00:01.67)
+      const inlineMatch = block.match(/\((\d+:\d+\.\d+)[~-](\d+:\d+\.\d+)\)/);
+      if (inlineMatch) {
+        timestamp = `${inlineMatch[1]}~${inlineMatch[2]}`;
+      }
+    }
 
     // Extract IMAGE section
     const imageSection = block.match(/### 🖼️ IMAGE\s*\n([\s\S]*?)(?=### 🎥|## 📍|## ✅|$)/i);
