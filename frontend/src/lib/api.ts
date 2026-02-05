@@ -906,29 +906,39 @@ class ApiClient {
         // TODO: 리뷰 후 제거
         const SKIP_AUTH_REDIRECT = true;
         if (SKIP_AUTH_REDIRECT) {
-          throw new Error("인증이 필요합니다.");
+          const err = new Error("인증이 필요합니다.") as Error & { status: number };
+          err.status = 401;
+          throw err;
         }
         // Clear any cached session and redirect to login
         if (typeof window !== "undefined") {
           const currentPath = window.location.pathname;
           // /login 페이지에서는 리다이렉트 하지 않음 (무한 루프 방지)
           if (currentPath === "/login") {
-            throw new Error("세션이 만료되었습니다. 다시 로그인해주세요.");
+            const err = new Error("세션이 만료되었습니다. 다시 로그인해주세요.") as Error & { status: number };
+            err.status = 401;
+            throw err;
           }
           // Store current path for redirect after login
           const returnPath = currentPath + window.location.search;
           sessionStorage.setItem("auth_redirect", returnPath);
           window.location.href = "/login?expired=true";
         }
-        throw new Error("세션이 만료되었습니다. 다시 로그인해주세요.");
+        const err = new Error("세션이 만료되었습니다. 다시 로그인해주세요.") as Error & { status: number };
+        err.status = 401;
+        throw err;
       }
 
       if (response.status === 402) {
-        throw new Error("크레딧이 부족합니다.");
+        const err = new Error("크레딧이 부족합니다.") as Error & { status: number };
+        err.status = 402;
+        throw err;
       }
 
       if (response.status === 403) {
-        throw new Error(`${message} (admin-only)`);
+        const err = new Error(message) as Error & { status: number };
+        err.status = 403;
+        throw err;
       }
 
       // Handle rate limiting (429)

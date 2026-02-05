@@ -49,10 +49,12 @@ function AcademyContent() {
   const [accessState, setAccessState] = useState<{
     loading: boolean;
     hasAccess: boolean;
+    isLoggedIn: boolean;
     accessInfo: AcademyAccessResponse | null;
   }>({
     loading: true,
     hasAccess: false,
+    isLoggedIn: false,
     accessInfo: null,
   });
 
@@ -67,15 +69,18 @@ function AcademyContent() {
           setAccessState({
             loading: false,
             hasAccess: response.can_access,
+            isLoggedIn: true,
             accessInfo: response,
           });
         }
-      } catch {
-        // 403 or other error means no access
+      } catch (err) {
+        // 401 = not logged in, 403 = logged in but not enrolled
+        const status = (err as { status?: number })?.status;
         if (!cancelled) {
           setAccessState({
             loading: false,
             hasAccess: false,
+            isLoggedIn: status === 403, // 403 means logged in but not enrolled
             accessInfo: null,
           });
         }
@@ -100,7 +105,7 @@ function AcademyContent() {
 
   // Show enrollment required if no access
   if (!accessState.hasAccess) {
-    return <EnrollmentRequired />;
+    return <EnrollmentRequired isLoggedIn={accessState.isLoggedIn} />;
   }
 
   return (
