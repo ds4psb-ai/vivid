@@ -3,7 +3,6 @@
  * Academy 접근 권한이 없는 사용자에게 수강 신청 안내를 보여줍니다.
  */
 
-import Link from "next/link";
 
 interface EnrollmentRequiredProps {
   isLoggedIn?: boolean;
@@ -92,15 +91,17 @@ export function EnrollmentRequired({ isLoggedIn = false }: EnrollmentRequiredPro
             )}
 
             {/* CTA Button - 수강 신청 */}
-            <Link
-              href="/crebit"
+            <a
+              href="https://cafe.naver.com/antacademy1/5150"
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-3 px-8 py-4 bg-purple-500/20 text-purple-300 font-bold rounded-2xl hover:bg-purple-500/30 transition-all border border-purple-500/30 group"
             >
               <span className="material-symbols-outlined text-xl group-hover:translate-x-1 transition-transform">
                 arrow_forward
               </span>
               수강 신청하기
-            </Link>
+            </a>
 
             {/* Help text */}
             <p className="text-sm text-gray-500 mt-8">
