@@ -372,11 +372,10 @@ async def check_academy_access(
     user: dict = Depends(require_authenticated_user),
     db: AsyncSession = Depends(get_db),
 ) -> JSONResponse:
-    """Check if user has academy access (paid enrollment).
+    """Check if user has academy access.
 
-    Returns access info if the user has a paid CrebitApplication.
-    Raises 403 if user is not enrolled or payment is not completed.
-    Admin users (MASTER_ADMIN_EMAILS) can also access without enrollment.
+    로그인한 사용자는 모두 접근 가능.
+    수강 정보가 있으면 cohort/track 정보도 반환.
     """
     user_id = user.get("user_id")
     user_email = user.get("email", "").lower()
@@ -384,7 +383,7 @@ async def check_academy_access(
     # Check if user is admin
     is_admin = user_email in settings.MASTER_ADMIN_EMAIL_SET
 
-    # Check for paid application
+    # Check for paid application (optional - for cohort info)
     result = await db.execute(
         select(CrebitApplication)
         .where(CrebitApplication.owner_id == user_id)
@@ -392,16 +391,10 @@ async def check_academy_access(
     )
     application = result.scalar_one_or_none()
 
-    # Admin can access without enrollment
-    if not application and not is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Academy access requires course enrollment",
-        )
-
+    # 로그인만 하면 접근 가능
     return JSONResponse({
         "can_access": True,
-        "cohort": application.cohort if application else None,
+        "cohort": application.cohort if application else "체험판",
         "track": application.track if application else None,
         "enrolled_at": application.paid_at.isoformat() if application and application.paid_at else None,
         "is_admin": is_admin,
