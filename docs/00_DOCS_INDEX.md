@@ -108,8 +108,9 @@
 
 | 문서 | 설명 | 상태 |
 |------|------|------|
-| [ACADEMY_WORKFLOW_GUIDE.md](./ACADEMY_WORKFLOW_GUIDE.md) | **Academy 페이지 워크플로우 (씬 감지, threshold 모드)** | ✅ Active |
-| [BUILDER1_HOMAGE_GENERATOR.md](./BUILDER1_HOMAGE_GENERATOR.md) | Builder1 오마주 공방 스펙 | ✅ Active |
+| [ACADEMY_WORKFLOW_GUIDE.md](./ACADEMY_WORKFLOW_GUIDE.md) | Academy 페이지 (34개 컴포넌트, 씬 감지, threshold 모드) | ✅ v1.1 (2026-02-06) |
+| [BUILDER1_HOMAGE_GENERATOR.md](./BUILDER1_HOMAGE_GENERATOR.md) | Builder1 오마주 공방 스펙 (5-STEP, VariationPanel) | ✅ v8.2 |
+| [BUILDER1_PROMPT_QUALITY_IMPLEMENTATION_STATUS.md](./BUILDER1_PROMPT_QUALITY_IMPLEMENTATION_STATUS.md) | 프롬프트 품질 개선 구현 상태 (Phase 1 완료) | ✅ Active |
 
 ---
 

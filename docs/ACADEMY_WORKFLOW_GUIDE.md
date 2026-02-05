@@ -1,8 +1,8 @@
 # Academy 워크플로우 가이드
 
-> **Version**: 1.0
-> **Last Updated**: 2026-02-05
-> **Location**: `frontend/src/app/academy/page.tsx`
+> **Version**: 1.1
+> **Last Updated**: 2026-02-06
+> **Location**: `frontend/src/app/academy/` (34개 컴포넌트)
 
 ---
 
@@ -120,15 +120,76 @@ POST /api/v1/scene-detect/?threshold=0.25  // 표준 모드
 
 ## 파일 구조
 
+### 리팩토링 전 (2026-02-05 이전)
 ```
 frontend/src/app/academy/
-└── page.tsx          # 전체 Academy 페이지 (1,400+ lines)
-    ├── UploadContent()   # 씬 감지 UI
-    ├── PromptContent()   # 프롬프트 생성
-    ├── ParseContent()    # 파싱 기능
-    ├── ToolsContent()    # 외부 도구 링크
-    └── ...
+└── page.tsx (2,251 lines)
 ```
+
+### 리팩토링 후 (2026-02-06 ✅)
+```
+frontend/src/app/academy/
+├── page.tsx (메인 컨테이너)
+├── api/
+│   └── sceneDetect.ts (씬 감지 API)
+├── components/
+│   ├── CreditContent.tsx
+│   ├── HomeContent.tsx
+│   ├── HomeworkContent.tsx
+│   ├── PromptContent.tsx
+│   ├── SetupContent.tsx
+│   ├── VibeContent.tsx
+│   ├── parse/ (5개 컴포넌트)
+│   │   ├── AnchorGuidePanel.tsx
+│   │   ├── ImageAttachmentGuide.tsx
+│   │   ├── MDInput.tsx
+│   │   ├── ParseContent.tsx
+│   │   └── SceneCard.tsx
+│   ├── shared/ (4개 컴포넌트)
+│   │   ├── ContentCard.tsx
+│   │   ├── NextStepButton.tsx
+│   │   ├── PageHeader.tsx
+│   │   └── WhiteButton.tsx
+│   ├── tools/ (4개 컴포넌트)
+│   │   ├── FAQItem.tsx
+│   │   ├── ToolDetailCard.tsx
+│   │   ├── ToolsContent.tsx
+│   │   └── toolsData.ts
+│   └── upload/ (5개 컴포넌트)
+│       ├── DetectionResults.tsx
+│       ├── ThresholdSelector.tsx
+│       ├── UploadContent.tsx
+│       ├── UploadProgressBar.tsx
+│       └── VideoDropzone.tsx
+├── hooks/
+│   ├── useMDParse.ts (MD 파싱 로직)
+│   └── useVideoUpload.ts (비디오 업로드 로직)
+└── constants.ts (상수 정의)
+```
+
+### 주요 컴포넌트
+
+#### Upload (비디오 업로드)
+- `VideoDropzone.tsx`: 드래그앤드롭 UI
+- `UploadProgressBar.tsx`: 업로드 진행 상태
+- `ThresholdSelector.tsx`: 정밀/표준 모드 선택
+- `DetectionResults.tsx`: 씬 감지 결과 표시
+
+#### Parse (MD 파싱)
+- `MDInput.tsx`: 마크다운 입력 필드
+- `SceneCard.tsx`: 파싱된 씬 카드
+- `AnchorGuidePanel.tsx`: 앵커 테이블 가이드
+- `ImageAttachmentGuide.tsx`: 이미지 첨부 워크플로우
+
+#### Shared (공통 컴포넌트)
+- `ContentCard.tsx`: 카드 컨테이너
+- `PageHeader.tsx`: 페이지 헤더
+- `NextStepButton.tsx`: 다음 단계 버튼
+- `WhiteButton.tsx`: 공통 버튼 스타일
+
+#### Custom Hooks
+- `useMDParse.ts`: MD → JSON 파싱 로직
+- `useVideoUpload.ts`: 비디오 업로드 + 씬 감지 상태 관리
 
 ---
 
@@ -145,4 +206,5 @@ frontend/src/app/academy/
 
 | 버전 | 날짜 | 변경 |
 |------|------|------|
+| 1.1 | 2026-02-06 | 2,251줄 단일 파일 → 34개 컴포넌트로 분리 (api/, components/, hooks/) |
 | 1.0 | 2026-02-05 | 초기 생성, threshold 모드 선택 UI 문서화 |

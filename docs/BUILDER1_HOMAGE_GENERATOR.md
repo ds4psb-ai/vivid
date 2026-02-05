@@ -6,6 +6,14 @@
 
 ---
 
+## 관련 문서
+
+- **프롬프트 품질 구현 상태**: [BUILDER1_PROMPT_QUALITY_IMPLEMENTATION_STATUS.md](./BUILDER1_PROMPT_QUALITY_IMPLEMENTATION_STATUS.md)
+  - Phase 1 완료 (constants.ts 개선)
+  - Phase 2 대기 중 (Academy 파서 패치)
+
+---
+
 ## 개요
 
 Academy에서 추출한 씬 테이블 기반으로 IMAGE + MOTION 프롬프트를 생성하는 통합 빌더.
