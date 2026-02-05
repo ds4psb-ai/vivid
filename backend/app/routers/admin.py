@@ -965,6 +965,98 @@ async def list_academy_applications(
     }
 
 
+class ActivateStudentRequest(BaseModel):
+    """수강생 활성화 요청 (Gmail만 입력)."""
+    google_email: str = Field(..., min_length=5, max_length=255, description="수강생 Google 이메일")
+    name: str = Field(default="", max_length=100, description="수강생 이름 (선택)")
+    cohort: str = Field(default="1기", max_length=50, description="기수")
+
+
+class ActivateStudentResponse(BaseModel):
+    """수강생 활성화 응답."""
+    success: bool
+    application_id: Optional[str] = None
+    user_id: Optional[str] = None
+    message: str
+    already_exists: bool = False
+
+
+@router.post("/academy/activate", response_model=ActivateStudentResponse)
+async def activate_academy_student(
+    request: ActivateStudentRequest,
+    admin_id: str = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """관리자: Gmail만 입력하면 수강생 즉시 활성화
+
+    1. 해당 Gmail로 로그인한 user_accounts 찾기
+    2. 없으면 에러 (먼저 Google 로그인 필요)
+    3. 이미 paid 수강신청 있으면 그대로 반환
+    4. 없으면 새 수강신청 생성 (status=paid)
+    """
+    import uuid
+    from datetime import datetime
+
+    email_lower = request.google_email.strip().lower()
+
+    # 1. user_accounts에서 user_id 찾기
+    user_query = select(UserAccount).where(UserAccount.email == email_lower)
+    user_result = await db.execute(user_query)
+    user_account = user_result.scalar_one_or_none()
+
+    if not user_account:
+        return ActivateStudentResponse(
+            success=False,
+            message=f"해당 Gmail로 로그인한 기록이 없습니다. 먼저 prompty.co.kr에서 Google 로그인하라고 안내해주세요: {email_lower}"
+        )
+
+    # 2. 이미 paid 수강신청 있는지 확인
+    app_query = (
+        select(CrebitApplication)
+        .where(CrebitApplication.owner_id == user_account.user_id)
+        .where(CrebitApplication.status == "paid")
+    )
+    app_result = await db.execute(app_query)
+    existing_app = app_result.scalar_one_or_none()
+
+    if existing_app:
+        return ActivateStudentResponse(
+            success=True,
+            application_id=str(existing_app.id),
+            user_id=user_account.user_id,
+            message=f"이미 활성화된 수강생입니다: {existing_app.name} ({existing_app.cohort})",
+            already_exists=True
+        )
+
+    # 3. 새 수강신청 생성
+    new_app = CrebitApplication(
+        id=uuid.uuid4(),
+        name=request.name or email_lower.split("@")[0],
+        email=email_lower,
+        phone="",
+        track="A",
+        status="paid",
+        cohort=request.cohort,
+        owner_id=user_account.user_id,
+        paid_at=datetime.utcnow(),
+        paid_amount=0,
+    )
+    db.add(new_app)
+
+    try:
+        await db.commit()
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"수강생 활성화 실패: {str(e)}")
+
+    return ActivateStudentResponse(
+        success=True,
+        application_id=str(new_app.id),
+        user_id=user_account.user_id,
+        message=f"수강생 활성화 완료: {new_app.name} ({request.cohort})"
+    )
+
+
 @router.get("/circuit-breakers")
 async def list_circuit_breakers(
     _admin: str = Depends(require_admin),

@@ -17,6 +17,12 @@ export function AdminContent() {
   const [searchTerm, setSearchTerm] = useState("");
   const [total, setTotal] = useState(0);
 
+  // Quick activate state
+  const [activateEmail, setActivateEmail] = useState("");
+  const [activateName, setActivateName] = useState("");
+  const [activating, setActivating] = useState(false);
+  const [activateResult, setActivateResult] = useState<{ success: boolean; message: string } | null>(null);
+
   // Modal state
   const [linkModalOpen, setLinkModalOpen] = useState(false);
   const [selectedApp, setSelectedApp] = useState<AcademyApplication | null>(null);
@@ -45,6 +51,33 @@ export function AdminContent() {
   useEffect(() => {
     fetchApplications();
   }, [fetchApplications]);
+
+  // Quick activate handler
+  const handleQuickActivate = async () => {
+    if (!activateEmail.trim()) return;
+
+    setActivating(true);
+    setActivateResult(null);
+
+    try {
+      const response = await api.activateAcademyStudent(activateEmail.trim(), activateName.trim());
+      setActivateResult({ success: response.success, message: response.message });
+
+      if (response.success) {
+        setActivateEmail("");
+        setActivateName("");
+        // Refresh list after success
+        setTimeout(() => fetchApplications(), 1000);
+      }
+    } catch (err) {
+      setActivateResult({
+        success: false,
+        message: err instanceof Error ? err.message : "활성화 중 오류가 발생했습니다.",
+      });
+    } finally {
+      setActivating(false);
+    }
+  };
 
   // Open link modal
   const openLinkModal = (app: AcademyApplication) => {
@@ -104,6 +137,75 @@ export function AdminContent() {
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-white mb-2">수강생 관리</h2>
         <p className="text-gray-400">수강 신청 목록 및 계정 연결 관리</p>
+      </div>
+
+      {/* Quick Activate Card */}
+      <div className="mb-8 p-6 rounded-2xl bg-gradient-to-br from-purple-500/10 to-indigo-500/10 border border-purple-500/30">
+        <div className="flex items-center gap-3 mb-4">
+          <span className="material-symbols-outlined text-purple-400 text-2xl">bolt</span>
+          <h3 className="text-lg font-bold text-white">빠른 활성화</h3>
+        </div>
+        <p className="text-sm text-gray-400 mb-4">
+          카톡방에서 받은 Gmail 주소를 입력하면 즉시 수강생으로 활성화됩니다.
+          <br />
+          <span className="text-amber-400">※ 수강생이 먼저 prompty.co.kr에서 Google 로그인해야 합니다.</span>
+        </p>
+        <div className="flex gap-3">
+          <input
+            type="text"
+            placeholder="이름 (선택)"
+            value={activateName}
+            onChange={(e) => setActivateName(e.target.value)}
+            className="w-40 bg-white/10 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-purple-500/50"
+          />
+          <input
+            type="email"
+            placeholder="Gmail 주소 입력"
+            value={activateEmail}
+            onChange={(e) => setActivateEmail(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleQuickActivate()}
+            className="flex-1 bg-white/10 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-purple-500/50"
+          />
+          <button
+            onClick={handleQuickActivate}
+            disabled={!activateEmail.trim() || activating}
+            className="px-6 py-2.5 rounded-lg bg-purple-500 text-white font-medium hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+          >
+            {activating ? (
+              <>
+                <div className="w-4 h-4 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+                처리 중
+              </>
+            ) : (
+              <>
+                <span className="material-symbols-outlined text-lg">person_add</span>
+                활성화
+              </>
+            )}
+          </button>
+        </div>
+        {activateResult && (
+          <div
+            className={`mt-4 p-3 rounded-lg ${
+              activateResult.success
+                ? "bg-green-500/10 border border-green-500/20"
+                : "bg-red-500/10 border border-red-500/20"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <span
+                className={`material-symbols-outlined text-lg ${
+                  activateResult.success ? "text-green-400" : "text-red-400"
+                }`}
+              >
+                {activateResult.success ? "check_circle" : "error"}
+              </span>
+              <p className={`text-sm ${activateResult.success ? "text-green-300" : "text-red-300"}`}>
+                {activateResult.message}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Stats Cards */}

@@ -374,8 +374,7 @@ async def check_academy_access(
 ) -> JSONResponse:
     """Check if user has academy access.
 
-    로그인한 사용자는 모두 접근 가능.
-    수강 정보가 있으면 cohort/track 정보도 반환.
+    결제 완료된 수강생(paid) 또는 관리자만 접근 가능.
     """
     user_id = user.get("user_id")
     user_email = user.get("email", "").lower()
@@ -383,7 +382,7 @@ async def check_academy_access(
     # Check if user is admin
     is_admin = user_email in settings.MASTER_ADMIN_EMAIL_SET
 
-    # Check for paid application (optional - for cohort info)
+    # Check for paid application
     result = await db.execute(
         select(CrebitApplication)
         .where(CrebitApplication.owner_id == user_id)
@@ -391,10 +390,21 @@ async def check_academy_access(
     )
     application = result.scalar_one_or_none()
 
-    # 로그인만 하면 접근 가능
+    # 관리자 또는 결제 완료 수강생만 접근 가능
+    can_access = is_admin or application is not None
+
+    if not can_access:
+        return JSONResponse({
+            "can_access": False,
+            "cohort": None,
+            "track": None,
+            "enrolled_at": None,
+            "is_admin": False,
+        }, status_code=403)
+
     return JSONResponse({
         "can_access": True,
-        "cohort": application.cohort if application else "체험판",
+        "cohort": application.cohort if application else "관리자",
         "track": application.track if application else None,
         "enrolled_at": application.paid_at.isoformat() if application and application.paid_at else None,
         "is_admin": is_admin,

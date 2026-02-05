@@ -1791,6 +1791,25 @@ class ApiClient {
     });
   }
 
+  /**
+   * Activate academy student by Gmail (admin only).
+   * Creates new application if not exists.
+   */
+  async activateAcademyStudent(
+    googleEmail: string,
+    name?: string,
+    cohort?: string
+  ): Promise<AcademyActivateResponse> {
+    return this.request<AcademyActivateResponse>(`/api/v1/admin/academy/activate`, {
+      method: "POST",
+      body: JSON.stringify({
+        google_email: googleEmail,
+        name: name || "",
+        cohort: cohort || "1기",
+      }),
+    });
+  }
+
   // --- Credits API ---
 
   async getCreditsBalance(): Promise<CreditBalance> {
@@ -3087,6 +3106,14 @@ export interface AcademyLinkResponse {
   application_id?: string;
   user_id?: string;
   message: string;
+}
+
+export interface AcademyActivateResponse {
+  success: boolean;
+  application_id?: string;
+  user_id?: string;
+  message: string;
+  already_exists?: boolean;
 }
 
 // --- Crebit Types ---
