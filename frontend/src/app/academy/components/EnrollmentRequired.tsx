@@ -77,7 +77,7 @@ export function EnrollmentRequired() {
             <p className="text-sm text-gray-500 mt-8">
               이미 결제하셨나요?{" "}
               <a
-                href="mailto:support@crebit.studio"
+                href="mailto:ted.taeeun.kim@gmail.com"
                 className="text-purple-400 hover:text-purple-300 hover:underline transition-colors"
               >
                 문의하기
