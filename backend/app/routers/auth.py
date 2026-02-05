@@ -209,6 +209,18 @@ async def google_callback(
     await db.commit()
     await db.refresh(account)
 
+    # 로그인 시 crebit_applications와 자동 연결 (email 매칭)
+    # owner_id가 null인 레코드 중 email이 일치하면 연결
+    app_result = await db.execute(
+        select(CrebitApplication)
+        .where(CrebitApplication.email == email.lower())
+        .where(CrebitApplication.owner_id.is_(None))
+    )
+    pending_application = app_result.scalar_one_or_none()
+    if pending_application:
+        pending_application.owner_id = account.user_id
+        await db.commit()
+
     await get_or_create_user_credits(db, account.user_id)
 
     session_payload = {
