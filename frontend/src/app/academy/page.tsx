@@ -522,13 +522,10 @@ function Builder1Content() {
   const parsedTimestamps = parseTimestamps(timestampInput);
   const allTimestamps = detectedTimestamps.length > 0 ? detectedTimestamps : parsedTimestamps;
 
-  // Format for Builder1 input
+  // Format for Builder1 input - 타임스탬프만
   const formatForBuilder1 = (): string => {
     if (allTimestamps.length === 0) return "";
-    return `FFmpeg Scene Detection Results (threshold 0.18):
-${allTimestamps.map((t, i) => `- Scene ${String(i + 1).padStart(2, '0')}: ${t}`).join('\n')}
-
-위 타임스탬프를 기준으로 영상을 분석해주세요.`;
+    return allTimestamps.join('\n');
   };
 
   const handleCopy = async () => {
