@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { api, type AcademyApplication } from "@/lib/api";
+import { api, type AcademyApplication, type AcademyDeactivateResponse } from "@/lib/api";
 
 type StatusFilter = "all" | "pending" | "paid" | "cancelled" | "refunded";
 
@@ -79,13 +79,20 @@ export function ApplicationsTab({ onDataUpdate }: ApplicationsTabProps) {
     const [searchTerm, setSearchTerm] = useState("");
     const [total, setTotal] = useState(0);
 
-    // Modal state
+    // Link Modal state
     const [linkModalOpen, setLinkModalOpen] = useState(false);
     const [selectedApp, setSelectedApp] = useState<AcademyApplication | null>(null);
     const [linkEmail, setLinkEmail] = useState("");
     const [linking, setLinking] = useState(false);
     const [linkError, setLinkError] = useState<string | null>(null);
     const [linkSuccess, setLinkSuccess] = useState<string | null>(null);
+
+    // Deactivate Modal state
+    const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
+    const [deactivateApp, setDeactivateApp] = useState<AcademyApplication | null>(null);
+    const [deactivating, setDeactivating] = useState(false);
+    const [deactivateError, setDeactivateError] = useState<string | null>(null);
+    const [deactivateSuccess, setDeactivateSuccess] = useState<string | null>(null);
 
     // Fetch applications
     const fetchApplications = useCallback(async () => {
@@ -148,6 +155,41 @@ export function ApplicationsTab({ onDataUpdate }: ApplicationsTabProps) {
             setLinkError(err instanceof Error ? err.message : "연결 중 오류가 발생했습니다.");
         } finally {
             setLinking(false);
+        }
+    };
+
+    // Open deactivate modal
+    const openDeactivateModal = (app: AcademyApplication) => {
+        setDeactivateApp(app);
+        setDeactivateError(null);
+        setDeactivateSuccess(null);
+        setDeactivateModalOpen(true);
+    };
+
+    // Handle deactivate
+    const handleDeactivate = async () => {
+        if (!deactivateApp) return;
+
+        setDeactivating(true);
+        setDeactivateError(null);
+        setDeactivateSuccess(null);
+
+        try {
+            const response = await api.deactivateAcademyStudent(deactivateApp.email);
+
+            if (response.success) {
+                setDeactivateSuccess(response.message);
+                setTimeout(() => {
+                    setDeactivateModalOpen(false);
+                    fetchApplications();
+                }, 1500);
+            } else {
+                setDeactivateError(response.message);
+            }
+        } catch (err) {
+            setDeactivateError(err instanceof Error ? err.message : "비활성화 중 오류가 발생했습니다.");
+        } finally {
+            setDeactivating(false);
         }
     };
 
@@ -299,14 +341,24 @@ export function ApplicationsTab({ onDataUpdate }: ApplicationsTabProps) {
                                             )}
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            {app.status === "paid" && !app.owner_id && (
-                                                <button
-                                                    onClick={() => openLinkModal(app)}
-                                                    className="px-3 py-1.5 rounded-lg bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 transition-colors text-sm font-medium"
-                                                >
-                                                    연결
-                                                </button>
-                                            )}
+                                            <div className="flex items-center justify-end gap-2">
+                                                {app.status === "paid" && !app.owner_id && (
+                                                    <button
+                                                        onClick={() => openLinkModal(app)}
+                                                        className="px-3 py-1.5 rounded-lg bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 transition-colors text-sm font-medium"
+                                                    >
+                                                        연결
+                                                    </button>
+                                                )}
+                                                {app.status === "paid" && (
+                                                    <button
+                                                        onClick={() => openDeactivateModal(app)}
+                                                        className="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-300 hover:bg-red-500/30 transition-colors text-sm font-medium"
+                                                    >
+                                                        비활성화
+                                                    </button>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -411,6 +463,97 @@ export function ApplicationsTab({ onDataUpdate }: ApplicationsTabProps) {
                                     </>
                                 ) : (
                                     "연결"
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Deactivate Modal */}
+            {deactivateModalOpen && deactivateApp && (
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+                    <div className="bg-[#0f0f11] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl">
+                        {/* Header */}
+                        <div className="flex items-center justify-between p-6 border-b border-white/10">
+                            <div className="flex items-center gap-3">
+                                <span className="material-symbols-outlined text-red-400">person_off</span>
+                                <h3 className="text-lg font-bold text-white">수강생 비활성화</h3>
+                            </div>
+                            <button
+                                onClick={() => setDeactivateModalOpen(false)}
+                                className="text-gray-400 hover:text-white transition-colors"
+                            >
+                                <span className="material-symbols-outlined">close</span>
+                            </button>
+                        </div>
+
+                        {/* Body */}
+                        <div className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm text-gray-400 mb-2">수강생</label>
+                                <div className="px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white">
+                                    {deactivateApp.name} ({deactivateApp.email})
+                                </div>
+                            </div>
+
+                            {/* Warning */}
+                            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                                <div className="flex items-start gap-2">
+                                    <span className="material-symbols-outlined text-red-400 text-lg mt-0.5">
+                                        warning
+                                    </span>
+                                    <p className="text-sm text-red-300">
+                                        이 수강생의 Academy 접근 권한이 취소됩니다. 계속하시겠습니까?
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Error */}
+                            {deactivateError && (
+                                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                                    <div className="flex items-start gap-2">
+                                        <span className="material-symbols-outlined text-red-400 text-lg mt-0.5">
+                                            error
+                                        </span>
+                                        <p className="text-sm text-red-300">{deactivateError}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Success */}
+                            {deactivateSuccess && (
+                                <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                                    <div className="flex items-start gap-2">
+                                        <span className="material-symbols-outlined text-green-400 text-lg mt-0.5">
+                                            check_circle
+                                        </span>
+                                        <p className="text-sm text-green-300">{deactivateSuccess}</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="flex items-center justify-end gap-3 p-6 border-t border-white/10">
+                            <button
+                                onClick={() => setDeactivateModalOpen(false)}
+                                className="px-4 py-2 rounded-lg bg-white/5 text-gray-300 hover:bg-white/10 transition-colors font-medium"
+                            >
+                                취소
+                            </button>
+                            <button
+                                onClick={handleDeactivate}
+                                disabled={deactivating}
+                                className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2"
+                            >
+                                {deactivating ? (
+                                    <>
+                                        <div className="w-4 h-4 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+                                        처리 중...
+                                    </>
+                                ) : (
+                                    "비활성화"
                                 )}
                             </button>
                         </div>

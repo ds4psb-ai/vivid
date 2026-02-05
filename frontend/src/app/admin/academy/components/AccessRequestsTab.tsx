@@ -5,6 +5,7 @@ import {
     CheckCircle,
     XCircle,
     Mail,
+    Undo2,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { EmptyState } from "@/components/shared";
@@ -39,11 +40,13 @@ function RequestCard({
     item,
     onApprove,
     onReject,
+    onRevoke,
     processing,
 }: {
     item: AccessRequestItem;
     onApprove: () => void;
     onReject: () => void;
+    onRevoke: () => void;
     processing: boolean;
 }) {
     const statusColors: Record<string, string> = {
@@ -99,6 +102,21 @@ function RequestCard({
                         >
                             <XCircle className="w-4 h-4" />
                             거절
+                        </Button>
+                    </div>
+                )}
+
+                {item.status === "approved" && (
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={onRevoke}
+                            disabled={processing}
+                            className="gap-2 text-orange-400 hover:text-orange-300 hover:bg-orange-500/10"
+                        >
+                            <Undo2 className="w-4 h-4" />
+                            승인 취소
                         </Button>
                     </div>
                 )}
@@ -162,6 +180,18 @@ export function AccessRequestsTab({ onDataUpdate }: AccessRequestsTabProps) {
             await fetchData();
         } catch (err) {
             setError(err instanceof Error ? err.message : "거절 처리 실패");
+        } finally {
+            setProcessingId(null);
+        }
+    };
+
+    const handleRevoke = async (id: string) => {
+        setProcessingId(id);
+        try {
+            await api.revokeAccessRequest(id);
+            await fetchData();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "승인 취소 실패");
         } finally {
             setProcessingId(null);
         }
@@ -244,6 +274,7 @@ export function AccessRequestsTab({ onDataUpdate }: AccessRequestsTabProps) {
                                 item={item}
                                 onApprove={() => handleApprove(item.id)}
                                 onReject={() => handleReject(item.id)}
+                                onRevoke={() => handleRevoke(item.id)}
                                 processing={processingId === item.id}
                             />
                         ))}

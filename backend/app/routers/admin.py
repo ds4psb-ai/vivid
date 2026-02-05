@@ -1192,6 +1192,99 @@ async def bulk_activate_academy_students(
         results=results
     )
 
+class DeactivateStudentRequest(BaseModel):
+    """수강생 비활성화 요청."""
+    email: str = Field(..., min_length=5, max_length=255, description="비활성화할 수강생 이메일")
+
+
+class DeactivateStudentResponse(BaseModel):
+    """수강생 비활성화 응답."""
+    success: bool
+    message: str
+    deactivated: dict
+
+
+@router.post("/academy/deactivate", response_model=DeactivateStudentResponse)
+async def deactivate_academy_student(
+    request: DeactivateStudentRequest,
+    admin_id: str = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """관리자: 수강생 권한 비활성화
+
+    1. CrebitApplication.status → "cancelled", owner_id → None
+    2. AccessRequest.status → "rejected"
+    """
+    from app.models import AccessRequest
+
+    email_lower = request.email.strip().lower()
+    deactivated = {"application": False, "access_request": False}
+
+    # 1. CrebitApplication 비활성화 (이메일 또는 owner_id로 찾기)
+    # 먼저 이메일로 찾기
+    app_query = (
+        select(CrebitApplication)
+        .where(CrebitApplication.email == email_lower)
+        .where(CrebitApplication.status == "paid")
+    )
+    app_result = await db.execute(app_query)
+    application = app_result.scalar_one_or_none()
+
+    # 이메일로 못 찾으면 UserAccount → user_id → CrebitApplication
+    if not application:
+        user_query = select(UserAccount).where(UserAccount.email == email_lower)
+        user_result = await db.execute(user_query)
+        user_account = user_result.scalar_one_or_none()
+
+        if user_account:
+            app_query2 = (
+                select(CrebitApplication)
+                .where(CrebitApplication.owner_id == user_account.user_id)
+                .where(CrebitApplication.status == "paid")
+            )
+            app_result2 = await db.execute(app_query2)
+            application = app_result2.scalar_one_or_none()
+
+    if application:
+        application.status = "cancelled"
+        application.owner_id = None
+        application.notes = f"관리자({admin_id})에 의해 비활성화됨"
+        deactivated["application"] = True
+
+    # 2. AccessRequest 비활성화 (이메일로 찾기)
+    ar_query = (
+        select(AccessRequest)
+        .where(AccessRequest.email == email_lower)
+        .where(AccessRequest.status == "approved")
+    )
+    ar_result = await db.execute(ar_query)
+    access_request = ar_result.scalar_one_or_none()
+
+    if access_request:
+        access_request.status = "rejected"
+        access_request.admin_notes = f"관리자({admin_id})에 의해 승인 취소됨"
+        deactivated["access_request"] = True
+
+    if not deactivated["application"] and not deactivated["access_request"]:
+        return DeactivateStudentResponse(
+            success=False,
+            message=f"해당 이메일({email_lower})의 활성화된 수강 기록을 찾을 수 없습니다.",
+            deactivated=deactivated,
+        )
+
+    try:
+        await db.commit()
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"비활성화 실패: {str(e)}")
+
+    return DeactivateStudentResponse(
+        success=True,
+        message=f"{email_lower} 수강생 비활성화 완료",
+        deactivated=deactivated,
+    )
+
+
 @router.get("/circuit-breakers")
 async def list_circuit_breakers(
     _admin: str = Depends(require_admin),

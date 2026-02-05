@@ -1810,6 +1810,32 @@ class ApiClient {
     });
   }
 
+  /**
+   * Deactivate academy student by email (admin only).
+   * Deactivates both CrebitApplication and AccessRequest.
+   */
+  async deactivateAcademyStudent(email: string): Promise<AcademyDeactivateResponse> {
+    return this.request<AcademyDeactivateResponse>(`/api/v1/admin/academy/deactivate`, {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+  }
+
+  /**
+   * Revoke an approved access request (admin only).
+   * Also deactivates linked CrebitApplication.
+   */
+  async revokeAccessRequest(requestId: string): Promise<{
+    success: boolean;
+    message: string;
+    application_deactivated: boolean;
+  }> {
+    return this.request(`/api/v1/access-request/admin/${requestId}/revoke`, {
+      method: "PATCH",
+      body: JSON.stringify({}),
+    });
+  }
+
   // --- Credits API ---
 
   async getCreditsBalance(): Promise<CreditBalance> {
@@ -3114,6 +3140,15 @@ export interface AcademyActivateResponse {
   user_id?: string;
   message: string;
   already_exists?: boolean;
+}
+
+export interface AcademyDeactivateResponse {
+  success: boolean;
+  message: string;
+  deactivated: {
+    application: boolean;
+    access_request: boolean;
+  };
 }
 
 // --- Crebit Types ---

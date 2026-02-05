@@ -222,30 +222,59 @@ async def admin_approve_request(
     _admin: dict = Depends(require_admin_user),
     db: AsyncSession = Depends(get_db),
 ) -> JSONResponse:
-    """Approve an access request (admin only)."""
+    """Approve an access request (admin only).
+
+    Also auto-creates a CrebitApplication with status='paid' if not exists.
+    """
     from uuid import UUID
-    
+    from datetime import datetime
+    from app.models import CrebitApplication, UserAccount
+
     try:
         rid = UUID(request_id)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid request ID")
-    
+
     result = await db.execute(
         select(AccessRequest).where(AccessRequest.id == rid)
     )
     request = result.scalar_one_or_none()
-    
+
     if not request:
         raise HTTPException(status_code=404, detail="Request not found")
-    
+
     request.status = "approved"
     if body.notes:
         request.admin_notes = body.notes
+
+    # Auto-create CrebitApplication if not exists
+    application_created = False
+    existing_app = await db.execute(
+        select(CrebitApplication)
+        .where(CrebitApplication.owner_id == request.user_id)
+        .where(CrebitApplication.status == "paid")
+    )
+    if not existing_app.scalar_one_or_none():
+        new_app = CrebitApplication(
+            name=request.name or request.email.split("@")[0],
+            email=request.email,
+            phone="",
+            track="A",
+            status="paid",
+            owner_id=request.user_id,
+            paid_at=datetime.utcnow(),
+            cohort="1기",
+            notes="AccessRequest 승인으로 자동 생성",
+        )
+        db.add(new_app)
+        application_created = True
+
     await db.commit()
-    
+
     return JSONResponse({
         "success": True,
         "message": f"Request for {request.email} approved",
+        "application_created": application_created,
     })
 
 
@@ -258,26 +287,84 @@ async def admin_reject_request(
 ) -> JSONResponse:
     """Reject an access request (admin only)."""
     from uuid import UUID
-    
+
     try:
         rid = UUID(request_id)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid request ID")
-    
+
     result = await db.execute(
         select(AccessRequest).where(AccessRequest.id == rid)
     )
     request = result.scalar_one_or_none()
-    
+
     if not request:
         raise HTTPException(status_code=404, detail="Request not found")
-    
+
     request.status = "rejected"
     if body.notes:
         request.admin_notes = body.notes
     await db.commit()
-    
+
     return JSONResponse({
         "success": True,
         "message": f"Request for {request.email} rejected",
+    })
+
+
+@router.patch("/admin/{request_id}/revoke")
+async def admin_revoke_request(
+    request_id: str,
+    body: AdminActionRequest = AdminActionRequest(),
+    _admin: dict = Depends(require_admin_user),
+    db: AsyncSession = Depends(get_db),
+) -> JSONResponse:
+    """Revoke an approved access request (admin only).
+
+    Reverts approved status to rejected and deactivates linked CrebitApplication.
+    """
+    from uuid import UUID
+    from app.models import CrebitApplication
+
+    try:
+        rid = UUID(request_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid request ID")
+
+    result = await db.execute(
+        select(AccessRequest).where(AccessRequest.id == rid)
+    )
+    request = result.scalar_one_or_none()
+
+    if not request:
+        raise HTTPException(status_code=404, detail="Request not found")
+
+    if request.status != "approved":
+        raise HTTPException(status_code=400, detail="Only approved requests can be revoked")
+
+    # Revoke access request
+    request.status = "rejected"
+    request.admin_notes = (body.notes or "") + " [승인 취소됨]"
+
+    # Deactivate linked CrebitApplication
+    application_deactivated = False
+    app_result = await db.execute(
+        select(CrebitApplication)
+        .where(CrebitApplication.owner_id == request.user_id)
+        .where(CrebitApplication.status == "paid")
+    )
+    application = app_result.scalar_one_or_none()
+
+    if application:
+        application.status = "cancelled"
+        application.owner_id = None
+        application.notes = (application.notes or "") + " [승인 취소로 비활성화됨]"
+        application_deactivated = True
+
+    await db.commit()
+
+    return JSONResponse({
+        "success": True,
+        "message": f"Request for {request.email} revoked",
+        "application_deactivated": application_deactivated,
     })
