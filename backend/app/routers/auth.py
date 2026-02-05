@@ -20,7 +20,7 @@ from app.credit_service import get_or_create_user_credits
 from app.database import get_db
 from app.dependencies import require_authenticated_user
 from app.middleware.csrf import generate_csrf_token
-from app.models import UserAccount, CrebitApplication
+from app.models import UserAccount, CrebitApplication, AccessRequest
 
 CSRF_COOKIE_NAME = "csrf_token"
 
@@ -406,7 +406,7 @@ async def check_academy_access(
     # Check if user is admin
     is_admin = user_email in settings.MASTER_ADMIN_EMAIL_SET
 
-    # Check for paid application
+    # Check for paid application (crebit_applications)
     result = await db.execute(
         select(CrebitApplication)
         .where(CrebitApplication.owner_id == user_id)
@@ -414,8 +414,16 @@ async def check_academy_access(
     )
     application = result.scalar_one_or_none()
 
-    # 관리자 또는 결제 완료 수강생만 접근 가능
-    can_access = is_admin or application is not None
+    # Check for approved access request (access_requests)
+    access_result = await db.execute(
+        select(AccessRequest)
+        .where(AccessRequest.user_id == user_id)
+        .where(AccessRequest.status == "approved")
+    )
+    approved_request = access_result.scalar_one_or_none()
+
+    # 관리자 또는 결제 완료 수강생 또는 승인된 접근 요청
+    can_access = is_admin or application is not None or approved_request is not None
 
     if not can_access:
         return JSONResponse({
@@ -426,11 +434,25 @@ async def check_academy_access(
             "is_admin": False,
         }, status_code=403)
 
+    # Determine cohort/track info
+    if application:
+        cohort = application.cohort
+        track = application.track
+        enrolled_at = application.paid_at.isoformat() if application.paid_at else None
+    elif approved_request:
+        cohort = "승인됨"
+        track = None
+        enrolled_at = approved_request.updated_at.isoformat() if approved_request.updated_at else None
+    else:
+        cohort = "관리자"
+        track = None
+        enrolled_at = None
+
     return JSONResponse({
         "can_access": True,
-        "cohort": application.cohort if application else "관리자",
-        "track": application.track if application else None,
-        "enrolled_at": application.paid_at.isoformat() if application and application.paid_at else None,
+        "cohort": cohort,
+        "track": track,
+        "enrolled_at": enrolled_at,
         "is_admin": is_admin,
     })
 
