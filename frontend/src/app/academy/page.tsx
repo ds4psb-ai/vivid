@@ -410,7 +410,7 @@ function SetupContent() {
 // ============ Anchor Content ============
 function AnchorContent() {
   const PROMPT_1 = `ffmpeg 설치해줘`;
-  const PROMPT_2 = `영상 프로젝트 폴더에 넣고, 첫 프레임 + 씬 전환 프레임 추출해줘 (threshold 0.18). 타임스탬프는 0.01초로 올림해서 복붙 가능하게 따로 알려줘.`;
+  const PROMPT_2 = `영상 프로젝트 폴더에 넣고, 첫 프레임 + 씬 전환 프레임 추출해줘 (threshold 0.25). 타임스탬프는 0.01초로 올림해서 복붙 가능하게 따로 알려줘.`;
 
   const [copied1, setCopied1] = useState(false);
   const [copied2, setCopied2] = useState(false);
@@ -780,7 +780,7 @@ function Builder1Content() {
                 </div>
                 <div>
                   <p className="text-emerald-400 font-bold">{detectedTimestamps.length}개 씬 감지 완료!</p>
-                  <p className="text-emerald-400/60 text-xs">threshold 0.18 기준</p>
+                  <p className="text-emerald-400/60 text-xs">threshold 0.25 기준</p>
                 </div>
               </div>
               <button
