@@ -10,9 +10,8 @@ import { useSearchParams } from "next/navigation";
 
 // Tool Links
 const TOOL_LINKS = {
-  builder1: "https://aistudio.google.com/app/prompts?state=%7B%22ids%22:%5B%221D3hHLIb6-e4QJQ3tDrOtTb8qZ80cOabz%22%5D,%22action%22:%22open%22,%22userId%22:%22109914641793744493802%22,%22resourceKeys%22:%7B%7D%7D&usp=sharing",
+  builder: "https://aistudio.google.com/app/prompts?state=%7B%22ids%22:%5B%221aReu3uy_0Ayxo6KhjC1OS-EJUmOmSLVA%22%5D,%22action%22:%22open%22,%22userId%22:%22109914641793744493802%22,%22resourceKeys%22:%7B%7D%7D&usp=sharing",
   vibe: "https://aistudio.google.com/app/prompts?state=%7B%22ids%22:%5B%221wKUuefdolzOVFp7YAxSfcO13prtAWvgu%22%5D,%22action%22:%22open%22,%22userId%22:%22109914641793744493802%22,%22resourceKeys%22:%7B%7D%7D&usp=sharing",
-  builder2: "https://aistudio.google.com/app/prompts?state=%7B%22ids%22:%5B%221W-ooRbimFIPbrOfAptWKcThofLDe9GF0%22%5D,%22action%22:%22open%22,%22userId%22:%22109914641793744493802%22,%22resourceKeys%22:%7B%7D%7D&usp=sharing",
   antigravity: "https://antigravity.google",
 };
 
@@ -284,35 +283,25 @@ function HomeContent({ setActiveTab }: { setActiveTab: (tab: TabKey) => void }) 
       </div>
 
       {/* Quick Links */}
-      <div className="max-w-3xl mx-auto">
-        <div className="grid grid-cols-3 gap-4">
+      <div className="max-w-2xl mx-auto">
+        <div className="grid grid-cols-2 gap-4">
           <a
-            href={TOOL_LINKS.builder1}
+            href={TOOL_LINKS.builder}
             target="_blank"
             rel="noopener noreferrer"
-            className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-purple-500/30 transition-all text-center group"
+            className="p-6 rounded-xl bg-gradient-to-br from-purple-500/10 to-indigo-500/10 border border-purple-500/30 hover:border-purple-500/50 transition-all text-center group"
           >
-            <span className="material-symbols-outlined text-purple-400 text-2xl mb-2 block group-hover:scale-110 transition-transform">construction</span>
-            <p className="text-white font-bold text-sm">이미지 프롬프트 생성기</p>
-            <p className="text-gray-500 text-xs mt-1">AI Studio</p>
-          </a>
-          <a
-            href={TOOL_LINKS.builder2}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-purple-500/30 transition-all text-center group"
-          >
-            <span className="material-symbols-outlined text-purple-400 text-2xl mb-2 block group-hover:scale-110 transition-transform">theater_comedy</span>
-            <p className="text-white font-bold text-sm">패러디 오마주 엔진</p>
-            <p className="text-gray-500 text-xs mt-1">AI Studio</p>
+            <span className="material-symbols-outlined text-purple-400 text-3xl mb-3 block group-hover:scale-110 transition-transform">movie_filter</span>
+            <p className="text-white font-bold">통합빌더</p>
+            <p className="text-gray-500 text-xs mt-1">오마주 + 변주 프롬프트 생성</p>
           </a>
           <button
             onClick={() => setActiveTab("vibe")}
-            className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-purple-500/30 transition-all text-center group"
+            className="p-6 rounded-xl bg-white/5 border border-white/10 hover:border-purple-500/30 transition-all text-center group"
           >
-            <span className="material-symbols-outlined text-purple-400 text-2xl mb-2 block group-hover:scale-110 transition-transform">psychology</span>
-            <p className="text-white font-bold text-sm">바이브 철학관</p>
-            <p className="text-gray-500 text-xs mt-1">Optional</p>
+            <span className="material-symbols-outlined text-purple-400 text-3xl mb-3 block group-hover:scale-110 transition-transform">psychology</span>
+            <p className="text-white font-bold">바이브 철학관</p>
+            <p className="text-gray-500 text-xs mt-1">나의 감성 프로필 (Optional)</p>
           </button>
         </div>
       </div>
@@ -367,9 +356,8 @@ function SetupContent() {
       <ContentCard>
         <h3 className="text-lg font-bold text-white mb-4">도구 바로가기</h3>
         <div className="space-y-3">
-          <WhiteButton href={TOOL_LINKS.builder1}>🔍 이미지 프롬프트 생성기</WhiteButton>
+          <WhiteButton href={TOOL_LINKS.builder}>🎬 통합빌더</WhiteButton>
           <WhiteButton href={TOOL_LINKS.vibe}>🔮 바이브 철학관</WhiteButton>
-          <WhiteButton href={TOOL_LINKS.builder2}>🎭 패러디 오마주 엔진</WhiteButton>
         </div>
       </ContentCard>
     </div>
@@ -785,7 +773,7 @@ function PromptContent() {
     <div className="max-w-3xl mx-auto space-y-8">
       <PageHeader title="통합빌더" sub="영상 → 씬 분석 → 이미지/모션 프롬프트 생성" />
       <ContentCard highlight>
-        <WhiteButton href={TOOL_LINKS.builder1} large>🎬 통합빌더 열기</WhiteButton>
+        <WhiteButton href={TOOL_LINKS.builder} large>🎬 통합빌더 열기</WhiteButton>
         <p className="text-gray-500 text-xs mt-3 text-center">Google AI Studio에서 실행됩니다</p>
       </ContentCard>
       <ContentCard>

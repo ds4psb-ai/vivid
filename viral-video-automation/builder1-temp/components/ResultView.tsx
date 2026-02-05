@@ -32,30 +32,70 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleDownload = () => {
-    let rawContent = `# 🎬 BUILDER 1 OUTPUT - RAW\n\n`;
-    rawContent += `> Generated: ${new Date().toLocaleString()}\n`;
-    rawContent += `> Builder Version: v8.0\n`;
-    rawContent += `> Note: IMAGE + MOTION 통합 워크플로우\n\n`;
+  // 오마쥬 워크플로우 다운로드 (STEP 4)
+  const handleDownloadHomage = () => {
+    // STEP 4 메시지에서 통합 워크플로우 찾기
+    const step4Message = messages.find(
+      (msg) => msg.role === 'model' && msg.step === 4
+    );
 
-    messages.forEach((msg) => {
-      if (msg.role === 'model') {
-        rawContent += `\n---\n\n## 📍 STEP ${msg.step || 'Unknown'}\n\n`;
-        rawContent += msg.text;
-        rawContent += `\n`;
-      }
-    });
+    if (!step4Message) {
+      alert('오마쥬 워크플로우가 아직 생성되지 않았습니다.');
+      return;
+    }
+
+    let rawContent = `# 🎬 오마쥬 워크플로우\n\n`;
+    rawContent += `> Generated: ${new Date().toLocaleString()}\n`;
+    rawContent += `> Builder Version: v8.1\n`;
+    rawContent += `> Type: IMAGE + MOTION 통합 워크플로우\n\n`;
+    rawContent += `---\n\n`;
+    rawContent += step4Message.text;
 
     const blob = new Blob([rawContent], { type: 'text/markdown;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `BUILDER1_OUTPUT_${new Date().toISOString().slice(0, 10)}.md`;
+    link.download = `HOMAGE_WORKFLOW_${new Date().toISOString().slice(0, 10)}.md`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
+
+  // 변주 워크플로우 다운로드 (STEP 5)
+  const handleDownloadVariation = () => {
+    // STEP 5 메시지에서 변주 워크플로우 찾기
+    const step5Message = messages.find(
+      (msg) => msg.role === 'model' && msg.step === 5
+    );
+
+    if (!step5Message) {
+      alert('변주 워크플로우가 아직 생성되지 않았습니다.');
+      return;
+    }
+
+    let rawContent = `# 🎬 변주 워크플로우\n\n`;
+    rawContent += `> Generated: ${new Date().toLocaleString()}\n`;
+    rawContent += `> Builder Version: v8.1\n`;
+    rawContent += `> Type: 변주 (Variation) 워크플로우\n\n`;
+    rawContent += `---\n\n`;
+    rawContent += step5Message.text;
+
+    const blob = new Blob([rawContent], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `VARIATION_WORKFLOW_${new Date().toISOString().slice(0, 10)}.md`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  // STEP 5 완료 여부 확인
+  const hasVariationWorkflow = messages.some(
+    (msg) => msg.role === 'model' && msg.step === 5
+  );
 
   return (
     <div className="w-full h-[80vh] flex flex-col bg-[#0c0c0c] border border-gray-800 rounded-xl overflow-hidden shadow-2xl relative">
@@ -69,17 +109,28 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           </div>
           <span className="text-sm font-bold text-gray-200 flex items-center gap-2">
             <Terminal className="w-4 h-4 text-green-500" />
-            오마쥬 빌더 (Step {currentStep}/6)
+            오마쥬 빌더 (Step {currentStep}/5)
           </span>
         </div>
-        <div className="flex items-center gap-3">
-          {currentStep >= 5 && (
+        <div className="flex items-center gap-2">
+          {/* 오마쥬 워크플로우 다운로드 (STEP 4+) */}
+          {currentStep >= 4 && (
             <button
-              onClick={handleDownload}
+              onClick={handleDownloadHomage}
               className="text-xs px-3 py-1.5 bg-accent-blue/10 text-accent-blue border border-accent-blue/30 rounded-md hover:bg-accent-blue/20 flex items-center gap-2 transition-all font-medium"
             >
               <Download className="w-3 h-3" />
-              채팅 원본(Raw) 다운로드 (.md)
+              오마쥬 (.md)
+            </button>
+          )}
+          {/* 변주 워크플로우 다운로드 (STEP 5) */}
+          {hasVariationWorkflow && (
+            <button
+              onClick={handleDownloadVariation}
+              className="text-xs px-3 py-1.5 bg-accent-purple/10 text-accent-purple border border-accent-purple/30 rounded-md hover:bg-accent-purple/20 flex items-center gap-2 transition-all font-medium"
+            >
+              <Download className="w-3 h-3" />
+              변주 (.md)
             </button>
           )}
           <button
@@ -95,7 +146,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       <div className="w-full h-1 bg-gray-800">
         <div
           className="h-full bg-gradient-to-r from-accent-blue via-accent-purple to-accent-cyan transition-all duration-500 ease-out"
-          style={{ width: `${(currentStep / 6) * 100}%` }}
+          style={{ width: `${(currentStep / 5) * 100}%` }}
         />
       </div>
 
@@ -147,62 +198,18 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
       {/* Input Area */}
       <div className="p-4 bg-gray-900 border-t border-gray-800">
-        <div className="max-w-4xl mx-auto space-y-4">
-          {/* STEP 1: 문화권 선택 버튼 */}
-          {currentStep === 1 && !isLoading && (
-            <div className="space-y-3">
-              <p className="text-center text-sm text-gray-400 mb-3">
-                🌏 오마쥬 타겟 문화권을 선택하세요
-              </p>
-              <div className="grid grid-cols-5 gap-2">
-                <button
-                  onClick={() => onSendMessage("A")}
-                  className="py-3 px-2 rounded-lg font-medium text-sm bg-gradient-to-r from-accent-blue to-accent-purple text-white hover:shadow-[0_0_15px_rgba(59,130,246,0.5)] active:scale-95 transition-all flex flex-col items-center gap-1"
-                >
-                  <span className="text-lg">🇰🇷</span>
-                  <span>한국</span>
-                  <span className="text-xs opacity-70">(기본)</span>
-                </button>
-                <button
-                  onClick={() => onSendMessage("B")}
-                  className="py-3 px-2 rounded-lg font-medium text-sm bg-gray-800 border border-gray-700 text-gray-200 hover:bg-gray-700 hover:border-accent-purple active:scale-95 transition-all flex flex-col items-center gap-1"
-                >
-                  <span className="text-lg">🇯🇵</span>
-                  <span>일본</span>
-                </button>
-                <button
-                  onClick={() => onSendMessage("C")}
-                  className="py-3 px-2 rounded-lg font-medium text-sm bg-gray-800 border border-gray-700 text-gray-200 hover:bg-gray-700 hover:border-accent-purple active:scale-95 transition-all flex flex-col items-center gap-1"
-                >
-                  <span className="text-lg">🇺🇸</span>
-                  <span>서양</span>
-                </button>
-                <button
-                  onClick={() => onSendMessage("D")}
-                  className="py-3 px-2 rounded-lg font-medium text-sm bg-gray-800 border border-gray-700 text-gray-200 hover:bg-gray-700 hover:border-accent-purple active:scale-95 transition-all flex flex-col items-center gap-1"
-                >
-                  <span className="text-lg">🇹🇭</span>
-                  <span>동남아</span>
-                </button>
-                <button
-                  onClick={() => onSendMessage("E")}
-                  className="py-3 px-2 rounded-lg font-medium text-sm bg-gray-800 border border-gray-700 text-gray-200 hover:bg-gray-700 hover:border-accent-purple active:scale-95 transition-all flex flex-col items-center gap-1"
-                >
-                  <span className="text-lg">🌍</span>
-                  <span>원본</span>
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 2-5: 다음 단계 버튼 + 텍스트 입력 */}
-          {currentStep > 1 && currentStep <= 6 && !isLoading && (
-            <div className="space-y-3">
+        <div className="max-w-4xl mx-auto space-y-3">
+          {/* STEP 1-5: 텍스트 입력 + 다음 버튼 */}
+          {currentStep <= 5 && !isLoading && (
+            <>
               {/* 텍스트 입력 */}
               <div className="flex gap-2">
                 <input
                   type="text"
-                  placeholder="피드백이나 수정 요청을 입력하세요..."
+                  placeholder={currentStep === 1
+                    ? "오마쥬 스타일 입력 (예: 한국인 20대, 일본 스타일...) 기본값: 한국인"
+                    : "피드백이나 수정 요청을 입력하세요..."
+                  }
                   className="flex-1 px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue/50"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && e.currentTarget.value.trim()) {
@@ -231,15 +238,23 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 className="w-full py-4 px-6 rounded-xl font-bold text-lg bg-gradient-to-r from-accent-blue to-accent-purple text-white hover:shadow-[0_0_20px_rgba(59,130,246,0.5)] active:scale-95 transition-all flex items-center justify-center gap-2"
               >
                 <Play className="w-5 h-5" />
-                {currentStep === 5 ? "통합 워크플로우 생성" : currentStep === 6 ? "변주 생성 (선택)" : "다음 단계"}
+                {currentStep === 1 ? "기본값(한국인)으로 진행" :
+                 currentStep === 4 ? "통합 워크플로우 생성" :
+                 currentStep === 5 ? "변주 생성 (선택)" : "다음 단계"}
               </button>
 
-              {currentStep >= 5 && (
+              {currentStep === 1 && (
+                <p className="text-center text-xs text-gray-500">
+                  💡 오마쥬 스타일을 자유롭게 입력하거나, 기본값(한국인)으로 진행하세요
+                </p>
+              )}
+
+              {currentStep >= 4 && (
                 <p className="text-center text-xs text-gray-500">
                   💡 수정이 필요하면 위 입력창에 피드백을 작성하세요
                 </p>
               )}
-            </div>
+            </>
           )}
 
           {isLoading && (
@@ -253,9 +268,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             </div>
           )}
 
-          {currentStep > 6 && (
+          {currentStep > 5 && (
             <p className="text-center text-xs text-green-500 font-bold animate-pulse">
-              🎉 모든 작업이 완료되었습니다. 우측 상단의 [채팅 원본 다운로드] 버튼을 눌러 저장하세요.
+              🎉 모든 작업이 완료되었습니다. 우측 상단의 [오마쥬] / [변주] 버튼으로 각각 다운로드하세요.
             </p>
           )}
         </div>

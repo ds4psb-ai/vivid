@@ -7,6 +7,8 @@ import { startAnalysisChat, sendUserFeedback } from './services/geminiService';
 import { AppStatus, ChatMessage } from './types';
 import { ShieldAlert, Sparkles, Settings2, TableProperties } from 'lucide-react';
 
+const TOTAL_STEPS = 5; // V8.1: 6단계 → 5단계 축소
+
 const App: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [sceneTable, setSceneTable] = useState<string>('');
@@ -46,10 +48,28 @@ const App: React.FC = () => {
     try {
       const response = await sendUserFeedback(text);
 
+      // "다음" 관련 명령어 감지
+      const isNextCommand = /다음|계속|진행|next|좋습니다/i.test(text);
+
+      // 통합 워크플로우 감지 (STEP 4 완료 신호)
+      const hasIntegratedWorkflow = response.includes('🎬 오마쥬 워크플로우') ||
+                                     response.includes('## ⭐ 앵커 이미지');
+
+      // 변주 워크플로우 감지 (STEP 5 완료 신호)
+      const hasVariationWorkflow = response.includes('🎬 변주 워크플로우');
+
       let nextStep = currentStep;
-      if (currentStep < 6) {
+
+      if (hasVariationWorkflow) {
+        nextStep = 5; // 변주 워크플로우 = STEP 5
+      } else if (hasIntegratedWorkflow) {
+        nextStep = 4; // 통합 워크플로우 = STEP 4
+      } else if (isNextCommand && currentStep < TOTAL_STEPS) {
+        // "다음" 명령어 입력 시에만 Step 증가
         nextStep = currentStep + 1;
       }
+      // else: currentStep 유지 (피드백/오마쥬 스타일 입력 중)
+
       setCurrentStep(nextStep);
 
       setMessages([
@@ -57,7 +77,7 @@ const App: React.FC = () => {
         { role: 'model', text: response, step: nextStep }
       ]);
 
-      if (nextStep >= 6) {
+      if (nextStep >= TOTAL_STEPS) {
         setStatus('COMPLETE');
       } else {
         setStatus('WAITING_USER');
@@ -118,7 +138,7 @@ const App: React.FC = () => {
                   <div className="space-y-3 text-sm text-gray-400">
                     <p><span className="text-accent-blue font-medium">1.</span> Academy에서 씬 테이블 추출</p>
                     <p><span className="text-accent-blue font-medium">2.</span> 영상 + 씬 테이블 입력</p>
-                    <p><span className="text-accent-blue font-medium">3.</span> 6-STEP 프롬프트 생성</p>
+                    <p><span className="text-accent-blue font-medium">3.</span> 5-STEP 프롬프트 생성</p>
                   </div>
 
                   <div className="mt-8 pt-6 border-t border-gray-800">
