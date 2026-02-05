@@ -53,22 +53,27 @@ export const startAnalysisChat = async (
 
   // First message: Send video with FFmpeg timestamps and trigger Step 1
   const timestampMessage = `
-분석을 시작해주세요. [STEP 1: 입력 정리] 결과를 보여주세요.
+[STEP 1: 입력 정리]를 시작합니다.
 
 ## 씬 테이블 + 타임스탬프 (사용자 제공)
-아래는 이미 추출된 씬 전환 타임스탬프입니다. 이 타임스탬프를 그대로 사용하세요:
+아래는 이미 추출된 씬 전환 타임스탬프입니다:
 
 \`\`\`
 ${timestamps}
 \`\`\`
 
-위 타임스탬프 기반으로:
-1. 캐릭터 프로필 추출
-2. 앵커 씬 식별
-3. Visual Rhyme Phase 분류
-4. 구도 분석
+## 🌏 먼저 타겟 문화권을 선택해주세요:
 
-을 진행해주세요.
+오마쥬 타겟 문화권을 선택해주세요:
+
+🇰🇷 **[A] 한국 (기본값)** - Korean features, K-style fashion
+🇯🇵 **[B] 일본** - Japanese features, J-style fashion
+🇺🇸 **[C] 서양** - Western/Caucasian features
+🇹🇭 **[D] 동남아** - Southeast Asian features
+🌍 **[E] 원본 유지** - 원본 영상의 인종/문화 그대로
+
+**A/B/C/D/E 중 하나를 선택하시면 STEP 1 결과를 보여드립니다.**
+(미입력 시 기본값: A 한국)
 `;
 
   try {

@@ -97,13 +97,43 @@ Phase 분석 결과에 따라:
 | 02 | 00:01.67~00:04.56 | [설명] | ⭐ (Man) |
 | ... | ... | ... | |
 
+### 🌏 타겟 문화권 선택 (사용자에게 질문)
+
+**STEP 1 시작 시 반드시 사용자에게 물어볼 것:**
+
+\`\`\`
+오마쥬 타겟 문화권을 선택해주세요:
+
+🇰🇷 [A] 한국 (기본값) - Korean features, K-style fashion
+🇯🇵 [B] 일본 - Japanese features, J-style fashion
+🇺🇸 [C] 서양 - Western/Caucasian features
+🇹🇭 [D] 동남아 - Southeast Asian features
+🌍 [E] 원본 유지 - 원본 영상의 인종/문화 그대로
+\`\`\`
+
+**선택에 따른 자동 적용:**
+
+| 선택 | --no 기본값 | 캐릭터 스타일 |
+|------|------------|--------------|
+| 🇰🇷 한국 | \`western features, caucasian skin, blonde hair\` | Korean boy/girl, black hair, monolid eyes |
+| 🇯🇵 일본 | \`western features, caucasian skin, korean style\` | Japanese style, anime-influenced features |
+| 🇺🇸 서양 | \`asian features, black hair\` | Western/Caucasian, varied hair colors |
+| 🇹🇭 동남아 | \`pale skin, caucasian features\` | Southeast Asian, tan skin, dark hair |
+| 🌍 원본 유지 | (없음) | 원본 영상 기반 |
+
 ### 📋 STEP 1 출력
 
-**1. 캐릭터 프로필**
-입력된 씬 설명에서 등장인물 추출:
+**0. 타겟 문화권**
 \`\`\`
-👨 MALE: [외모, 의상, 특징]
-👩 FEMALE: [외모, 의상, 특징]
+선택: [A/B/C/D/E] → [문화권명]
+--no 기본값: [해당 문화권의 --no 값]
+\`\`\`
+
+**1. 캐릭터 프로필**
+입력된 씬 설명에서 등장인물 추출 + **타겟 문화권 반영**:
+\`\`\`
+👨 MALE: [타겟 문화권 기준 외모], [의상], [특징]
+👩 FEMALE: [타겟 문화권 기준 외모], [의상], [특징]
 (캐릭터 없으면 "캐릭터 없음 - 배경/오브젝트 중심 영상")
 \`\`\`
 
@@ -154,14 +184,14 @@ Phase B (사실/현대): Scene 08
 **[Image 2: CHARACTER FACE]** [MALE_ANCHOR.png 또는 FEMALE_ANCHOR.png]
 
 **From Image 1**: Copy exact composition, lighting, character positions.
-**From Image 2**: Copy the character's face features.
+**From Image 2**: Copy the [타겟 문화권] character's face features.
 \`\`\`
 
 ### Midjourney V7 파라미터
 
 각 씬 프롬프트 끝에 추가:
 \`\`\`
---iw 2.0 --ar 9:16 --v 7 --style raw --cref [ANCHOR_URL] --cw [동적] --stylize [동적] --no [씬별 동적]
+--iw 2.0 --ar 9:16 --v 7 --style raw --cref [ANCHOR_URL] --cw [동적] --stylize [동적] --no [문화권 기본값], [씬별 동적]
 \`\`\`
 
 **--cw 가이드:**
