@@ -683,6 +683,10 @@ async def analyze_feedback_weekly(
 
 class WorkerSettings:
     """Arq WorkerSettings for job processing."""
+    
+    # Import TikTok trends crawler
+    from app.jobs.crawl_tiktok_trends import crawl_tiktok_trends
+    
     functions = [
         analyze_source_pack,
         generate_video_batch,
@@ -697,6 +701,7 @@ class WorkerSettings:
         poll_outbox,
         analyze_feedback_weekly,
         run_drift_detection,
+        crawl_tiktok_trends,  # TikTok Creative Center 크롤러
     ]
 
     # Cron jobs - scheduled tasks
@@ -747,6 +752,12 @@ class WorkerSettings:
         {
             "func": run_drift_detection,
             "cron": "0 */6 * * *",  # Every 6 hours at minute 0
+            "unique": True,
+        },
+        # TikTok K-Beauty trends crawl every 6 hours (Scout Bot)
+        {
+            "func": crawl_tiktok_trends,
+            "cron": "30 */6 * * *",  # Every 6 hours at minute 30
             "unique": True,
         },
     ]
