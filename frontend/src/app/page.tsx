@@ -235,7 +235,7 @@ function Sidebar({ activeTab, setActiveTab, cohort, isAdmin }: { activeTab: TabK
       </div>
 
       {/* User */}
-      <div className="p-4 border-t border-white/5">
+      <div className="p-4 border-t border-white/5 space-y-3">
         <div className="bg-white rounded-2xl p-3 flex items-center gap-3 shadow-md">
           <div className="w-10 h-10 rounded-full bg-slate-700 text-white flex items-center justify-center font-bold text-sm">
             {isAdmin ? "A" : "U"}
@@ -245,6 +245,13 @@ function Sidebar({ activeTab, setActiveTab, cohort, isAdmin }: { activeTab: TabK
             <div className="text-xs text-gray-500">{cohort || "1기"}</div>
           </div>
         </div>
+        <a
+          href="/api/v1/auth/logout"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white transition-all text-sm"
+        >
+          <span className="material-symbols-outlined text-base">logout</span>
+          로그아웃
+        </a>
       </div>
     </aside>
   );

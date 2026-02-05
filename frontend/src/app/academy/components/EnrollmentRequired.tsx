@@ -113,6 +113,9 @@ export function EnrollmentRequired({ isLoggedIn = false }: EnrollmentRequiredPro
                 문의하기
               </a>
             </p>
+            <p className="text-xs text-gray-600 mt-2">
+              (수강하신 분은 단톡방 공지에 댓글로 구글 메일 주소 적어주세요)
+            </p>
           </div>
         </div>
       </div>
