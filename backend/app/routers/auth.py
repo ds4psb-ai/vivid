@@ -18,8 +18,9 @@ from app.auth_tokens import create_token, decode_token
 from app.config import settings
 from app.credit_service import get_or_create_user_credits
 from app.database import get_db
+from app.dependencies import require_authenticated_user
 from app.middleware.csrf import generate_csrf_token
-from app.models import UserAccount
+from app.models import UserAccount, CrebitApplication
 
 CSRF_COOKIE_NAME = "csrf_token"
 
@@ -329,7 +330,7 @@ async def get_current_user_profile(
     db: AsyncSession = Depends(get_db),
 ) -> JSONResponse:
     """Get current user profile.
-    
+
     Returns the authenticated user's profile from the database.
     """
     token = request.cookies.get(settings.SESSION_COOKIE_NAME)
@@ -340,20 +341,20 @@ async def get_current_user_profile(
     payload = decode_token(token, settings.SESSION_SECRET.get_secret_value()) if token else None
     if not payload:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    
+
     user_id = payload.get("user_id")
     if not user_id:
         raise HTTPException(status_code=401, detail="Invalid session")
-    
+
     # Get full user profile from DB
     result = await db.execute(
         select(UserAccount).where(UserAccount.user_id == user_id)
     )
     account = result.scalar_one_or_none()
-    
+
     if not account:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     return JSONResponse({
         "user_id": account.user_id,
         "email": account.email,
@@ -363,5 +364,46 @@ async def get_current_user_profile(
         "is_active": account.is_active,
         "created_at": account.created_at.isoformat() if account.created_at else None,
         "last_login_at": account.last_login_at.isoformat() if account.last_login_at else None,
+    })
+
+
+@router.get("/academy/access")
+async def check_academy_access(
+    user: dict = Depends(require_authenticated_user),
+    db: AsyncSession = Depends(get_db),
+) -> JSONResponse:
+    """Check if user has academy access (paid enrollment).
+
+    Returns access info if the user has a paid CrebitApplication.
+    Raises 403 if user is not enrolled or payment is not completed.
+    Admin users (MASTER_ADMIN_EMAILS) can also access without enrollment.
+    """
+    user_id = user.get("user_id")
+    user_email = user.get("email", "").lower()
+
+    # Check if user is admin
+    is_admin = user_email in settings.MASTER_ADMIN_EMAIL_SET
+
+    # Check for paid application
+    result = await db.execute(
+        select(CrebitApplication)
+        .where(CrebitApplication.owner_id == user_id)
+        .where(CrebitApplication.status == "paid")
+    )
+    application = result.scalar_one_or_none()
+
+    # Admin can access without enrollment
+    if not application and not is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Academy access requires course enrollment",
+        )
+
+    return JSONResponse({
+        "can_access": True,
+        "cohort": application.cohort if application else None,
+        "track": application.track if application else None,
+        "enrolled_at": application.paid_at.isoformat() if application and application.paid_at else None,
+        "is_admin": is_admin,
     })
 

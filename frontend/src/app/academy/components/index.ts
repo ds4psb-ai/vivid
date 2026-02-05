@@ -17,3 +17,9 @@ export { ParseContent } from './parse';
 
 // Tools components
 export { ToolsContent } from './tools';
+
+// Access control
+export { EnrollmentRequired } from './EnrollmentRequired';
+
+// Admin components
+export { AdminContent } from './AdminContent';

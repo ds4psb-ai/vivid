@@ -7,31 +7,50 @@ export const TOOL_LINKS = {
 
 export const FREE_TRIAL_URL = "https://console.cloud.google.com/freetrial/signup/tos?facet_url=https:%2F%2Fcloud.google.com%2Ffree&facet_utm_source=google&facet_utm_campaign=17100102-GCP-DR-APAC-KR-ko-Google-BKWS-MIX-GenericCloud&facet_utm_medium=cpc";
 
-export type TabKey = "home" | "setup" | "credit" | "upload" | "prompt" | "parse" | "tools" | "vibe" | "homework";
+export type TabKey = "home" | "setup" | "credit" | "upload" | "prompt" | "parse" | "tools" | "vibe" | "homework" | "admin";
 
-export const NAV_SECTIONS = [
+export interface NavItem {
+  key: TabKey;
+  label: string;
+  icon: string;
+}
+
+export interface NavSection {
+  title: string;
+  items: NavItem[];
+}
+
+export const NAV_SECTIONS: NavSection[] = [
   {
     title: "Dashboard",
     items: [
-      { key: "home" as TabKey, label: "홈 대시보드", icon: "dashboard" },
-      { key: "setup" as TabKey, label: "환경 설정", icon: "settings" },
-      { key: "credit" as TabKey, label: "$300 무료 크레딧", icon: "redeem" },
+      { key: "home", label: "홈 대시보드", icon: "dashboard" },
+      { key: "setup", label: "환경 설정", icon: "settings" },
+      { key: "credit", label: "$300 무료 크레딧", icon: "redeem" },
     ],
   },
   {
     title: "Workflow",
     items: [
-      { key: "upload" as TabKey, label: "영상 업로드", icon: "cloud_upload" },
-      { key: "prompt" as TabKey, label: "프롬프트 생성", icon: "auto_awesome" },
-      { key: "parse" as TabKey, label: "파싱 + 복사", icon: "content_copy" },
-      { key: "tools" as TabKey, label: "외부 툴", icon: "build" },
+      { key: "upload", label: "영상 업로드", icon: "cloud_upload" },
+      { key: "prompt", label: "프롬프트 생성", icon: "auto_awesome" },
+      { key: "parse", label: "파싱 + 복사", icon: "content_copy" },
+      { key: "tools", label: "외부 툴", icon: "build" },
     ],
   },
   {
     title: "기타",
     items: [
-      { key: "vibe" as TabKey, label: "바이브 철학관", icon: "psychology" },
-      { key: "homework" as TabKey, label: "과제", icon: "assignment_turned_in" },
+      { key: "vibe", label: "바이브 철학관", icon: "psychology" },
+      { key: "homework", label: "과제", icon: "assignment_turned_in" },
     ],
   },
 ];
+
+// Admin 전용 섹션 (is_admin일 때만 표시)
+export const ADMIN_SECTION: NavSection = {
+  title: "ADMIN",
+  items: [
+    { key: "admin", label: "수강생 관리", icon: "admin_panel_settings" },
+  ],
+};

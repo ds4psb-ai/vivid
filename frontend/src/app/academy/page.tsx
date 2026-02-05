@@ -5,10 +5,10 @@
  * Stitch 7 디자인 - 화이트 토큰 버튼 스타일 (완전 재현)
  */
 
-import { useState, Suspense, startTransition } from "react";
+import { useState, useEffect, Suspense, startTransition } from "react";
 import { useSearchParams } from "next/navigation";
 
-import { NAV_SECTIONS, type TabKey } from "./constants";
+import { NAV_SECTIONS, ADMIN_SECTION, type TabKey } from "./constants";
 import {
   HomeContent,
   SetupContent,
@@ -19,7 +19,10 @@ import {
   UploadContent,
   ParseContent,
   ToolsContent,
+  EnrollmentRequired,
+  AdminContent,
 } from "./components";
+import { api, type AcademyAccessResponse } from "@/lib/api";
 
 export default function AcademyPage() {
   return (
@@ -42,9 +45,63 @@ function AcademyContent() {
   const urlTab = searchParams.get("tab") as TabKey | null;
   const [activeTab, setActiveTab] = useState<TabKey>(urlTab || "home");
 
+  // Access control state
+  const [accessState, setAccessState] = useState<{
+    loading: boolean;
+    hasAccess: boolean;
+    accessInfo: AcademyAccessResponse | null;
+  }>({
+    loading: true,
+    hasAccess: false,
+    accessInfo: null,
+  });
+
+  // Check academy access on mount
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkAccess() {
+      try {
+        const response = await api.checkAcademyAccess();
+        if (!cancelled) {
+          setAccessState({
+            loading: false,
+            hasAccess: response.can_access,
+            accessInfo: response,
+          });
+        }
+      } catch {
+        // 403 or other error means no access
+        if (!cancelled) {
+          setAccessState({
+            loading: false,
+            hasAccess: false,
+            accessInfo: null,
+          });
+        }
+      }
+    }
+
+    checkAccess();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const handleTabChange = (tab: TabKey) => {
     startTransition(() => setActiveTab(tab));
   };
+
+  // Show loading while checking access
+  if (accessState.loading) {
+    return <LoadingScreen />;
+  }
+
+  // Show enrollment required if no access
+  if (!accessState.hasAccess) {
+    return <EnrollmentRequired />;
+  }
 
   return (
     <>
@@ -83,7 +140,7 @@ function AcademyContent() {
 
       <div className="min-h-screen bg-[#050505] text-white font-sans overflow-hidden h-screen flex antialiased selection:bg-purple-500 selection:text-white">
         {/* Sidebar */}
-        <Sidebar activeTab={activeTab} setActiveTab={handleTabChange} />
+        <Sidebar activeTab={activeTab} setActiveTab={handleTabChange} cohort={accessState.accessInfo?.cohort} isAdmin={accessState.accessInfo?.is_admin} />
 
         {/* Main */}
         <main className="flex-1 relative flex flex-col">
@@ -111,6 +168,7 @@ function AcademyContent() {
             {activeTab === "tools" && <ToolsContent setActiveTab={handleTabChange} />}
             {activeTab === "vibe" && <VibeContent />}
             {activeTab === "homework" && <HomeworkContent />}
+            {activeTab === "admin" && accessState.accessInfo?.is_admin && <AdminContent />}
           </div>
         </main>
       </div>
@@ -118,7 +176,10 @@ function AcademyContent() {
   );
 }
 
-function Sidebar({ activeTab, setActiveTab }: { activeTab: TabKey; setActiveTab: (tab: TabKey) => void }) {
+function Sidebar({ activeTab, setActiveTab, cohort, isAdmin }: { activeTab: TabKey; setActiveTab: (tab: TabKey) => void; cohort?: string | null; isAdmin?: boolean }) {
+  // Combine NAV_SECTIONS with ADMIN_SECTION if isAdmin
+  const sections = isAdmin ? [...NAV_SECTIONS, ADMIN_SECTION] : NAV_SECTIONS;
+
   return (
     <aside className="w-72 bg-[#080808] border-r border-white/5 flex-col justify-between shrink-0 z-20 relative hidden lg:flex">
       {/* Logo */}
@@ -137,7 +198,7 @@ function Sidebar({ activeTab, setActiveTab }: { activeTab: TabKey; setActiveTab:
 
       {/* Navigation */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-8">
-        {NAV_SECTIONS.map((section) => (
+        {sections.map((section) => (
           <div key={section.title}>
             <h3 className="text-[10px] font-bold tracking-[0.2em] text-gray-500 mb-4 px-2 font-mono uppercase">
               {section.title}
@@ -172,11 +233,11 @@ function Sidebar({ activeTab, setActiveTab }: { activeTab: TabKey; setActiveTab:
       <div className="p-4 border-t border-white/5">
         <div className="bg-white rounded-2xl p-3 flex items-center gap-3 shadow-md">
           <div className="w-10 h-10 rounded-full bg-slate-700 text-white flex items-center justify-center font-bold text-sm">
-            U
+            {isAdmin ? "A" : "U"}
           </div>
           <div>
-            <div className="text-sm font-bold text-gray-900">수강생</div>
-            <div className="text-xs text-gray-500">1기</div>
+            <div className="text-sm font-bold text-gray-900">{isAdmin ? "관리자" : "수강생"}</div>
+            <div className="text-xs text-gray-500">{cohort || "1기"}</div>
           </div>
         </div>
       </div>

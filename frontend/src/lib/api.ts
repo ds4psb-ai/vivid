@@ -1751,6 +1751,36 @@ class ApiClient {
     });
   }
 
+  // --- Academy Access API ---
+
+  /**
+   * Check if the current user has academy access (paid enrollment).
+   * Returns access info if enrolled, or throws 403 if not.
+   */
+  async checkAcademyAccess(): Promise<AcademyAccessResponse> {
+    return this.request<AcademyAccessResponse>(`/api/v1/auth/academy/access`);
+  }
+
+  // --- Academy Admin API ---
+
+  /**
+   * Get academy applications list (admin only).
+   */
+  async getAcademyApplications(status?: string): Promise<AcademyApplicationsResponse> {
+    const params = status ? `?status=${status}&limit=100` : "?limit=100";
+    return this.request<AcademyApplicationsResponse>(`/api/v1/admin/academy/applications${params}`);
+  }
+
+  /**
+   * Link academy application to Google account (admin only).
+   */
+  async linkAcademyAccount(name: string, googleEmail: string): Promise<AcademyLinkResponse> {
+    return this.request<AcademyLinkResponse>(`/api/v1/admin/academy/link`, {
+      method: "POST",
+      body: JSON.stringify({ name, google_email: googleEmail }),
+    });
+  }
+
   // --- Credits API ---
 
   async getCreditsBalance(): Promise<CreditBalance> {
@@ -3011,6 +3041,42 @@ class ApiClient {
       body: JSON.stringify(request),
     });
   }
+}
+
+// --- Academy Access Types ---
+
+export interface AcademyAccessResponse {
+  can_access: boolean;
+  cohort: string | null;
+  track: string | null;
+  enrolled_at: string | null;
+  is_admin?: boolean;
+}
+
+export interface AcademyApplication {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  track: string;
+  status: string;
+  owner_id: string | null;
+  paid_amount: number | null;
+  paid_at: string | null;
+}
+
+export interface AcademyApplicationsResponse {
+  applications: AcademyApplication[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface AcademyLinkResponse {
+  success: boolean;
+  application_id?: string;
+  user_id?: string;
+  message: string;
 }
 
 // --- Crebit Types ---
