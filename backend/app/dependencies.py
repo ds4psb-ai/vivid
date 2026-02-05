@@ -121,14 +121,24 @@ async def require_authenticated_user(
     
     Same as get_current_user but always raises 401 if not authenticated,
     regardless of environment.
+    
+    Returns full session data including email, name, role.
     """
+    from app.auth import _get_session_payload
+    
     user_id = await require_user_id(request, x_user_id)
     is_admin = await get_is_admin(request)
+    
+    # Get full session payload to include email and name
+    payload = _get_session_payload(request) or {}
     
     return {
         "id": user_id,
         "user_id": user_id,
         "is_admin": is_admin,
+        "email": payload.get("email", ""),
+        "name": payload.get("name", ""),
+        "role": payload.get("role", "user"),
     }
 
 
