@@ -10,7 +10,7 @@ export const Header: React.FC = () => {
             <Film className="w-5 h-5 text-white" />
           </div>
           <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-            Builder 1 <span className="text-accent-cyan font-mono text-sm">V7.2</span>
+            Builder 1 <span className="text-accent-cyan font-mono text-sm">V8.0</span>
           </h1>
         </div>
         <div className="flex items-center gap-4 text-xs font-mono text-gray-500">
@@ -19,7 +19,7 @@ export const Header: React.FC = () => {
             POWERED BY GEMINI 3 PRO
           </span>
           <span className="hidden sm:inline-block px-2 py-1 bg-gray-800 rounded text-gray-300">
-            5-STEP (프레임 검증 포함)
+            6-STEP (IMAGE + MOTION 통합)
           </span>
         </div>
       </div>

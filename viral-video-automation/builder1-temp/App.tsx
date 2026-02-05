@@ -109,11 +109,11 @@ const App: React.FC = () => {
           <div className="space-y-8 animate-in fade-in duration-500">
             <div className="text-center space-y-4 mb-12">
               <h2 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-white via-gray-200 to-gray-500 tracking-tight">
-                AI 이미지 프롬프트 생성기
+                AI 프롬프트 생성기
               </h2>
               <p className="text-gray-400 max-w-2xl mx-auto text-lg leading-relaxed">
-                원본 영상을 분석하여 <span className="text-white font-semibold">씬별 이미지 프롬프트</span>를 생성합니다.<br />
-                NanoBanana Pro / Midjourney V7 에서 바로 사용 가능!
+                원본 영상 기반 <span className="text-white font-semibold">IMAGE + MOTION 프롬프트</span>를 생성합니다.<br />
+                NanoBanana / Midjourney V7 / Kling 3.0 / Veo 3.1 지원!
               </p>
             </div>
 
@@ -127,7 +127,7 @@ const App: React.FC = () => {
                   </div>
 
                   <div className="space-y-4">
-                    <p className="text-sm text-gray-400">Builder 1은 영상을 분석하여 각 씬별 이미지 프롬프트를 생성합니다.</p>
+                    <p className="text-sm text-gray-400">Builder 1은 씬 테이블 기반으로 IMAGE + MOTION 프롬프트를 생성합니다.</p>
                   </div>
 
                   <div className="mt-8 pt-6 border-t border-gray-800">
