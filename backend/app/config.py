@@ -113,7 +113,7 @@ class Settings(BaseSettings):
     GOOGLE_TOKEN_INFO_URL: str = "https://oauth2.googleapis.com/tokeninfo"
 
     SESSION_SECRET: SecretStr = SecretStr("")
-    SESSION_TTL_SECONDS: int = 60 * 60 * 24 * 7
+    SESSION_TTL_SECONDS: int = 60 * 60 * 8  # 8시간
     OAUTH_STATE_TTL_SECONDS: int = 600
     SESSION_COOKIE_NAME: str = "crebit_session"
     OAUTH_STATE_COOKIE_NAME: str = "crebit_oauth_state"
@@ -122,7 +122,7 @@ class Settings(BaseSettings):
     # Cross-subdomain cookie sharing (e.g., ".prompty.co.kr" for api.prompty.co.kr <-> www.prompty.co.kr)
     # Leave empty for same-origin only (default behavior)
     COOKIE_DOMAIN: str = ""
-    MASTER_ADMIN_EMAILS: str = ""
+    MASTER_ADMIN_EMAILS: str = "ted.taeeun.kim@gmail.com"
 
     # Frontend Integration (Phase 6 Cache Invalidation)
     # URL of the Next.js frontend for cache invalidation API calls

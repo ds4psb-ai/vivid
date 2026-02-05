@@ -116,6 +116,17 @@ const nextConfig: NextConfig = {
     // Phase 5: Legacy dimension routes → Mega App redirects
     // Preserves backward compatibility while directing users to unified experience
     return [
+      // Academy moved to root
+      {
+        source: "/academy",
+        destination: "/",
+        permanent: true, // 301
+      },
+      {
+        source: "/academy/:path*",
+        destination: "/:path*",
+        permanent: true, // 301
+      },
       // ===== DNA Lab redirects =====
       {
         source: "/dimension/aesthetic",

@@ -815,6 +815,156 @@ async def resolve_dlq(
 from app.services.circuit_breaker import CircuitBreaker
 
 
+# ============================================
+# Academy Account Linking (수강생 계정 연결)
+# ============================================
+
+from app.models import CrebitApplication, UserAccount
+
+
+class LinkAccountRequest(BaseModel):
+    """Academy 계정 연결 요청."""
+    name: str = Field(..., min_length=1, max_length=100, description="수강 신청서에 적은 이름")
+    google_email: str = Field(..., min_length=5, max_length=255, description="Google 로그인 이메일")
+
+
+class LinkAccountResponse(BaseModel):
+    """Academy 계정 연결 응답."""
+    success: bool
+    application_id: Optional[str] = None
+    user_id: Optional[str] = None
+    message: str
+
+
+@router.post("/academy/link", response_model=LinkAccountResponse)
+async def link_academy_account(
+    request: LinkAccountRequest,
+    admin_id: str = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """관리자: 수강 신청에 Google 계정 연결
+
+    오프라인 결제 수강생의 Google 이메일을 crebit_applications.owner_id에 연결합니다.
+
+    사용 흐름:
+    1. 수강생이 crebit.studio에서 Google 로그인
+    2. /academy 접속 → "수강생 전용" 표시
+    3. 카톡에 "이름 / Google이메일" 댓글
+    4. 관리자가 이 API로 연결
+    5. 수강생 /academy 접속 가능
+
+    Args:
+        name: 수강 신청서에 적은 이름 (정확히 일치해야 함)
+        google_email: 로그인용 Google 이메일
+    """
+    # 1. name으로 crebit_applications 찾기 (status=paid)
+    app_query = (
+        select(CrebitApplication)
+        .where(CrebitApplication.name == request.name)
+        .where(CrebitApplication.status == "paid")
+    )
+    result = await db.execute(app_query)
+    application = result.scalar_one_or_none()
+
+    if not application:
+        return LinkAccountResponse(
+            success=False,
+            message=f"결제 완료된 수강 신청을 찾을 수 없습니다: '{request.name}'"
+        )
+
+    # 이미 연결된 경우 확인
+    if application.owner_id:
+        return LinkAccountResponse(
+            success=False,
+            application_id=str(application.id),
+            user_id=application.owner_id,
+            message=f"이미 다른 계정에 연결되어 있습니다: {application.owner_id}"
+        )
+
+    # 2. google_email로 user_accounts에서 user_id 찾기
+    email_lower = request.google_email.strip().lower()
+    user_query = (
+        select(UserAccount)
+        .where(UserAccount.email == email_lower)
+    )
+    result = await db.execute(user_query)
+    user_account = result.scalar_one_or_none()
+
+    if not user_account:
+        return LinkAccountResponse(
+            success=False,
+            application_id=str(application.id),
+            message=f"해당 이메일로 로그인한 기록이 없습니다: '{request.google_email}'. 수강생이 먼저 crebit.studio에서 Google 로그인 해야 합니다."
+        )
+
+    # 3. application.owner_id = user_id 설정
+    application.owner_id = user_account.user_id
+
+    try:
+        await db.commit()
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=safe_error_detail(e, "Link account"))
+
+    return LinkAccountResponse(
+        success=True,
+        application_id=str(application.id),
+        user_id=user_account.user_id,
+        message=f"계정 연결 완료: {request.name} → {request.google_email}"
+    )
+
+
+@router.get("/academy/applications")
+async def list_academy_applications(
+    status: Optional[str] = None,
+    limit: int = 50,
+    offset: int = 0,
+    _admin: str = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """관리자: 수강 신청 목록 조회
+
+    status 필터: pending, paid, cancelled, refunded
+    """
+    from sqlalchemy import func
+
+    query = select(CrebitApplication).order_by(CrebitApplication.id.desc())
+
+    if status:
+        query = query.where(CrebitApplication.status == status)
+
+    query = query.limit(limit).offset(offset)
+    result = await db.execute(query)
+    applications = result.scalars().all()
+
+    # 총 개수
+    count_query = select(func.count(CrebitApplication.id))
+    if status:
+        count_query = count_query.where(CrebitApplication.status == status)
+    total_result = await db.execute(count_query)
+    total = total_result.scalar() or 0
+
+    return {
+        "applications": [
+            {
+                "id": str(app.id),
+                "name": app.name,
+                "email": app.email,
+                "phone": app.phone,
+                "track": app.track,
+                "status": app.status,
+                "owner_id": app.owner_id,
+                "paid_amount": app.paid_amount,
+                "paid_at": app.paid_at.isoformat() if app.paid_at else None,
+            }
+            for app in applications
+        ],
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+    }
+
+
 @router.get("/circuit-breakers")
 async def list_circuit_breakers(
     _admin: str = Depends(require_admin),

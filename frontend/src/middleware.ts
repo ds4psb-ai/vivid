@@ -24,6 +24,7 @@ const PROTECTED_ROUTES = [
     "/humancloud",  // P1: Human Cloud routes require authentication
     "/creator",     // P1: Creator dashboard requires authentication
     "/settlements", // P1: Settlement routes require authentication
+    // Note: "/" (Academy) is not protected here - EnrollmentRequired handles access control
 ];
 
 const PUBLIC_ROUTES = [
@@ -60,16 +61,7 @@ const SESSION_COOKIE_NAME = "crebit_session";
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
-    // ⚠️ TEMP: Auth disabled for designer preview - REMOVE AFTER REVIEW
-    const AUTH_DISABLED = true;
-    if (AUTH_DISABLED) {
-        // Only handle legacy redirects, skip all auth
-        const redirectTarget = LEGACY_REDIRECTS[pathname];
-        if (redirectTarget) {
-            return NextResponse.redirect(new URL(redirectTarget, request.url), { status: 301 });
-        }
-        return NextResponse.next();
-    }
+    // Auth is now enabled - protected routes require authentication
 
     // Check for legacy redirects first (2026 Mega Apps)
     const redirectTarget = LEGACY_REDIRECTS[pathname];
