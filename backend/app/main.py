@@ -164,6 +164,9 @@ from app.routers.prompty import router as prompty_router
 # Scene Detection (FFmpeg-based - Academy Helper)
 from app.routers.scene_detect import router as scene_detect_router
 
+# Access Request (Academy Enrollment - replaces KakaoTalk comments)
+from app.routers.access_request import router as access_request_router
+
 from app.middleware.rate_limit import setup_rate_limiting, DefaultRateLimitMiddleware
 from app.middleware.mtls import MTLSMiddleware
 from app.middleware.security import setup_security_middleware
@@ -647,6 +650,9 @@ app.include_router(prompty_router, prefix="/api", tags=["prompty"])
 
 # Scene Detection (FFmpeg-based - Academy Helper)
 app.include_router(scene_detect_router, tags=["scene-detect"])
+
+# Access Request (Academy Enrollment - replaces KakaoTalk comments)
+app.include_router(access_request_router, prefix="/api/v1/access-request", tags=["access-request"])
 
 # GraphQL Gateway (2026 Best Practices - P3.3)
 if settings.ENVIRONMENT.lower() in {"production", "prod", "staging"}:

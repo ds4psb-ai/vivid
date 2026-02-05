@@ -661,6 +661,34 @@ class CrebitApplication(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class AccessRequest(Base):
+    """Academy access requests from logged-in users.
+    
+    Replaces the manual process of asking students to comment
+    their Google email in the KakaoTalk group chat.
+    """
+    __tablename__ = "access_requests"
+    __table_args__ = (
+        Index("ix_access_requests_user_id", "user_id"),
+        Index("ix_access_requests_status", "status"),
+        UniqueConstraint("user_id", name="uq_access_requests_user_id"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[str] = mapped_column(String(160))  # google:sub
+    email: Mapped[str] = mapped_column(String(255))  # from session
+    name: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    
+    # Request status: pending | approved | rejected
+    status: Mapped[str] = mapped_column(String(20), default="pending")
+    
+    # Admin notes (optional)
+    admin_notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class AgentSession(Base):
     __tablename__ = "agent_sessions"
     __table_args__ = (
