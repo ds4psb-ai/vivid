@@ -564,49 +564,40 @@ function UploadContent({ setActiveTab }: { setActiveTab: (tab: TabKey) => void }
 
         <div className="grid grid-cols-3 gap-3">
           {/* YouTube Shorts */}
-          <a
-            href="https://savefrom.net"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group p-4 rounded-xl bg-gradient-to-br from-red-500/10 to-red-600/5 border border-red-500/20 hover:border-red-500/50 transition-all"
-          >
-            <div className="flex items-center gap-2 mb-2">
+          <div className="p-4 rounded-xl bg-gradient-to-br from-red-500/10 to-red-600/5 border border-red-500/20">
+            <div className="flex items-center gap-2 mb-3">
               <span className="material-symbols-outlined text-red-400 text-lg">play_circle</span>
               <span className="text-red-400 font-bold text-sm">YouTube</span>
             </div>
-            <p className="text-gray-400 text-xs group-hover:text-white transition-colors">savefrom.net</p>
-            <p className="text-gray-600 text-[10px] mt-1">Shorts, 일반 영상</p>
-          </a>
+            <div className="space-y-2">
+              <a href="https://savefrom.net" target="_blank" rel="noopener noreferrer" className="block text-xs text-gray-400 hover:text-white transition-colors">savefrom.net</a>
+              <a href="https://publer.com/tools/youtube-short-downloader" target="_blank" rel="noopener noreferrer" className="block text-xs text-gray-400 hover:text-white transition-colors">publer.com</a>
+            </div>
+          </div>
 
           {/* TikTok */}
-          <a
-            href="https://snaptik.app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group p-4 rounded-xl bg-gradient-to-br from-pink-500/10 to-pink-600/5 border border-pink-500/20 hover:border-pink-500/50 transition-all"
-          >
-            <div className="flex items-center gap-2 mb-2">
+          <div className="p-4 rounded-xl bg-gradient-to-br from-pink-500/10 to-pink-600/5 border border-pink-500/20">
+            <div className="flex items-center gap-2 mb-3">
               <span className="material-symbols-outlined text-pink-400 text-lg">music_note</span>
               <span className="text-pink-400 font-bold text-sm">TikTok</span>
             </div>
-            <p className="text-gray-400 text-xs group-hover:text-white transition-colors">snaptik.app</p>
-            <p className="text-gray-600 text-[10px] mt-1">워터마크 제거</p>
-          </a>
+            <div className="space-y-2">
+              <a href="https://snaptik.app" target="_blank" rel="noopener noreferrer" className="block text-xs text-gray-400 hover:text-white transition-colors">snaptik.app</a>
+              <a href="https://ssstik.io" target="_blank" rel="noopener noreferrer" className="block text-xs text-gray-400 hover:text-white transition-colors">ssstik.io</a>
+            </div>
+          </div>
 
           {/* Instagram */}
-          <a
-            href="https://snapinsta.app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group p-4 rounded-xl bg-gradient-to-br from-purple-500/10 to-fuchsia-600/5 border border-purple-500/20 hover:border-purple-500/50 transition-all"
-          >
-            <div className="flex items-center gap-2 mb-2">
+          <div className="p-4 rounded-xl bg-gradient-to-br from-purple-500/10 to-fuchsia-600/5 border border-purple-500/20">
+            <div className="flex items-center gap-2 mb-3">
               <span className="material-symbols-outlined text-purple-400 text-lg">photo_camera</span>
               <span className="text-purple-400 font-bold text-sm">Instagram</span>
             </div>
-            <p className="text-gray-400 text-xs group-hover:text-white transition-colors">snapinsta.app</p>
-            <p className="text-gray-600 text-[10px] mt-1">Reels, 스토리</p>
-          </a>
+            <div className="space-y-2">
+              <a href="https://snapinsta.to" target="_blank" rel="noopener noreferrer" className="block text-xs text-gray-400 hover:text-white transition-colors">snapinsta.to</a>
+              <a href="https://sssinstagram.com/reels-downloader" target="_blank" rel="noopener noreferrer" className="block text-xs text-gray-400 hover:text-white transition-colors">sssinstagram.com</a>
+            </div>
+          </div>
         </div>
 
         <div className="mt-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
