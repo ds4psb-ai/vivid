@@ -16,7 +16,7 @@ const TOOL_LINKS = {
   antigravity: "https://antigravity.google",
 };
 
-type TabKey = "home" | "setup" | "credit" | "anchor" | "builder1" | "vibe" | "image" | "video" | "homework";
+type TabKey = "home" | "setup" | "credit" | "upload" | "prompt" | "parse" | "tools" | "vibe" | "homework";
 
 const NAV_SECTIONS = [
   {
@@ -25,21 +25,21 @@ const NAV_SECTIONS = [
       { key: "home" as TabKey, label: "홈 대시보드", icon: "dashboard" },
       { key: "setup" as TabKey, label: "환경 설정", icon: "settings" },
       { key: "credit" as TabKey, label: "$300 무료 크레딧", icon: "redeem" },
-      { key: "anchor" as TabKey, label: "기준 프레임", icon: "aspect_ratio" },
     ],
   },
   {
-    title: "Tools",
+    title: "Workflow",
     items: [
-      { key: "builder1" as TabKey, label: "빌더1 (통합)", icon: "construction" },
+      { key: "upload" as TabKey, label: "영상 업로드", icon: "cloud_upload" },
+      { key: "prompt" as TabKey, label: "프롬프트 생성", icon: "auto_awesome" },
+      { key: "parse" as TabKey, label: "파싱 + 복사", icon: "content_copy" },
+      { key: "tools" as TabKey, label: "외부 툴", icon: "build" },
+    ],
+  },
+  {
+    title: "기타",
+    items: [
       { key: "vibe" as TabKey, label: "바이브 철학관", icon: "psychology" },
-    ],
-  },
-  {
-    title: "Creation",
-    items: [
-      { key: "image" as TabKey, label: "이미지 생성", icon: "image" },
-      { key: "video" as TabKey, label: "영상 생성", icon: "movie" },
       { key: "homework" as TabKey, label: "과제", icon: "assignment_turned_in" },
     ],
   },
@@ -202,11 +202,11 @@ function AcademyContent() {
             {activeTab === "home" && <HomeContent setActiveTab={(tab) => startTransition(() => setActiveTab(tab))} />}
             {activeTab === "setup" && <SetupContent />}
             {activeTab === "credit" && <CreditContent />}
-            {activeTab === "anchor" && <AnchorContent />}
-            {activeTab === "builder1" && <Builder1Content />}
+            {activeTab === "upload" && <UploadContent />}
+            {activeTab === "prompt" && <PromptContent />}
+            {activeTab === "parse" && <ParseContent />}
+            {activeTab === "tools" && <ToolsContent />}
             {activeTab === "vibe" && <VibeContent />}
-            {activeTab === "image" && <ImageContent />}
-            {activeTab === "video" && <VideoContent />}
             {activeTab === "homework" && <HomeworkContent />}
           </div>
         </main>
@@ -217,139 +217,108 @@ function AcademyContent() {
 
 // ============ Home Content ============
 function HomeContent({ setActiveTab }: { setActiveTab: (tab: TabKey) => void }) {
+  const workflowSteps = [
+    { key: "upload" as TabKey, num: 1, label: "영상 업로드", icon: "cloud_upload", sub: "드래그앤드롭" },
+    { key: "upload" as TabKey, num: 2, label: "컷 나누기", icon: "content_cut", sub: "FFmpeg 분석" },
+    { key: "prompt" as TabKey, num: 3, label: "프롬프트", icon: "auto_awesome", sub: "AI Studio" },
+    { key: "parse" as TabKey, num: 4, label: "파싱", icon: "content_copy", sub: "복사" },
+    { key: "tools" as TabKey, num: 5, label: "제작", icon: "build", sub: "외부툴" },
+  ];
+
   return (
     <div className="max-w-4xl mx-auto">
       {/* Hero */}
-      <div className="text-center mt-8 mb-16">
+      <div className="text-center mt-8 mb-12">
         <div className="inline-block px-4 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 mb-6">
-          <span className="text-[10px] font-bold text-indigo-400 tracking-[0.2em] font-mono uppercase">Workflow Visualization</span>
+          <span className="text-[10px] font-bold text-indigo-400 tracking-[0.2em] font-mono uppercase">Step-by-Step Workflow</span>
         </div>
-        <h2 className="text-5xl md:text-6xl font-black mb-6 tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-purple-400 glow-text">
+        <h2 className="text-4xl md:text-5xl font-black mb-6 tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-purple-400 glow-text">
           AI 영상 오마주 & 패러디
         </h2>
         <p className="text-gray-400 text-lg max-w-2xl mx-auto leading-relaxed font-light">
           바이럴 영상을 분석하고, AI 엔진을 통해 나만의 유니크한 버전으로<br />
-          재창조하는 차세대 크리에이티브 파이프라인.
+          재창조하는 5단계 워크플로우
         </p>
       </div>
 
-      {/* Flow Card */}
-      <div className="max-w-3xl mx-auto relative">
+      {/* Horizontal Workflow */}
+      <div className="max-w-4xl mx-auto relative mb-12">
         <div className="absolute -inset-1 bg-gradient-to-b from-purple-500/20 to-transparent opacity-30 blur-2xl rounded-[3rem]" />
-        <div className="relative bg-[#0f0f11] border border-white/10 rounded-[2.5rem] p-12 min-h-[500px] shadow-2xl flex flex-col items-center">
+        <div className="relative bg-[#0f0f11] border border-white/10 rounded-[2.5rem] p-8 shadow-2xl">
 
-          {/* Input Source */}
-          <div className="relative z-10 group">
-            <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-mono text-gray-400 tracking-[0.1em] uppercase">Input Source</div>
-            <button className="bg-white text-gray-900 px-10 py-5 rounded-2xl flex items-center gap-3 shadow-[0_10px_30px_-10px_rgba(255,255,255,0.3)] hover:scale-105 transition-transform duration-300">
-              <span className="material-symbols-outlined">movie</span>
-              <span className="font-bold text-lg">아웃라이어 영상 업로드</span>
-            </button>
+          {/* Flow Steps - Horizontal */}
+          <div className="flex items-center justify-between gap-2">
+            {workflowSteps.map((step, index) => (
+              <div key={step.num} className="flex items-center flex-1">
+                {/* Step Card */}
+                <button
+                  onClick={() => setActiveTab(step.key)}
+                  className="group flex-1 p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-purple-500/50 hover:bg-purple-500/10 transition-all duration-300 text-center"
+                >
+                  <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-gradient-to-br from-purple-500/20 to-indigo-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <span className="material-symbols-outlined text-2xl text-purple-400">{step.icon}</span>
+                  </div>
+                  <div className="text-[10px] font-mono text-purple-400 mb-1">STEP {step.num}</div>
+                  <div className="text-white font-bold text-sm mb-1">{step.label}</div>
+                  <div className="text-gray-500 text-xs">{step.sub}</div>
+                </button>
+
+                {/* Arrow */}
+                {index < workflowSteps.length - 1 && (
+                  <div className="mx-2 flex-shrink-0">
+                    <span className="material-symbols-outlined text-purple-500/50 text-xl">arrow_forward</span>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
-
-          {/* Line 1 */}
-          <div className="w-px h-16 bg-gradient-to-b from-white/20 via-purple-500 to-purple-500 my-2" />
-
-          {/* Analysis Module */}
-          <div className="relative z-10 group">
-            <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-mono text-gray-400 tracking-[0.1em] uppercase">Analysis Module</div>
-            <a
-              href={TOOL_LINKS.builder1}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-white text-gray-900 px-8 py-5 rounded-2xl flex items-center gap-4 shadow-[0_10px_30px_-10px_rgba(255,255,255,0.3)] hover:scale-105 transition-transform duration-300"
-            >
-              <span className="material-symbols-outlined">search</span>
-              <span className="font-bold text-lg">이미지 프롬프트 생성기</span>
-              <span className="material-symbols-outlined text-gray-400 text-sm">open_in_new</span>
-            </a>
-          </div>
-
-          {/* Line 2 with animation */}
-          <div className="w-px h-16 bg-gradient-to-b from-purple-500 via-purple-500 to-purple-500/20 my-2 relative">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-white rounded-full shadow-[0_0_10px_white] animate-[slow-ping_2s_cubic-bezier(0,0,0.2,1)_infinite]" />
-          </div>
-
-          {/* Core Engine + Optional */}
-          <div className="flex gap-6 mt-4 w-full justify-center">
-            {/* Core Engine */}
-            <div className="relative group w-1/2 max-w-[280px]">
-              <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-mono text-gray-500 tracking-[0.1em] uppercase">Core Engine</div>
-              <a
-                href={TOOL_LINKS.builder2}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full bg-[#1a1a2e] border border-purple-500/30 text-white px-6 py-5 rounded-2xl flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(168,85,247,0.15)] group-hover:shadow-[0_0_30px_rgba(168,85,247,0.3)] transition-all duration-300 relative overflow-hidden"
-              >
-                <div className="absolute inset-0 bg-purple-500/5 group-hover:bg-purple-500/10 transition-colors" />
-                <span className="material-symbols-outlined text-purple-500">theater_comedy</span>
-                <span className="font-bold text-gray-100">패러디 오마주 엔진</span>
-                <span className="material-symbols-outlined text-gray-500 text-sm ml-auto">open_in_new</span>
-              </a>
-            </div>
-
-            {/* Optional */}
-            <div className="relative group w-1/2 max-w-[280px]">
-              <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-mono text-gray-400 tracking-[0.1em] uppercase">Optional</div>
-              <a
-                href={TOOL_LINKS.vibe}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full bg-white text-gray-900 px-6 py-5 rounded-2xl flex items-center justify-center gap-3 shadow-[0_10px_30px_-10px_rgba(255,255,255,0.2)] hover:scale-[1.02] transition-transform duration-300"
-              >
-                <span className="material-symbols-outlined text-gray-800">psychology</span>
-                <span className="font-bold">바이브 철학관</span>
-                <span className="material-symbols-outlined text-gray-400 text-sm ml-auto">open_in_new</span>
-              </a>
-            </div>
-          </div>
-
-          {/* Line 3 */}
-          <div className="w-px h-16 bg-gradient-to-b from-purple-500/20 via-purple-500/50 to-purple-500 my-2 mt-8" />
-
-          {/* Image Gen */}
-          <div className="relative z-10 group">
-            <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-mono text-gray-400 tracking-[0.1em] uppercase">Generative Process</div>
-            <button
-              onClick={() => setActiveTab("image")}
-              className="bg-white text-gray-900 px-8 py-5 rounded-2xl flex items-center gap-3 shadow-[0_10px_30px_-10px_rgba(255,255,255,0.3)] hover:scale-105 transition-transform duration-300"
-            >
-              <span className="material-symbols-outlined">image</span>
-              <span className="font-bold text-lg">이미지 생성</span>
-            </button>
-          </div>
-
-          {/* Line 4 */}
-          <div className="w-px h-16 bg-gradient-to-b from-purple-500 via-purple-500/50 to-purple-500/20 my-2" />
-
-          {/* Video Gen */}
-          <div className="relative z-10 group">
-            <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-mono text-gray-400 tracking-[0.1em] uppercase">Rendering</div>
-            <button
-              onClick={() => setActiveTab("video")}
-              className="bg-white text-gray-900 px-8 py-5 rounded-2xl flex items-center gap-3 shadow-[0_10px_30px_-10px_rgba(255,255,255,0.3)] hover:scale-105 transition-transform duration-300"
-            >
-              <span className="material-symbols-outlined">movie</span>
-              <span className="font-bold text-lg">영상 생성</span>
-            </button>
-          </div>
-
-          {/* Line 5 */}
-          <div className="w-px h-16 bg-gradient-to-b from-purple-500/20 via-emerald-500/50 to-emerald-500 my-2" />
 
           {/* Output */}
-          <div className="relative z-10 group">
-            <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-mono text-emerald-400 tracking-[0.1em] uppercase">Output Ready</div>
-            <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-10 py-5 rounded-2xl flex items-center gap-3 shadow-[0_10px_30px_-10px_rgba(16,185,129,0.5)]">
-              <span className="material-symbols-outlined">check_circle</span>
-              <span className="font-bold text-lg">나만의 영상 완성!</span>
+          <div className="mt-8 text-center">
+            <div className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/30">
+              <span className="material-symbols-outlined text-emerald-400">check_circle</span>
+              <span className="font-bold text-emerald-300 text-lg">나만의 영상 완성!</span>
             </div>
           </div>
         </div>
       </div>
 
+      {/* Quick Links */}
+      <div className="max-w-3xl mx-auto">
+        <div className="grid grid-cols-3 gap-4">
+          <a
+            href={TOOL_LINKS.builder1}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-purple-500/30 transition-all text-center group"
+          >
+            <span className="material-symbols-outlined text-purple-400 text-2xl mb-2 block group-hover:scale-110 transition-transform">construction</span>
+            <p className="text-white font-bold text-sm">이미지 프롬프트 생성기</p>
+            <p className="text-gray-500 text-xs mt-1">AI Studio</p>
+          </a>
+          <a
+            href={TOOL_LINKS.builder2}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-purple-500/30 transition-all text-center group"
+          >
+            <span className="material-symbols-outlined text-purple-400 text-2xl mb-2 block group-hover:scale-110 transition-transform">theater_comedy</span>
+            <p className="text-white font-bold text-sm">패러디 오마주 엔진</p>
+            <p className="text-gray-500 text-xs mt-1">AI Studio</p>
+          </a>
+          <button
+            onClick={() => setActiveTab("vibe")}
+            className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-purple-500/30 transition-all text-center group"
+          >
+            <span className="material-symbols-outlined text-purple-400 text-2xl mb-2 block group-hover:scale-110 transition-transform">psychology</span>
+            <p className="text-white font-bold text-sm">바이브 철학관</p>
+            <p className="text-gray-500 text-xs mt-1">Optional</p>
+          </button>
+        </div>
+      </div>
+
       {/* Divider */}
-      <div className="mt-20 text-center opacity-30">
+      <div className="mt-16 text-center opacity-30">
         <div className="h-px w-32 bg-gradient-to-r from-transparent via-gray-500 to-transparent mx-auto" />
       </div>
     </div>
@@ -407,101 +376,8 @@ function SetupContent() {
   );
 }
 
-// ============ Anchor Content ============
-function AnchorContent() {
-  const PROMPT_1 = `ffmpeg 설치해줘`;
-  const PROMPT_2 = `영상 프로젝트 폴더에 넣고, 첫 프레임 + 씬 전환 프레임 추출해줘 (threshold 0.19). 타임스탬프는 0.01초로 올림해서 복붙 가능하게 따로 알려줘.`;
-
-  const [copied1, setCopied1] = useState(false);
-  const [copied2, setCopied2] = useState(false);
-
-  const handleCopy = async (text: string, setCopied: (v: boolean) => void) => {
-    await navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      <PageHeader title="기준 프레임 추출" sub="Antigravity 복붙 2번이면 끝" />
-
-      {/* 섹션 1: ffmpeg 설치 */}
-      <ContentCard>
-        <div className="flex items-center gap-3 mb-3">
-          <span className="w-7 h-7 rounded-full bg-purple-500/20 text-purple-400 text-sm font-bold flex items-center justify-center">1</span>
-          <p className="text-white font-bold">ffmpeg 설치 (최초 1회)</p>
-        </div>
-        <div className="relative">
-          <div className="p-3 rounded-xl bg-black/50 border border-white/10">
-            <p className="text-purple-200 text-sm pr-16">{PROMPT_1}</p>
-          </div>
-          <button
-            onClick={() => handleCopy(PROMPT_1, setCopied1)}
-            className={`absolute top-2 right-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${copied1 ? 'bg-emerald-500 text-white' : 'bg-white text-gray-900 hover:bg-gray-100'
-              }`}
-          >
-            {copied1 ? '복사됨!' : '복사'}
-          </button>
-        </div>
-      </ContentCard>
-
-      {/* 섹션 2: 영상 드래그 + 프레임 추출 */}
-      <ContentCard highlight>
-        <div className="flex items-center gap-3 mb-3">
-          <span className="w-7 h-7 rounded-full bg-purple-500/20 text-purple-400 text-sm font-bold flex items-center justify-center">2</span>
-          <p className="text-white font-bold">영상 드래그앤드롭 + 복붙</p>
-        </div>
-        <p className="text-gray-400 text-sm mb-3">영상 파일을 Antigravity 채팅창에 끌어다 놓고 아래 복붙</p>
-        <div className="relative">
-          <div className="p-3 rounded-xl bg-black/50 border border-purple-500/30">
-            <p className="text-purple-200 text-sm pr-16">{PROMPT_2}</p>
-          </div>
-          <button
-            onClick={() => handleCopy(PROMPT_2, setCopied2)}
-            className={`absolute top-2 right-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${copied2 ? 'bg-emerald-500 text-white' : 'bg-white text-gray-900 hover:bg-gray-100'
-              }`}
-          >
-            {copied2 ? '복사됨!' : '복사'}
-          </button>
-        </div>
-        <p className="text-emerald-400 text-sm mt-4 text-center font-medium">
-          끝! 씬 전환 자동 감지 → 프레임 추출 → 경로 안내까지
-        </p>
-      </ContentCard>
-
-      {/* 영상 다운로더 링크 */}
-      <ContentCard>
-        <h3 className="text-lg font-bold text-white mb-4">아웃라이어 영상 다운로드</h3>
-        <div className="grid grid-cols-3 gap-4">
-          <div>
-            <p className="text-red-400 font-medium text-sm mb-2">YouTube Shorts</p>
-            <div className="space-y-2">
-              <a href="https://savefrom.net" target="_blank" rel="noopener noreferrer" className="block text-xs text-gray-400 hover:text-white transition-colors">savefrom.net</a>
-              <a href="https://y2mate.com" target="_blank" rel="noopener noreferrer" className="block text-xs text-gray-400 hover:text-white transition-colors">y2mate.com</a>
-            </div>
-          </div>
-          <div>
-            <p className="text-pink-400 font-medium text-sm mb-2">TikTok</p>
-            <div className="space-y-2">
-              <a href="https://snaptik.app" target="_blank" rel="noopener noreferrer" className="block text-xs text-gray-400 hover:text-white transition-colors">snaptik.app</a>
-              <a href="https://ssstik.io" target="_blank" rel="noopener noreferrer" className="block text-xs text-gray-400 hover:text-white transition-colors">ssstik.io</a>
-            </div>
-          </div>
-          <div>
-            <p className="text-purple-400 font-medium text-sm mb-2">Instagram Reels</p>
-            <div className="space-y-2">
-              <a href="https://snapinsta.app" target="_blank" rel="noopener noreferrer" className="block text-xs text-gray-400 hover:text-white transition-colors">snapinsta.app</a>
-              <a href="https://igram.io" target="_blank" rel="noopener noreferrer" className="block text-xs text-gray-400 hover:text-white transition-colors">igram.io</a>
-            </div>
-          </div>
-        </div>
-      </ContentCard>
-    </div>
-  );
-}
-
-// ============ Builder1 Content ============
-function Builder1Content() {
+// ============ Upload Content ============
+function UploadContent() {
   const [timestampInput, setTimestampInput] = useState("");
   const [copied, setCopied] = useState(false);
 
@@ -682,18 +558,7 @@ function Builder1Content() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-8">
-      <PageHeader title="이미지 프롬프트 생성기" sub="영상 넣으면 → 이미지용 프롬프트 나옴" />
-      <ContentCard highlight>
-        <WhiteButton href={TOOL_LINKS.builder1} large>🔍 이미지 프롬프트 생성기 열기</WhiteButton>
-      </ContentCard>
-      <ContentCard>
-        <h3 className="text-lg font-bold text-white mb-4">사용법</h3>
-        <div className="space-y-3 text-sm">
-          <div className="flex gap-3"><span className="text-purple-400 font-bold">1.</span><span className="text-gray-300">영상 파일 업로드</span></div>
-          <div className="flex gap-3"><span className="text-purple-400 font-bold">2.</span><span className="text-gray-300">STEP 1~4 순서대로 진행</span></div>
-          <div className="flex gap-3"><span className="text-purple-400 font-bold">3.</span><span className="text-gray-300">결과물(.md) 다운로드</span></div>
-        </div>
-      </ContentCard>
+      <PageHeader title="영상 업로드 + 컷 나누기" sub="영상을 드래그하면 씬별로 자동 분석" />
 
       {/* Scene Detection Upload Section - Premium Design */}
       <ContentCard highlight>
@@ -882,7 +747,287 @@ function Builder1Content() {
           </div>
         )}
       </ContentCard>
+
+      {/* 영상 다운로더 링크 */}
+      <ContentCard>
+        <h3 className="text-lg font-bold text-white mb-4">아웃라이어 영상 다운로드</h3>
+        <div className="grid grid-cols-3 gap-4">
+          <div>
+            <p className="text-red-400 font-medium text-sm mb-2">YouTube Shorts</p>
+            <div className="space-y-2">
+              <a href="https://savefrom.net" target="_blank" rel="noopener noreferrer" className="block text-xs text-gray-400 hover:text-white transition-colors">savefrom.net</a>
+              <a href="https://y2mate.com" target="_blank" rel="noopener noreferrer" className="block text-xs text-gray-400 hover:text-white transition-colors">y2mate.com</a>
+            </div>
+          </div>
+          <div>
+            <p className="text-pink-400 font-medium text-sm mb-2">TikTok</p>
+            <div className="space-y-2">
+              <a href="https://snaptik.app" target="_blank" rel="noopener noreferrer" className="block text-xs text-gray-400 hover:text-white transition-colors">snaptik.app</a>
+              <a href="https://ssstik.io" target="_blank" rel="noopener noreferrer" className="block text-xs text-gray-400 hover:text-white transition-colors">ssstik.io</a>
+            </div>
+          </div>
+          <div>
+            <p className="text-purple-400 font-medium text-sm mb-2">Instagram Reels</p>
+            <div className="space-y-2">
+              <a href="https://snapinsta.app" target="_blank" rel="noopener noreferrer" className="block text-xs text-gray-400 hover:text-white transition-colors">snapinsta.app</a>
+              <a href="https://igram.io" target="_blank" rel="noopener noreferrer" className="block text-xs text-gray-400 hover:text-white transition-colors">igram.io</a>
+            </div>
+          </div>
+        </div>
+      </ContentCard>
     </div>
+  );
+}
+
+// ============ Prompt Content ============
+function PromptContent() {
+  return (
+    <div className="max-w-3xl mx-auto space-y-8">
+      <PageHeader title="프롬프트 생성기" sub="영상 넣으면 → 이미지/모션용 프롬프트 나옴" />
+      <ContentCard highlight>
+        <WhiteButton href={TOOL_LINKS.builder1} large>🔍 이미지 프롬프트 생성기 열기</WhiteButton>
+      </ContentCard>
+      <ContentCard>
+        <h3 className="text-lg font-bold text-white mb-4">사용법</h3>
+        <div className="space-y-3 text-sm">
+          <div className="flex gap-3"><span className="text-purple-400 font-bold">1.</span><span className="text-gray-300">영상 파일 업로드</span></div>
+          <div className="flex gap-3"><span className="text-purple-400 font-bold">2.</span><span className="text-gray-300">STEP 1~4 순서대로 진행</span></div>
+          <div className="flex gap-3"><span className="text-purple-400 font-bold">3.</span><span className="text-gray-300">결과물(.md) 다운로드</span></div>
+        </div>
+      </ContentCard>
+      <ContentCard>
+        <h3 className="text-lg font-bold text-white mb-4">오마주 vs 변주</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20">
+            <p className="text-purple-400 font-bold mb-2">🎭 오마주</p>
+            <p className="text-gray-400 text-sm">원본과 유사한 구도/스타일</p>
+            <p className="text-gray-500 text-xs mt-2">Midjourney --cref 활용</p>
+          </div>
+          <div className="p-4 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
+            <p className="text-cyan-400 font-bold mb-2">✨ 변주</p>
+            <p className="text-gray-400 text-sm">나만의 스타일로 재해석</p>
+            <p className="text-gray-500 text-xs mt-2">바이브 프로필 반영</p>
+          </div>
+        </div>
+      </ContentCard>
+      <ContentCard>
+        <h3 className="text-lg font-bold text-white mb-4">패러디 오마주 엔진</h3>
+        <p className="text-gray-400 text-sm mb-4">이미지 프롬프트 생성 후, 패러디 엔진으로 모션 프롬프트 생성</p>
+        <WhiteButton href={TOOL_LINKS.builder2}>🎭 패러디 오마주 엔진 열기</WhiteButton>
+      </ContentCard>
+    </div>
+  );
+}
+
+// ============ Parse Content ============
+import { parseBuilder2Output, insertCrefUrl, type Builder2Scene, type Builder2ParseResult } from "@/lib/builder2-md-parser";
+
+function ParseContent() {
+  const [mdInput, setMdInput] = useState("");
+  const [parseResult, setParseResult] = useState<Builder2ParseResult | null>(null);
+  const [activeType, setActiveType] = useState<"ohmage" | "variation">("ohmage");
+  const [crefUrl, setCrefUrl] = useState("");
+  const [copiedStates, setCopiedStates] = useState<Record<string, boolean>>({});
+
+  // Parse MD when input changes
+  useEffect(() => {
+    if (mdInput.trim()) {
+      const result = parseBuilder2Output(mdInput);
+      setParseResult(result);
+      // Auto-select type based on what's available
+      if (result.hasVariation && !result.hasOhmage) {
+        setActiveType("variation");
+      } else {
+        setActiveType("ohmage");
+      }
+    } else {
+      setParseResult(null);
+    }
+  }, [mdInput]);
+
+  const handleCopy = async (key: string, text: string) => {
+    await navigator.clipboard.writeText(text);
+    setCopiedStates(prev => ({ ...prev, [key]: true }));
+    setTimeout(() => {
+      setCopiedStates(prev => ({ ...prev, [key]: false }));
+    }, 2000);
+  };
+
+  const activeScenes = activeType === "ohmage" ? parseResult?.ohmageScenes : parseResult?.variationScenes;
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      <PageHeader title="파싱 + 복사" sub="MD 결과물 붙여넣기 → 씬별 프롬프트 복사" />
+
+      {/* MD Input */}
+      <ContentCard highlight>
+        <h3 className="text-lg font-bold text-white mb-4">📋 MD 결과물 붙여넣기</h3>
+        <textarea
+          value={mdInput}
+          onChange={(e) => setMdInput(e.target.value)}
+          placeholder="이미지 프롬프트 생성기 또는 패러디 오마주 엔진의 결과물(.md)을 여기에 붙여넣으세요..."
+          className="w-full h-40 p-4 rounded-xl bg-black/50 border border-purple-500/30 text-gray-200 text-sm placeholder-gray-600 focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/20 resize-none font-mono"
+        />
+        {parseResult && (parseResult.hasOhmage || parseResult.hasVariation) && (
+          <div className="mt-3 flex items-center gap-4">
+            <span className="text-emerald-400 text-sm flex items-center gap-2">
+              <span className="material-symbols-outlined text-sm">check_circle</span>
+              파싱 완료!
+            </span>
+            <span className="text-gray-500 text-xs">
+              오마주 {parseResult.ohmageScenes.length}개 / 변주 {parseResult.variationScenes.length}개
+            </span>
+          </div>
+        )}
+      </ContentCard>
+
+      {/* Type Tabs + cref URL */}
+      {parseResult && (parseResult.hasOhmage || parseResult.hasVariation) && (
+        <>
+          <div className="flex items-center gap-4">
+            {/* Type Tabs */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => setActiveType("ohmage")}
+                disabled={!parseResult.hasOhmage}
+                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeType === "ohmage"
+                  ? "bg-purple-500 text-white"
+                  : parseResult.hasOhmage
+                    ? "bg-white/10 text-gray-400 hover:bg-white/20"
+                    : "bg-white/5 text-gray-600 cursor-not-allowed"
+                  }`}
+              >
+                🎭 오마주 ({parseResult.ohmageScenes.length})
+              </button>
+              <button
+                onClick={() => setActiveType("variation")}
+                disabled={!parseResult.hasVariation}
+                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeType === "variation"
+                  ? "bg-cyan-500 text-white"
+                  : parseResult.hasVariation
+                    ? "bg-white/10 text-gray-400 hover:bg-white/20"
+                    : "bg-white/5 text-gray-600 cursor-not-allowed"
+                  }`}
+              >
+                ✨ 변주 ({parseResult.variationScenes.length})
+              </button>
+            </div>
+
+            {/* cref URL Input */}
+            <div className="flex-1 flex items-center gap-2">
+              <span className="text-gray-500 text-xs">--cref URL:</span>
+              <input
+                type="text"
+                value={crefUrl}
+                onChange={(e) => setCrefUrl(e.target.value)}
+                placeholder="앵커 이미지 URL (Midjourney용)"
+                className="flex-1 px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-gray-200 text-sm placeholder-gray-600 focus:border-purple-500/30 focus:outline-none"
+              />
+            </div>
+          </div>
+
+          {/* Scene Cards */}
+          <div className="space-y-4">
+            {activeScenes?.map((scene) => (
+              <SceneCard
+                key={`${activeType}-${scene.sceneNum}`}
+                scene={scene}
+                crefUrl={crefUrl}
+                copiedStates={copiedStates}
+                onCopy={handleCopy}
+              />
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* Empty State */}
+      {!parseResult && (
+        <ContentCard>
+          <div className="text-center py-8">
+            <span className="material-symbols-outlined text-4xl text-gray-600 mb-4 block">content_paste</span>
+            <p className="text-gray-500">MD 파일 내용을 위에 붙여넣으면 씬별로 파싱됩니다</p>
+          </div>
+        </ContentCard>
+      )}
+    </div>
+  );
+}
+
+// ============ Scene Card Component ============
+function SceneCard({
+  scene,
+  crefUrl,
+  copiedStates,
+  onCopy,
+}: {
+  scene: Builder2Scene;
+  crefUrl: string;
+  copiedStates: Record<string, boolean>;
+  onCopy: (key: string, text: string) => void;
+}) {
+  const midjourneyPrompt = crefUrl
+    ? insertCrefUrl(scene.imagePrompts.midjourney, crefUrl)
+    : scene.imagePrompts.midjourney;
+
+  const promptItems = [
+    { key: "nanoBanana", label: "NanoBanana", prompt: scene.imagePrompts.nanoBanana, color: "orange" },
+    { key: "midjourney", label: "Midjourney", prompt: midjourneyPrompt, color: "violet" },
+    { key: "kling", label: "Kling", prompt: scene.motionPrompts.kling, color: "cyan" },
+    { key: "veo", label: "Veo", prompt: scene.motionPrompts.veo, color: "red" },
+  ].filter(item => item.prompt);
+
+  return (
+    <ContentCard>
+      <div className="flex items-center gap-3 mb-4">
+        <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${scene.isAnchor
+          ? "bg-amber-500/20 text-amber-400"
+          : "bg-purple-500/20 text-purple-400"
+          }`}>
+          {scene.sceneNum}
+        </span>
+        <div>
+          <h3 className="text-white font-bold">{scene.title || `Scene ${scene.sceneNum}`}</h3>
+          {scene.beatTimestamp && (
+            <p className="text-gray-500 text-xs">{scene.beatTimestamp}</p>
+          )}
+        </div>
+        {scene.isAnchor && (
+          <span className="ml-auto px-2 py-1 rounded text-xs font-bold bg-amber-500/20 text-amber-400">
+            ANCHOR
+          </span>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        {promptItems.map((item) => {
+          const copyKey = `${scene.sceneNum}-${item.key}`;
+          const isCopied = copiedStates[copyKey];
+
+          return (
+            <div key={item.key} className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className={`text-xs font-bold text-${item.color}-400`}>{item.label}</span>
+                <button
+                  onClick={() => onCopy(copyKey, item.prompt)}
+                  className={`px-2 py-1 rounded text-xs font-bold transition-all ${isCopied
+                    ? "bg-emerald-500 text-white"
+                    : "bg-white text-gray-900 hover:bg-gray-100"
+                    }`}
+                >
+                  {isCopied ? "✓" : "복사"}
+                </button>
+              </div>
+              <div className="p-2 rounded-lg bg-black/30 border border-white/10 max-h-20 overflow-y-auto">
+                <p className="text-gray-300 text-xs font-mono whitespace-pre-wrap break-all">
+                  {item.prompt.slice(0, 200)}{item.prompt.length > 200 ? "..." : ""}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </ContentCard>
   );
 }
 
@@ -999,161 +1144,126 @@ function CreditContent() {
   );
 }
 
-// ============ Image Content ============
-function ImageContent() {
+// ============ Tools Content ============
+function ToolsContent() {
   return (
     <div className="max-w-3xl mx-auto space-y-8">
-      <PageHeader title="이미지 생성" sub="프롬프트 → 이미지" />
-      <ContentCard highlight>
-        <h3 className="text-lg font-bold text-white mb-4">⚡ Google AI Pro 구독 필수</h3>
-        <p className="text-gray-400 mb-4">NanoBanana Pro 사용을 위해 필요합니다 (18세 이상)</p>
-        <div className="p-4 rounded-xl bg-white text-gray-900">
-          <p className="font-bold text-purple-600 mb-1">Google AI Pro</p>
-          <div className="flex items-baseline gap-2 mb-2">
-            <p className="text-2xl font-black text-gray-900">₩14,500/월</p>
-            <p className="text-sm text-gray-400 line-through">₩29,000</p>
-            <span className="text-xs bg-red-500 text-white px-2 py-0.5 rounded-full">2개월</span>
-          </div>
-          <ul className="text-gray-600 text-sm space-y-1">
-            <li>• Gemini 챗에서 NanoBanana Pro 이미지 생성</li>
-            <li>• AI 크레딧 1,000/월</li>
-            <li>• 2TB 클라우드 스토리지</li>
-          </ul>
+      <PageHeader title="외부 툴" sub="이미지 + 영상 생성 도구" />
+
+      {/* Image Tools */}
+      <ContentCard>
+        <h3 className="text-lg font-bold text-white mb-4">🖼️ 이미지 생성</h3>
+        <div className="grid grid-cols-2 gap-4">
           <a
-            href="https://one.google.com/ai?utm_source=gemini&utm_medium=web&utm_campaign=geminiplanspage&sc=EgIIAQ&hl=ko&icid=geminiplanspage&g1_landing_page=75"
+            href="https://gemini.google.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-bold hover:bg-purple-700 transition-colors"
+            className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 hover:border-orange-500/50 transition-all group"
           >
-            구독하기
-            <span className="material-symbols-outlined text-sm">open_in_new</span>
+            <p className="text-orange-400 font-bold mb-2">NanoBanana Pro</p>
+            <p className="text-gray-400 text-sm">🇰🇷 한글 지원, 4K 이미지</p>
+            <p className="text-gray-500 text-xs mt-2">Gemini → NanoBanana</p>
+          </a>
+          <a
+            href="https://www.midjourney.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-4 rounded-xl bg-violet-500/10 border border-violet-500/20 hover:border-violet-500/50 transition-all group"
+          >
+            <p className="text-violet-400 font-bold mb-2">Midjourney V7</p>
+            <p className="text-gray-400 text-sm">🎨 영문, 예술적 스타일</p>
+            <p className="text-gray-500 text-xs mt-2">--cref로 캐릭터 일관성</p>
           </a>
         </div>
       </ContentCard>
+
+      {/* Video Tools */}
       <ContentCard>
-        <h3 className="text-lg font-bold text-white mb-4">도구 비교</h3>
+        <h3 className="text-lg font-bold text-white mb-4">🎥 영상 생성</h3>
         <div className="grid grid-cols-2 gap-4">
-          <div className="p-4 rounded-xl bg-white text-gray-900">
-            <p className="text-orange-500 font-bold mb-2">NanoBanana Pro</p>
-            <p className="text-gray-600 text-sm">🇰🇷 한글 지원, 4K, 3~8초</p>
+          <a
+            href="https://gemini.google.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 hover:border-red-500/50 transition-all group"
+          >
+            <p className="text-red-400 font-bold mb-2">Veo 3.1</p>
+            <p className="text-gray-400 text-sm">🎬 오디오 자동 생성</p>
+            <p className="text-gray-500 text-xs mt-2">Gemini → Flow 메뉴</p>
+          </a>
+          <a
+            href="https://klingai.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-4 rounded-xl bg-cyan-500/10 border border-cyan-500/20 hover:border-cyan-500/50 transition-all group"
+          >
+            <p className="text-cyan-400 font-bold mb-2">Kling 3.0</p>
+            <p className="text-gray-400 text-sm">👥 캐릭터 일관성 최고</p>
+            <p className="text-gray-500 text-xs mt-2">4K 시네마틱</p>
+          </a>
+        </div>
+      </ContentCard>
+
+      {/* When to use */}
+      <ContentCard>
+        <h3 className="text-lg font-bold text-white mb-4">언제 뭘 쓰나요?</h3>
+        <div className="space-y-3 text-sm">
+          <div className="flex items-start gap-3">
+            <span className="text-orange-400 font-bold shrink-0 w-24">NanoBanana</span>
+            <span className="text-gray-400">→ 한글 프롬프트, 빠른 테스트, Google AI Pro 포함</span>
           </div>
-          <div className="p-4 rounded-xl bg-white text-gray-900">
-            <p className="text-violet-500 font-bold mb-2">Midjourney V7</p>
-            <p className="text-gray-600 text-sm">🎨 영문, 예술적 스타일</p>
+          <div className="flex items-start gap-3">
+            <span className="text-violet-400 font-bold shrink-0 w-24">Midjourney</span>
+            <span className="text-gray-400">→ 예술적 품질, --cref 캐릭터 일관성</span>
+          </div>
+          <div className="flex items-start gap-3">
+            <span className="text-red-400 font-bold shrink-0 w-24">Veo 3.1</span>
+            <span className="text-gray-400">→ 대사/효과음 필요 영상, Flow 활용</span>
+          </div>
+          <div className="flex items-start gap-3">
+            <span className="text-cyan-400 font-bold shrink-0 w-24">Kling 3.0</span>
+            <span className="text-gray-400">→ 고화질 시네마, 캐릭터 일관성, 모션 제어</span>
           </div>
         </div>
       </ContentCard>
-    </div>
-  );
-}
 
-// ============ Video Content ============
-function VideoContent() {
-  return (
-    <div className="max-w-3xl mx-auto space-y-8">
-      <PageHeader title="영상 생성" sub="이미지 + 프롬프트 → 영상" />
+      {/* Subscription Info */}
       <ContentCard highlight>
-        <h3 className="text-lg font-bold text-white mb-4">⚡ 구독 안내 (18세 이상)</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <h3 className="text-lg font-bold text-white mb-4">⚡ 구독 안내</h3>
+        <div className="grid grid-cols-2 gap-4">
           <div className="p-4 rounded-xl bg-white text-gray-900">
-            <p className="font-bold text-purple-600 mb-1">Google AI Pro (필수)</p>
-            <div className="flex items-baseline gap-2 mb-2">
-              <p className="text-2xl font-black text-gray-900">₩14,500/월</p>
-              <p className="text-sm text-gray-400 line-through">₩29,000</p>
-            </div>
-            <span className="text-xs bg-red-500 text-white px-2 py-0.5 rounded-full mb-2 inline-block">2개월 프로모션</span>
-            <ul className="text-gray-600 text-sm space-y-1">
-              <li>✓ Veo 3.1 + Flow 영상 생성</li>
-              <li>✓ Whisk 이미지→영상</li>
+            <p className="font-bold text-purple-600 mb-1">Google AI Pro</p>
+            <p className="text-xl font-black text-gray-900">₩14,500/월</p>
+            <ul className="text-gray-600 text-xs mt-2 space-y-1">
+              <li>✓ NanoBanana + Veo + Flow</li>
               <li>✓ AI 크레딧 1,000/월</li>
             </ul>
             <a
-              href="https://one.google.com/ai?utm_source=gemini&utm_medium=web&utm_campaign=geminiplanspage&sc=EgIIAQ&hl=ko&icid=geminiplanspage&g1_landing_page=75"
+              href="https://one.google.com/ai"
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-bold hover:bg-purple-700 transition-colors"
+              className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-purple-600 text-white text-xs font-bold hover:bg-purple-700 transition-colors"
             >
               구독하기
-              <span className="material-symbols-outlined text-sm">open_in_new</span>
+              <span className="material-symbols-outlined text-xs">open_in_new</span>
             </a>
           </div>
           <div className="p-4 rounded-xl bg-white text-gray-900">
-            <p className="font-bold text-cyan-600 mb-1">Kling 3.0 (추천)</p>
-            <p className="text-2xl font-black text-gray-900 mb-2">₩31,200~/월</p>
-            <ul className="text-gray-600 text-sm space-y-1">
-              <li>✓ 4K 고화질 시네마틱</li>
-              <li>✓ Pro 3,000cr (2.6기준 5초 60개)</li>
-              <li>✓ Premier ₩78,000 (8,000cr)</li>
-              <li>✓ 상업용 라이선스 포함</li>
+            <p className="font-bold text-cyan-600 mb-1">Kling Pro</p>
+            <p className="text-xl font-black text-gray-900">₩31,200/월</p>
+            <ul className="text-gray-600 text-xs mt-2 space-y-1">
+              <li>✓ 3,000cr (5초 ~60개)</li>
+              <li>✓ 상업용 라이선스</li>
             </ul>
             <a
               href="https://app.klingai.com/global/membership/membership-plan"
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-600 text-white text-sm font-bold hover:bg-cyan-700 transition-colors"
+              className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-cyan-600 text-white text-xs font-bold hover:bg-cyan-700 transition-colors"
             >
               구독하기
-              <span className="material-symbols-outlined text-sm">open_in_new</span>
+              <span className="material-symbols-outlined text-xs">open_in_new</span>
             </a>
-          </div>
-        </div>
-        <p className="text-gray-500 text-xs mt-4">※ 환율 변동에 따라 가격이 달라질 수 있습니다 (USD 1,200원 기준)</p>
-      </ContentCard>
-      <ContentCard>
-        <h3 className="text-lg font-bold text-white mb-4">Kling 추천 플랜</h3>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-gray-400 border-b border-white/10">
-                <th className="text-left py-2">플랜</th>
-                <th className="text-right py-2">월간</th>
-                <th className="text-right py-2">크레딧</th>
-                <th className="text-right py-2">5초 영상 (2.6)</th>
-              </tr>
-            </thead>
-            <tbody className="text-gray-300">
-              <tr className="border-b border-white/5 bg-cyan-500/10">
-                <td className="py-2 font-bold text-cyan-400">Pro (추천)</td>
-                <td className="text-right">₩31,200</td>
-                <td className="text-right">3,000</td>
-                <td className="text-right">~60개</td>
-              </tr>
-              <tr className="bg-cyan-500/5">
-                <td className="py-2 font-bold text-cyan-300">Premier</td>
-                <td className="text-right">₩78,000</td>
-                <td className="text-right">8,000</td>
-                <td className="text-right">~160개</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <p className="text-gray-500 text-xs mt-3">※ Kling 2.6: 5초=50cr | 3.0 크레딧 미정 | $25.99 / $64.99 (환율 1,200원)</p>
-      </ContentCard>
-      <ContentCard>
-        <h3 className="text-lg font-bold text-white mb-4">언제 뭘 쓰나요?</h3>
-        <div className="space-y-3 text-sm">
-          <div className="flex items-start gap-3">
-            <span className="text-red-400 font-bold shrink-0">Veo 3.1</span>
-            <span className="text-gray-400">→ 대사/효과음이 필요한 영상 (Flow 활용)</span>
-          </div>
-          <div className="flex items-start gap-3">
-            <span className="text-cyan-400 font-bold shrink-0">Kling 3.0</span>
-            <span className="text-gray-400">→ 고화질 시네마/애니, 대사 없는 모션, Canvas Agent 스토리보드</span>
-          </div>
-        </div>
-      </ContentCard>
-      <ContentCard>
-        <h3 className="text-lg font-bold text-white mb-4">도구 비교</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="p-4 rounded-xl bg-white text-gray-900">
-            <p className="text-red-500 font-bold mb-2">Veo 3.1</p>
-            <p className="text-gray-600 text-sm">🎬 오디오 자동 생성, Google</p>
-            <p className="text-gray-400 text-xs mt-2">Gemini → Flow 메뉴</p>
-          </div>
-          <div className="p-4 rounded-xl bg-white text-gray-900">
-            <p className="text-cyan-500 font-bold mb-2">Kling AI</p>
-            <p className="text-gray-600 text-sm">👥 캐릭터 일관성 최고</p>
-            <p className="text-gray-400 text-xs mt-2">klingai.com</p>
           </div>
         </div>
       </ContentCard>
@@ -1238,24 +1348,4 @@ function WhiteButton({ href, onClick, children, large }: {
     );
   }
   return <button onClick={onClick} className={className}>{children}</button>;
-}
-
-function Step({ num, title, children }: { num: number; title: string; children: React.ReactNode }) {
-  return (
-    <div className="flex gap-4">
-      <span className="w-7 h-7 rounded-full bg-purple-500/20 text-purple-400 text-sm font-bold flex items-center justify-center shrink-0">{num}</span>
-      <div>
-        <p className="text-white font-medium mb-2">{title}</p>
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function ChatBubble({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="p-3 rounded-lg bg-black/30 border border-white/10">
-      <p className="text-purple-300 text-sm">{children}</p>
-    </div>
-  );
 }
