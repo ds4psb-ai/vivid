@@ -833,11 +833,24 @@ function UploadContent({ setActiveTab }: { setActiveTab: (tab: TabKey) => void }
               </button>
               <button
                 onClick={downloadFrames}
-                className="py-4 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-sm font-bold hover:from-purple-700 hover:to-indigo-700 transition-all flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(168,85,247,0.3)]"
+                className="py-4 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 transition-all flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(168,85,247,0.3)]"
               >
                 <span className="material-symbols-outlined text-lg">download</span>
-                프레임 이미지 다운로드
+                <div className="flex flex-col items-start">
+                  <span className="font-bold text-sm">프레임 이미지 다운로드</span>
+                  <span className="text-xs text-purple-100">
+                    ZIP으로 frame_01.jpg, frame_02.jpg... 추출
+                  </span>
+                </div>
               </button>
+            </div>
+
+            {/* 다운로드 안내 추가 */}
+            <div className="mt-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+              <p className="text-xs text-blue-200">
+                💡 다운로드 후 압축 해제하면 씬별 프레임 이미지를 얻을 수 있습니다.
+                이 이미지들이 각 프롬프트의 "구도 레퍼런스"로 사용됩니다.
+              </p>
             </div>
           </div>
         )}
@@ -942,6 +955,24 @@ function PromptContent({ setActiveTab }: { setActiveTab: (tab: TabKey) => void }
             <p className="text-gray-500 text-xs mt-2">A/B/C 옵션 선택</p>
           </div>
         </div>
+        {/* 변주 개인화 팁 */}
+        <div className="mt-4 p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+          <p className="text-purple-300 text-sm flex items-center gap-2">
+            <span className="material-symbols-outlined text-base">psychology</span>
+            <span>
+              <strong>변주 개인화 팁:</strong> 바이브 철학관에서 프로필을 만들면 나만의 감성이 담긴 변주를 생성할 수 있어요!
+            </span>
+          </p>
+          <a
+            href={TOOL_LINKS.vibe}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 inline-flex items-center gap-1.5 text-purple-400 text-xs hover:text-purple-300 transition-colors"
+          >
+            <span>🔮 바이브 철학관 열기</span>
+            <span className="material-symbols-outlined text-sm">open_in_new</span>
+          </a>
+        </div>
       </ContentCard>
       <ContentCard>
         <h3 className="text-lg font-bold text-white mb-4">다운로드 후 다음 단계</h3>
@@ -957,7 +988,7 @@ function PromptContent({ setActiveTab }: { setActiveTab: (tab: TabKey) => void }
 }
 
 // ============ Parse Content ============
-import { parseBuilder2Output, insertCrefUrl, type Builder2Scene, type Builder2ParseResult } from "@/lib/builder2-md-parser";
+import { parseBuilder2Output, insertCrefUrl, type Builder2Scene, type Builder2ParseResult, type AnchorInfo } from "@/lib/builder2-md-parser";
 
 function ParseContent({ setActiveTab }: { setActiveTab: (tab: TabKey) => void }) {
   const [mdInput, setMdInput] = useState("");
@@ -1195,6 +1226,14 @@ function ParseContent({ setActiveTab }: { setActiveTab: (tab: TabKey) => void })
             </div>
           </div>
 
+          {/* Image Attachment Workflow Guide */}
+          <ImageAttachmentGuide />
+
+          {/* Anchor Guide Panel */}
+          {parseResult.anchors.length > 0 && (
+            <AnchorGuidePanel anchors={parseResult.anchors} />
+          )}
+
           {/* Scene Cards */}
           <div className="space-y-4">
             {activeScenes?.map((scene) => (
@@ -1205,6 +1244,7 @@ function ParseContent({ setActiveTab }: { setActiveTab: (tab: TabKey) => void })
                 copiedStates={copiedStates}
                 completedPrompts={completedPrompts}
                 onCopy={handleCopy}
+                anchors={parseResult.anchors}
               />
             ))}
           </div>
@@ -1226,6 +1266,204 @@ function ParseContent({ setActiveTab }: { setActiveTab: (tab: TabKey) => void })
   );
 }
 
+// ============ Image Attachment Workflow Guide ============
+function ImageAttachmentGuide() {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  return (
+    <ContentCard>
+      <div
+        className="flex items-center justify-between cursor-pointer"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">🖼️</span>
+          <h3 className="text-lg font-bold text-white">이미지 첨부 워크플로우 가이드</h3>
+        </div>
+        <span className={`material-symbols-outlined text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
+          expand_more
+        </span>
+      </div>
+
+      {isExpanded && (
+        <div className="mt-4 space-y-4">
+          {/* STEP 1: 프레임 추출 */}
+          <div className="p-4 rounded-lg bg-slate-800 border border-slate-700">
+            <h4 className="font-bold text-white mb-2">STEP 1: 프레임 추출</h4>
+            <ol className="text-sm text-gray-300 space-y-2 ml-4 list-decimal">
+              <li>
+                위 "프레임 다운로드" 버튼으로 영상에서 자동 추출된 프레임 다운로드
+              </li>
+              <li>
+                ZIP 압축 해제하면{' '}
+                <code className="px-2 py-1 bg-black/40 rounded font-mono text-blue-300">frame_01_00-00.00.jpg</code>,{' '}
+                <code className="px-2 py-1 bg-black/40 rounded font-mono text-blue-300 ml-1">frame_02_00-01.67.jpg</code>{' '}
+                등 파일 생성
+              </li>
+              <li>이 파일들이 각 씬의 "구도 레퍼런스"로 사용됩니다</li>
+            </ol>
+          </div>
+
+          {/* STEP 2: 앵커 이미지 생성 */}
+          <div className="p-4 rounded-lg bg-slate-800 border border-slate-700">
+            <h4 className="font-bold text-white mb-2">STEP 2: 앵커 이미지 생성 (최우선)</h4>
+            <div className="text-sm text-gray-300 space-y-2">
+              <p>
+                <strong className="text-amber-300">⚠️ 앵커부터 생성:</strong>{' '}
+                캐릭터 일관성을 위해 반드시 먼저 생성
+              </p>
+              <ol className="ml-4 list-decimal space-y-1">
+                <li>
+                  아래 "앵커 이미지 먼저 생성" 섹션에서 해당 씬의 프레임 파일 확인
+                </li>
+                <li>
+                  NanoBanana Pro 또는 Midjourney에서 프롬프트 복사 + 프레임 첨부
+                </li>
+                <li>
+                  생성된 이미지를{' '}
+                  <code className="px-2 py-1 bg-black/40 rounded font-mono text-green-300 ml-1">anchor_male.jpg</code> /{' '}
+                  <code className="px-2 py-1 bg-black/40 rounded font-mono text-green-300 ml-1">anchor_female.jpg</code>로 저장
+                </li>
+              </ol>
+            </div>
+          </div>
+
+          {/* STEP 3: 씬별 이미지 생성 */}
+          <div className="p-4 rounded-lg bg-slate-800 border border-slate-700">
+            <h4 className="font-bold text-white mb-2">STEP 3: 씬별 이미지 생성</h4>
+            <div className="text-sm text-gray-300 space-y-2">
+              <p>각 씬마다 다음 이미지 첨부:</p>
+              <ul className="ml-4 list-disc space-y-1">
+                <li>
+                  <strong className="text-blue-300">Image 1 (구도):</strong> 해당 씬의 frame 파일
+                </li>
+                <li>
+                  <strong className="text-green-300">Image 2 (캐릭터):</strong> STEP 2에서 생성한 anchor 파일
+                </li>
+              </ul>
+              <p className="mt-2 text-xs text-gray-400">
+                💡 각 씬 카드의 "이미지 첨부 가이드" 섹션에서 정확한 파일명 확인
+              </p>
+            </div>
+          </div>
+
+          {/* STEP 4: 모션 생성 */}
+          <div className="p-4 rounded-lg bg-slate-800 border border-slate-700">
+            <h4 className="font-bold text-white mb-2">STEP 4: 모션 생성</h4>
+            <div className="text-sm text-gray-300 space-y-2">
+              <ul className="ml-4 list-disc space-y-1">
+                <li>
+                  <strong>Kling 3.0:</strong> STEP 3에서 생성한 이미지 첨부
+                </li>
+                <li>
+                  <strong>Veo 3.1:</strong> 씬 프레임 + 앵커 이미지 (최대 3개) 첨부
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* 파일명 규칙 요약 */}
+          <div className="p-4 rounded-lg bg-slate-800 border border-slate-700">
+            <h4 className="font-bold text-white mb-2">📁 파일명 규칙 요약</h4>
+            <div className="text-sm space-y-2">
+              <div className="flex items-start gap-2">
+                <span className="text-blue-300">•</span>
+                <div>
+                  <strong className="text-blue-200">씬 프레임:</strong>{' '}
+                  <code className="ml-2 px-2 py-1 bg-black/40 rounded font-mono text-xs text-blue-300">
+                    frame_01_00-00.00.jpg
+                  </code>
+                  <span className="ml-2 text-gray-400">(영상에서 자동 추출)</span>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-green-300">•</span>
+                <div>
+                  <strong className="text-green-200">앵커 이미지:</strong>{' '}
+                  <code className="ml-2 px-2 py-1 bg-black/40 rounded font-mono text-xs text-green-300">
+                    anchor_male.jpg
+                  </code>
+                  <span className="ml-2 text-gray-400">(생성 후 저장)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </ContentCard>
+  );
+}
+
+// ============ Anchor Guide Panel ============
+function AnchorGuidePanel({ anchors }: { anchors: AnchorInfo[] }) {
+  if (anchors.length === 0) return null;
+
+  return (
+    <ContentCard>
+      <div className="flex items-center gap-2 mb-4">
+        <span className="text-2xl">⭐</span>
+        <h3 className="text-lg font-bold text-white">앵커 이미지 먼저 생성</h3>
+      </div>
+
+      {/* 워크플로우 안내 추가 */}
+      <div className="mb-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+        <p className="text-sm text-blue-200">
+          💡 앵커 이미지는 캐릭터 일관성을 위해 <strong>반드시 먼저</strong> 생성하세요.
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        {anchors.map(anchor => (
+          <div key={anchor.key} className="p-4 rounded-lg bg-slate-800 border border-slate-700 mb-3">
+            {/* 기본 정보 */}
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-2xl">{anchor.emoji}</span>
+              <div>
+                <h4 className="font-bold text-white">{anchor.key} ANCHOR</h4>
+                <p className="text-sm text-gray-400">Scene {String(anchor.sceneNum).padStart(2, '0')}: {anchor.title}</p>
+              </div>
+            </div>
+
+            {/* 이미지 첨부 가이드 추가 */}
+            <div className="mt-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+              <p className="text-xs font-bold text-amber-200 mb-2">📎 이미지 첨부 가이드:</p>
+              <ol className="text-xs text-amber-100 space-y-1 ml-4 list-decimal">
+                <li>
+                  영상에서 프레임 추출:{' '}
+                  <code className="ml-2 px-2 py-1 bg-black/40 rounded text-amber-300 font-mono">
+                    {anchor.frameFile}
+                  </code>
+                </li>
+                <li>NanoBanana Pro: 위 프레임을 레퍼런스로 첨부</li>
+                <li>Midjourney: 위 프레임을 Discord에 업로드</li>
+                <li>
+                  생성된 이미지를 저장:{' '}
+                  <code className="ml-2 px-2 py-1 bg-black/40 rounded text-green-300 font-mono">
+                    anchor_{anchor.key.toLowerCase()}.jpg
+                  </code>
+                </li>
+              </ol>
+            </div>
+
+            {/* 캐릭터 설명 */}
+            <div className="mt-3 text-sm">
+              <span className="text-gray-400">👤 캐릭터:</span>
+              <span className="ml-2 text-white">{anchor.character}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* 다음 단계 안내 */}
+      <div className="mt-4 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+        <p className="text-sm text-green-200">
+          ✅ 앵커 이미지 생성 완료 후 아래 씬별 프롬프트로 진행하세요.
+        </p>
+      </div>
+    </ContentCard>
+  );
+}
+
 // ============ Scene Card Component ============
 const PROMPT_COLORS: Record<string, string> = {
   nanoBanana: "text-orange-400",
@@ -1240,12 +1478,14 @@ function SceneCard({
   copiedStates,
   completedPrompts,
   onCopy,
+  anchors,
 }: {
   scene: Builder2Scene;
   crefUrl: string;
   copiedStates: Record<string, boolean>;
   completedPrompts: Set<string>;
   onCopy: (key: string, text: string) => void;
+  anchors: AnchorInfo[];
 }) {
   const midjourneyPrompt = crefUrl
     ? insertCrefUrl(scene.imagePrompts.midjourney, crefUrl)
@@ -1257,6 +1497,11 @@ function SceneCard({
     { key: "kling", label: "Kling", prompt: scene.motionPrompts.kling },
     { key: "veo", label: "Veo", prompt: scene.motionPrompts.veo },
   ].filter(item => item.prompt);
+
+  // Get relevant anchor refs for this scene (non-anchor scenes with anchorRefs)
+  const relevantAnchors = !scene.isAnchor && scene.anchorRefs && scene.anchorRefs.length > 0
+    ? anchors.filter(a => scene.anchorRefs.includes(a.key))
+    : [];
 
   return (
     <ContentCard>
@@ -1279,6 +1524,61 @@ function SceneCard({
           </span>
         )}
       </div>
+
+      {/* 앵커 씬 특별 가이드 */}
+      {scene.isAnchor && (
+        <div className="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+          <p className="text-xs font-bold text-amber-200 mb-2">⭐ 이 씬은 앵커 씬입니다</p>
+          <div className="text-xs text-amber-100 space-y-1">
+            <div>• 이 씬의 이미지가 다른 씬에서 캐릭터 레퍼런스로 사용됩니다</div>
+            <div>• --oref 파라미터 없이 먼저 생성하세요</div>
+            <div>
+              • 생성 후{' '}
+              <code className="ml-1 px-2 py-1 bg-black/40 rounded text-green-300 font-mono">
+                anchor_male.jpg
+              </code>{' '}
+              (또는 anchor_female.jpg)로 저장
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 이미지 첨부 가이드 (비앵커 씬) */}
+      {!scene.isAnchor && (
+        <div className="mb-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+          <p className="text-xs font-bold text-blue-200 mb-2">📎 이미지 첨부 가이드:</p>
+
+          {/* Image 1: COMPOSITION (씬 프레임) */}
+          <div className="mb-2">
+            <span className="text-xs text-blue-300">Image 1 (구도):</span>
+            <code className="ml-2 px-2 py-1 bg-black/40 rounded text-blue-200 font-mono text-xs">
+              {scene.frameFile}
+            </code>
+          </div>
+
+          {/* Image 2: CHARACTER FACE (앵커 이미지들) */}
+          {relevantAnchors.length > 0 && (
+            <div className="mb-2">
+              <span className="text-xs text-blue-300">Image 2 (캐릭터):</span>
+              {relevantAnchors.map((anchor, idx) => (
+                <code
+                  key={anchor.key}
+                  className="ml-2 px-2 py-1 bg-black/40 rounded text-green-200 font-mono text-xs"
+                >
+                  anchor_{anchor.key.toLowerCase()}.jpg
+                </code>
+              ))}
+            </div>
+          )}
+
+          {/* 도구별 첨부 방법 */}
+          <div className="mt-2 text-xs text-blue-100 space-y-1">
+            <div>• <strong>NanoBanana Pro</strong>: 두 이미지 모두 드래그앤드롭</div>
+            <div>• <strong>Midjourney</strong>: Discord에 업로드 → --oref에 앵커 URL 사용</div>
+            <div>• <strong>Kling/Veo</strong>: 생성된 이미지 또는 {scene.frameFile} 첨부</div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-3">
         {promptItems.map((item) => {
