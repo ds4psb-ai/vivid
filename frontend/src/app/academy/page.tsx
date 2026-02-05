@@ -700,12 +700,17 @@ ${allTimestamps.map((t, i) => `- Scene ${String(i + 1).padStart(2, '0')}: ${t}`)
         </div>
       </ContentCard>
 
-      {/* Scene Detection Upload Section */}
+      {/* Scene Detection Upload Section - Premium Design */}
       <ContentCard highlight>
-        <h3 className="text-lg font-bold text-white mb-4">🎬 자동 씬 감지 (드래그앤드롭)</h3>
-        <p className="text-gray-400 text-sm mb-4">
-          영상 파일을 업로드하면 자동으로 씬 전환을 감지하고 프레임을 추출합니다.
-        </p>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-[0_0_20px_rgba(168,85,247,0.3)]">
+            <span className="material-symbols-outlined text-white">movie_filter</span>
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-white">🎬 자동 씬 감지</h3>
+            <p className="text-gray-500 text-xs">FFmpeg 기반 정밀 분석</p>
+          </div>
+        </div>
 
         {uploadStatus === "idle" && (
           <div
@@ -713,12 +718,15 @@ ${allTimestamps.map((t, i) => `- Scene ${String(i + 1).padStart(2, '0')}: ${t}`)
             onDragLeave={handleDragOut}
             onDragOver={handleDrag}
             onDrop={handleDrop}
-            className={`border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer ${isDragging
-                ? "border-purple-500 bg-purple-500/10"
-                : "border-white/20 hover:border-purple-500/50 hover:bg-purple-500/5"
+            className={`relative border-2 border-dashed rounded-2xl p-10 text-center transition-all cursor-pointer group ${isDragging
+              ? "border-purple-500 bg-purple-500/10"
+              : "border-white/20 hover:border-purple-500/50 hover:bg-purple-500/5"
               }`}
             onClick={() => document.getElementById("videoFileInput")?.click()}
           >
+            {/* Glow effect on hover */}
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+
             <input
               id="videoFileInput"
               type="file"
@@ -726,25 +734,41 @@ ${allTimestamps.map((t, i) => `- Scene ${String(i + 1).padStart(2, '0')}: ${t}`)
               onChange={handleFileSelect}
               className="hidden"
             />
-            <span className="material-symbols-outlined text-4xl text-purple-400 mb-3 block">
-              cloud_upload
-            </span>
-            <p className="text-white font-medium mb-1">영상 파일을 드래그하거나 클릭</p>
-            <p className="text-gray-500 text-xs">MP4, MOV, WebM 지원 (최대 100MB)</p>
+            <div className="relative z-10">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-purple-500/20 to-indigo-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <span className="material-symbols-outlined text-4xl text-purple-400">
+                  cloud_upload
+                </span>
+              </div>
+              <p className="text-white font-bold text-lg mb-1">영상 파일을 드래그하거나 클릭</p>
+              <p className="text-gray-500 text-sm">MP4, MOV, WebM 지원 • 최대 100MB</p>
+            </div>
           </div>
         )}
 
         {(uploadStatus === "uploading" || uploadStatus === "processing") && (
-          <div className="p-6 rounded-2xl bg-black/30 border border-purple-500/30">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="animate-spin rounded-full h-5 w-5 border-2 border-purple-500 border-t-transparent" />
-              <span className="text-white font-medium">
-                {uploadStatus === "uploading" ? `업로드 중... ${uploadProgress}%` : "씬 분석 중..."}
-              </span>
+          <div className="p-8 rounded-2xl bg-black/30 border border-purple-500/30">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="relative">
+                <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-6 w-6 border-2 border-purple-500 border-t-transparent" />
+                </div>
+                {uploadStatus === "processing" && (
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-purple-500 rounded-full animate-pulse" />
+                )}
+              </div>
+              <div>
+                <p className="text-white font-bold">
+                  {uploadStatus === "uploading" ? "업로드 중..." : "씬 분석 중..."}
+                </p>
+                <p className="text-gray-500 text-sm">
+                  {uploadStatus === "uploading" ? `${uploadProgress}% 완료` : "FFmpeg 처리 중"}
+                </p>
+              </div>
             </div>
             <div className="h-2 bg-black/50 rounded-full overflow-hidden">
               <div
-                className="h-full bg-purple-500 transition-all duration-300"
+                className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-300"
                 style={{ width: uploadStatus === "processing" ? "100%" : `${uploadProgress}%` }}
               />
             </div>
@@ -752,49 +776,67 @@ ${allTimestamps.map((t, i) => `- Scene ${String(i + 1).padStart(2, '0')}: ${t}`)
         )}
 
         {uploadStatus === "done" && detectedTimestamps.length > 0 && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <p className="text-emerald-400 font-medium">
-                ✅ {detectedTimestamps.length}개 씬 감지 완료!
-              </p>
+          <div className="space-y-5">
+            {/* Success header */}
+            <div className="flex items-center justify-between p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-emerald-400">check_circle</span>
+                </div>
+                <div>
+                  <p className="text-emerald-400 font-bold">{detectedTimestamps.length}개 씬 감지 완료!</p>
+                  <p className="text-emerald-400/60 text-xs">threshold 0.18 기준</p>
+                </div>
+              </div>
               <button
                 onClick={resetUpload}
-                className="text-gray-400 text-sm hover:text-white transition-colors"
+                className="px-3 py-1.5 rounded-lg text-gray-400 text-sm hover:text-white hover:bg-white/5 transition-all"
               >
                 다시 업로드
               </button>
             </div>
 
-            <div className="p-3 rounded-xl bg-black/30 border border-emerald-500/20">
-              <pre className="text-emerald-200 text-xs whitespace-pre-wrap font-mono">
+            {/* Result preview */}
+            <div className="p-4 rounded-xl bg-black/30 border border-emerald-500/20 overflow-hidden">
+              <pre className="text-emerald-200 text-xs whitespace-pre-wrap font-mono leading-relaxed">
                 {formatForBuilder1()}
               </pre>
             </div>
 
-            <div className="flex gap-3">
+            {/* Action buttons */}
+            <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={handleCopy}
-                className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${copied ? 'bg-emerald-500 text-white' : 'bg-white text-gray-900 hover:bg-gray-100'
+                className={`py-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${copied
+                  ? 'bg-emerald-500 text-white shadow-[0_0_20px_rgba(52,211,153,0.3)]'
+                  : 'bg-white text-gray-900 hover:bg-gray-100 shadow-[0_4px_20px_rgba(255,255,255,0.1)]'
                   }`}
               >
-                {copied ? '✅ 복사됨!' : '📋 Builder1 입력용 복사'}
+                <span className="material-symbols-outlined text-lg">{copied ? 'check' : 'content_copy'}</span>
+                {copied ? '복사됨!' : 'Builder1 입력용 복사'}
               </button>
               <button
                 onClick={downloadFrames}
-                className="flex-1 py-3 rounded-xl bg-purple-600 text-white text-sm font-bold hover:bg-purple-700 transition-colors"
+                className="py-4 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-sm font-bold hover:from-purple-700 hover:to-indigo-700 transition-all flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(168,85,247,0.3)]"
               >
-                📦 프레임 이미지 다운로드
+                <span className="material-symbols-outlined text-lg">download</span>
+                프레임 이미지 다운로드
               </button>
             </div>
           </div>
         )}
 
         {uploadStatus === "error" && (
-          <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30">
-            <p className="text-red-400 text-sm mb-3">{errorMessage}</p>
+          <div className="p-6 rounded-xl bg-red-500/10 border border-red-500/30">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
+                <span className="material-symbols-outlined text-red-400">error</span>
+              </div>
+              <p className="text-red-400 font-bold">{errorMessage}</p>
+            </div>
             <button
               onClick={resetUpload}
-              className="px-4 py-2 rounded-lg bg-white text-gray-900 text-sm font-bold hover:bg-gray-100 transition-colors"
+              className="w-full py-3 rounded-xl bg-white text-gray-900 text-sm font-bold hover:bg-gray-100 transition-colors"
             >
               다시 시도
             </button>
@@ -804,30 +846,37 @@ ${allTimestamps.map((t, i) => `- Scene ${String(i + 1).padStart(2, '0')}: ${t}`)
 
       {/* Manual Timestamp Helper Section (Fallback) */}
       <ContentCard>
-        <h3 className="text-lg font-bold text-white mb-4">타임스탬프 수동 입력 (백업)</h3>
-        <p className="text-gray-400 text-sm mb-4">
-          위 자동 감지가 안 되면 Antigravity에서 받은 타임스탬프를 붙여넣으세요.
-        </p>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center">
+            <span className="material-symbols-outlined text-gray-400 text-sm">keyboard</span>
+          </div>
+          <div>
+            <h3 className="text-white font-bold">타임스탬프 수동 입력</h3>
+            <p className="text-gray-500 text-xs">자동 감지가 안 될 때 백업용</p>
+          </div>
+        </div>
 
         <textarea
           value={timestampInput}
           onChange={(e) => setTimestampInput(e.target.value)}
           placeholder="예: 00:00.00, 00:01.67, 00:04.56, 00:07.06..."
-          className="w-full h-24 p-3 rounded-xl bg-black/50 border border-white/10 text-gray-200 text-sm placeholder-gray-500 focus:border-purple-500/50 focus:outline-none resize-none"
+          className="w-full h-20 p-4 rounded-xl bg-black/50 border border-white/10 text-gray-200 text-sm placeholder-gray-600 focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/20 resize-none font-mono"
         />
 
         {parsedTimestamps.length > 0 && detectedTimestamps.length === 0 && (
-          <div className="mt-4">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-emerald-400 text-sm font-medium">
+          <div className="mt-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-emerald-400 text-sm font-medium flex items-center gap-2">
+                <span className="material-symbols-outlined text-sm">check_circle</span>
                 {parsedTimestamps.length}개 씬 감지됨
               </p>
               <button
                 onClick={handleCopy}
-                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${copied ? 'bg-emerald-500 text-white' : 'bg-white text-gray-900 hover:bg-gray-100'
+                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${copied ? 'bg-emerald-500 text-white' : 'bg-white text-gray-900 hover:bg-gray-100'
                   }`}
               >
-                {copied ? '복사됨!' : 'Builder1 입력용 복사'}
+                <span className="material-symbols-outlined text-sm">{copied ? 'check' : 'content_copy'}</span>
+                {copied ? '복사됨!' : '복사'}
               </button>
             </div>
             <div className="p-3 rounded-xl bg-black/30 border border-emerald-500/20">
