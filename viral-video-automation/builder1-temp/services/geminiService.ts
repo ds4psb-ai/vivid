@@ -1,6 +1,5 @@
 import { GoogleGenAI, Chat, ThinkingLevel } from "@google/genai";
 import { GEMINI_MODEL, SYSTEM_PROMPT_TEMPLATE } from "../constants";
-// OutputMode 삭제됨 - 항상 MINIMAL 모드 사용
 
 /**
  * Converts a File object to a Base64 string.
@@ -24,7 +23,7 @@ let currentFileBase64: { mimeType: string; data: string } | null = null;
 
 export const startAnalysisChat = async (
   file: File,
-  timestamps: string
+  sceneTable: string
 ): Promise<string> => {
   const apiKey = process.env.API_KEY;
   if (!apiKey) throw new Error("API Key is not configured in process.env.API_KEY");
@@ -46,20 +45,20 @@ export const startAnalysisChat = async (
     config: {
       systemInstruction: finalSystemPrompt,
       temperature: 0.2,
-      maxOutputTokens: 32768, // RAW 출력 잘림 방지
+      maxOutputTokens: 32768,
       thinkingConfig: { thinkingLevel: ThinkingLevel.HIGH },
     },
   });
 
-  // First message: Send video with FFmpeg timestamps and trigger Step 1
-  const timestampMessage = `
+  // First message: Send video with scene table and trigger Step 1
+  const initialMessage = `
 [STEP 1: 입력 정리]를 시작합니다.
 
-## 씬 테이블 + 타임스탬프 (사용자 제공)
-아래는 이미 추출된 씬 전환 타임스탬프입니다:
+## 씬 테이블 (Academy에서 추출)
+아래는 Academy에서 추출한 씬 테이블입니다:
 
 \`\`\`
-${timestamps}
+${sceneTable}
 \`\`\`
 
 ## 🌏 먼저 타겟 문화권을 선택해주세요:
@@ -83,7 +82,7 @@ ${timestamps}
           inlineData: currentFileBase64
         },
         {
-          text: timestampMessage
+          text: initialMessage
         }
       ]
     });
@@ -94,7 +93,7 @@ ${timestamps}
 
   } catch (error: any) {
     console.error("Gemini API Error:", error);
-    throw new Error(error.message || "영상 분석 초기화 실패");
+    throw new Error(error.message || "프롬프트 생성 초기화 실패");
   }
 };
 
@@ -103,11 +102,10 @@ export const sendUserFeedback = async (
 ): Promise<string> => {
   if (!currentChat) throw new Error("활성 채팅 세션이 없습니다.");
 
-  // Re-send the video with the user feedback to ensure the model analyzes it individually for the next step
+  // Re-send the video with the user feedback
   const parts: any[] = [{ text: message }];
 
   if (currentFileBase64) {
-    // Add the video again to the message payload
     parts.unshift({
       inlineData: currentFileBase64
     });

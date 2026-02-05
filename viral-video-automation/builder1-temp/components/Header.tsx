@@ -10,16 +10,16 @@ export const Header: React.FC = () => {
             <Film className="w-5 h-5 text-white" />
           </div>
           <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-            Builder 1 <span className="text-accent-cyan font-mono text-sm">V8.0</span>
+            오마쥬 빌더
           </h1>
         </div>
         <div className="flex items-center gap-4 text-xs font-mono text-gray-500">
           <span className="flex items-center gap-1">
             <Zap className="w-3 h-3 text-yellow-500" />
-            POWERED BY GEMINI 3 PRO
+            GEMINI 3 PRO
           </span>
           <span className="hidden sm:inline-block px-2 py-1 bg-gray-800 rounded text-gray-300">
-            6-STEP (IMAGE + MOTION 통합)
+            6-STEP | IMAGE + MOTION
           </span>
         </div>
       </div>

@@ -69,7 +69,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           </div>
           <span className="text-sm font-bold text-gray-200 flex items-center gap-2">
             <Terminal className="w-4 h-4 text-green-500" />
-            AI 프롬프트 생성기 (Step {currentStep}/6)
+            오마쥬 빌더 (Step {currentStep}/6)
           </span>
         </div>
         <div className="flex items-center gap-3">

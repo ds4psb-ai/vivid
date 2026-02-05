@@ -19,10 +19,10 @@ export const ProcessingOverlay: React.FC<ProcessingOverlayProps> = ({ status }) 
         </div>
 
         <h3 className="text-2xl font-bold text-white mb-2">
-          AI가 분석 중입니다...
+          프롬프트 생성 중...
         </h3>
         <p className="text-gray-400 font-mono text-sm animate-pulse">
-          Gemini 3 Pro Preview가 영상을 시청하고 있습니다. 잠시만 기다려주세요.
+          Gemini 3 Pro가 씬 테이블을 기반으로 프롬프트를 생성하고 있습니다.
         </p>
         
         <div className="mt-8 flex gap-2">
