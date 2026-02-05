@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Copy, Check, Terminal, Play, RefreshCw, Download } from 'lucide-react';
-import { ChatMessage } from '../types';
+import { Copy, Check, Terminal, Play, RefreshCw, Download, ExternalLink } from 'lucide-react';
+import { VariationPanel } from './VariationPanel';
+
+const ACADEMY_PARSE_URL = "https://www.prompty.co.kr/academy?tab=parse";
+import { ChatMessage, VariationData } from '../types';
 
 interface ChatInterfaceProps {
   messages: ChatMessage[];
@@ -8,6 +11,10 @@ interface ChatInterfaceProps {
   isLoading: boolean;
   onReset: () => void;
   currentStep: number;
+  variationData: VariationData;
+  onVariationDataChange: (data: VariationData) => void;
+  onGenerateVariation: () => void;
+  onSkipVariation: () => void;
 }
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({
@@ -15,7 +22,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   onSendMessage,
   isLoading,
   onReset,
-  currentStep
+  currentStep,
+  variationData,
+  onVariationDataChange,
+  onGenerateVariation,
+  onSkipVariation,
 }) => {
   const [copied, setCopied] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -32,7 +43,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // 오마쥬 워크플로우 다운로드 (STEP 4)
+  // 오마주 워크플로우 다운로드 (STEP 4)
   const handleDownloadHomage = () => {
     // STEP 4 메시지에서 통합 워크플로우 찾기
     const step4Message = messages.find(
@@ -40,11 +51,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     );
 
     if (!step4Message) {
-      alert('오마쥬 워크플로우가 아직 생성되지 않았습니다.');
+      alert('오마주 워크플로우가 아직 생성되지 않았습니다.');
       return;
     }
 
-    let rawContent = `# 🎬 오마쥬 워크플로우\n\n`;
+    let rawContent = `# 🎬 오마주 워크플로우\n\n`;
     rawContent += `> Generated: ${new Date().toLocaleString()}\n`;
     rawContent += `> Builder Version: v8.1\n`;
     rawContent += `> Type: IMAGE + MOTION 통합 워크플로우\n\n`;
@@ -109,18 +120,18 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           </div>
           <span className="text-sm font-bold text-gray-200 flex items-center gap-2">
             <Terminal className="w-4 h-4 text-green-500" />
-            오마쥬 빌더 (Step {currentStep}/5)
+            오마주 공방 (Step {currentStep}/5)
           </span>
         </div>
         <div className="flex items-center gap-2">
-          {/* 오마쥬 워크플로우 다운로드 (STEP 4+) */}
+          {/* 오마주 워크플로우 다운로드 (STEP 4+) */}
           {currentStep >= 4 && (
             <button
               onClick={handleDownloadHomage}
               className="text-xs px-3 py-1.5 bg-accent-blue/10 text-accent-blue border border-accent-blue/30 rounded-md hover:bg-accent-blue/20 flex items-center gap-2 transition-all font-medium"
             >
               <Download className="w-3 h-3" />
-              오마쥬 (.md)
+              오마주 (.md)
             </button>
           )}
           {/* 변주 워크플로우 다운로드 (STEP 5) */}
@@ -132,6 +143,18 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               <Download className="w-3 h-3" />
               변주 (.md)
             </button>
+          )}
+          {/* 파싱 페이지 링크 (STEP 4+) */}
+          {currentStep >= 4 && (
+            <a
+              href={ACADEMY_PARSE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs px-3 py-1.5 bg-accent-cyan/10 text-accent-cyan border border-accent-cyan/30 rounded-md hover:bg-accent-cyan/20 flex items-center gap-2 transition-all font-medium"
+            >
+              <ExternalLink className="w-3 h-3" />
+              파싱
+            </a>
           )}
           <button
             onClick={onReset}
@@ -194,20 +217,30 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             </div>
           </div>
         )}
+
+        {/* STEP 4 완료 후 변주 패널 표시 (STEP 5 시작 전) */}
+        {currentStep === 4 && !isLoading && !hasVariationWorkflow && (
+          <VariationPanel
+            variationData={variationData}
+            onVariationDataChange={onVariationDataChange}
+            onGenerateVariation={onGenerateVariation}
+            onSkipVariation={onSkipVariation}
+          />
+        )}
       </div>
 
       {/* Input Area */}
       <div className="p-4 bg-gray-900 border-t border-gray-800">
         <div className="max-w-4xl mx-auto space-y-3">
-          {/* STEP 1-5: 텍스트 입력 + 다음 버튼 */}
-          {currentStep <= 5 && !isLoading && (
+          {/* STEP 1-3, 5: 텍스트 입력 + 다음 버튼 (STEP 4는 VariationPanel에서 처리) */}
+          {currentStep <= 5 && !isLoading && currentStep !== 4 && (
             <>
               {/* 텍스트 입력 */}
               <div className="flex gap-2">
                 <input
                   type="text"
                   placeholder={currentStep === 1
-                    ? "오마쥬 스타일 입력 (예: 한국인 20대, 일본 스타일...) 기본값: 한국인"
+                    ? "오마주 스타일 입력 (예: 한국인 20대, 일본 스타일...) 기본값: 한국인"
                     : "피드백이나 수정 요청을 입력하세요..."
                   }
                   className="flex-1 px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue/50"
@@ -239,21 +272,54 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               >
                 <Play className="w-5 h-5" />
                 {currentStep === 1 ? "기본값(한국인)으로 진행" :
-                 currentStep === 4 ? "통합 워크플로우 생성" :
-                 currentStep === 5 ? "변주 생성 (선택)" : "다음 단계"}
+                 currentStep === 5 ? "다음 단계" : "다음 단계"}
               </button>
 
               {currentStep === 1 && (
                 <p className="text-center text-xs text-gray-500">
-                  💡 오마쥬 스타일을 자유롭게 입력하거나, 기본값(한국인)으로 진행하세요
+                  💡 오마주 스타일을 자유롭게 입력하거나, 기본값(한국인)으로 진행하세요
                 </p>
               )}
 
-              {currentStep >= 4 && (
+              {currentStep === 5 && (
                 <p className="text-center text-xs text-gray-500">
                   💡 수정이 필요하면 위 입력창에 피드백을 작성하세요
                 </p>
               )}
+            </>
+          )}
+
+          {/* STEP 4: 피드백 입력만 (다음 버튼은 VariationPanel에서 제공) */}
+          {currentStep === 4 && !isLoading && !hasVariationWorkflow && (
+            <>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="오마주 워크플로우에 대한 피드백을 입력하세요..."
+                  className="flex-1 px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue/50"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                      onSendMessage(e.currentTarget.value.trim());
+                      e.currentTarget.value = '';
+                    }
+                  }}
+                />
+                <button
+                  onClick={(e) => {
+                    const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                    if (input.value.trim()) {
+                      onSendMessage(input.value.trim());
+                      input.value = '';
+                    }
+                  }}
+                  className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-gray-400 hover:text-white hover:border-accent-blue transition-colors"
+                >
+                  전송
+                </button>
+              </div>
+              <p className="text-center text-xs text-gray-500">
+                💡 위에서 변주 옵션을 선택하거나, 피드백을 입력하세요
+              </p>
             </>
           )}
 
@@ -270,7 +336,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
           {currentStep > 5 && (
             <p className="text-center text-xs text-green-500 font-bold animate-pulse">
-              🎉 모든 작업이 완료되었습니다. 우측 상단의 [오마쥬] / [변주] 버튼으로 각각 다운로드하세요.
+              🎉 모든 작업이 완료되었습니다. 우측 상단의 [오마주] / [변주] 버튼으로 각각 다운로드하세요.
             </p>
           )}
         </div>

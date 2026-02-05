@@ -16,3 +16,12 @@ export interface ProcessingState {
   currentStage: number;
   message: string;
 }
+
+export type VariationOption = 'A' | 'B' | 'AB';
+
+export interface VariationData {
+  personaJson: File | null;
+  personaContent: object | null;
+  bestComment: string;
+  variationOption: VariationOption | null;
+}

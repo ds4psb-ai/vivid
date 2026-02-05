@@ -121,14 +121,20 @@ Phase 분석 결과에 따라:
 
 **입력에 따른 자동 적용:**
 
-| 입력 키워드 | --no 기본값 | 캐릭터 스타일 |
-|------------|------------|--------------|
-| 한국/Korean | \`western features, caucasian skin, blonde hair\` | Korean boy/girl, black hair, monolid eyes |
-| 일본/Japanese | \`western features, caucasian skin, korean style\` | Japanese style, anime-influenced features |
-| 서양/Western/텍사스 | \`asian features, black hair\` | Western/Caucasian, varied hair colors |
-| 동남아/Southeast | \`pale skin, caucasian features\` | Southeast Asian, tan skin, dark hair |
-| 원본/Original | (없음) | 원본 영상 기반 |
-| 기타 | 사용자 입력 기반 동적 생성 | 입력 내용에 맞춰 생성 |
+| 문화권 | --no 기본값 | 배경 변환 규칙 | 캐릭터 스타일 |
+|--------|------------|---------------|--------------|
+| 한국/Korean | \`western features, caucasian skin, blonde hair, blue eyes, double eyelids (unless specified)\` | "미국 주택" → "1990s Korean apartment, warm tungsten lighting (3200K)" / "modern Seoul high-rise, cold LED (5000K)" | Korean, black hair, monolid/single eyelids, warm skin tone, natural Korean features |
+| 일본/Japanese | \`western features, caucasian skin, korean style\` | "suburban house" → "Japanese home, tatami, shoji screens, soft natural light" | Japanese, straight black hair, soft features, pale skin, delicate jawline |
+| 서양/Western/텍사스 | \`asian features, black hair, monolid eyes\` | 변환 없음 (원본 배경 유지) | Caucasian, varied hair color, double eyelids, Western features |
+| 동남아/Southeast | \`pale skin, caucasian features, east asian\` | "suburban" → "tropical Southeast Asian setting, humid atmosphere" | Southeast Asian, tan skin, dark hair, warm climate features |
+| 원본/Original | (없음) | 변환 없음 (원본 배경 유지) | 원본 영상 기반 |
+| 기타 | 사용자 입력 기반 동적 생성 | 입력 내용에 맞춰 생성 | 입력 내용에 맞춰 생성 |
+
+⚠️ 배경 변환 규칙:
+- 원본 영상의 배경이 "미국 교외 주택"이면 → "[타겟 문화권] 주거 환경"으로 자동 변환
+- 예: "suburban house with lawn" → "1990s Korean apartment building, narrow street"
+- 시대감 유지: 원본이 90s면 → 타겟도 90s 스타일
+- 조명 색온도 명시: "warm tungsten lighting (3200K)" 또는 "cold LED (5000K)"
 
 ### 📋 STEP 1 출력
 
@@ -140,9 +146,33 @@ Phase 분석 결과에 따라:
 
 **1. 캐릭터 프로필**
 입력된 씬 설명에서 등장인물 추출 + **타겟 문화권 반영**:
-\`\`\`
-👨 MALE: [타겟 문화권 기준 외모], [의상], [특징]
-👩 FEMALE: [타겟 문화권 기준 외모], [의상], [특징]
+\`\`\`markdown
+👨 MALE ANCHOR (Scene XX: [제목]):
+  나이: [씬에서 추출된 나이대 - e.g., "7-year-old boy", "man in his early 20s"]
+
+  얼굴 특징 (문화권별 디테일 필수):
+    - 한국: "black hair, monolid/single eyelids, warm skin tone, natural Korean features"
+    - 일본: "straight black hair, soft features, pale skin, delicate jawline"
+    - 서양: "varied hair color, double eyelids, Caucasian features, defined nose bridge"
+    - 동남아: "dark hair, warm tan skin, Southeast Asian features"
+
+  헤어스타일: [구체적 스타일 필수 - e.g., "1990s Korean bowl cut (black)", "side-parted business cut", "short cropped hair"]
+
+  표정: [기본 표정 - e.g., "shy gentle smile (lips closed)", "confident grin", "neutral looking at camera"]
+
+  체형: [필요시 - e.g., "slim build", "athletic", "child proportions"]
+
+  의상: [색상, 질감, 스타일 필수 - e.g., "청자켓 (denim jacket, medium blue), 흰 티셔츠 (white cotton t-shirt)"]
+
+  특징: [고유 특징 - e.g., "손에 붉은 장미 꽃다발 (holding red roses bouquet)", "wearing silver watch"]
+
+👩 FEMALE ANCHOR (Scene XX: [제목]):
+  [동일한 구조로 작성]
+
+⚠️ CRITICAL: 각 요소를 **구체적으로** 기술하세요.
+- "한국 남성"만 → ❌ 불충분
+- "7-year-old Korean boy: black bowl cut (1990s Korean style), single eyelids, shy gentle smile (lips closed)" → ✅ 충분
+
 (캐릭터 없으면 "캐릭터 없음 - 배경/오브젝트 중심 영상")
 \`\`\`
 
@@ -204,39 +234,104 @@ Phase B (사실/현대): Scene 08
 > **STEP 2에서 모든 씬의 IMAGE 프롬프트를 한 번에 출력합니다.**
 > Phase 1-2, Phase 3-4를 나누지 않고 **전체 씬 한꺼번에 생성**!
 
-### 듀얼 레퍼런스 라벨 형식
+### 듀얼 레퍼런스 라벨 형식 (2026 Best Practices)
+
+⚠️ **레거시 강점 복원**: 듀얼 레퍼런스 명확화 패턴 적용
 
 \`\`\`markdown
 **[Image 1: COMPOSITION]** [scene_XX.png]
 **[Image 2: CHARACTER FACE]** [MALE_ANCHOR.png 또는 FEMALE_ANCHOR.png]
 
-**From Image 1**: Copy exact composition, lighting, character positions.
-**From Image 2**: Copy the [타겟 문화권] character's face features.
+**From Image 1**: Copy exact composition, lighting, camera angle, character positions, depth of field.
+**From Image 2**: Copy the [타겟 문화권] [character]'s face (hair style, hair color, eyes, eyebrows, expression, skin tone).
+
+⚠️ CRITICAL: 아래 프롬프트는 **변경사항만** 기술하세요.
+레퍼런스에 이미 있는 요소(구도, 조명, 카메라 앵글, 기존 외모)를 다시 기술하지 마세요.
+
+예시:
+❌ 잘못된 예: "Wide shot of Korean man in denim jacket, warm lighting, 1990s apartment"
+   → 레퍼런스에 이미 있는 내용 중복
+
+✅ 올바른 예: "Walking forward towards camera. 배경은 1990s 한국 아파트로 변환."
+   → 변경사항(동작, 배경 문화권 변환)만 기술
 \`\`\`
 
-### Midjourney V7 파라미터
+### Midjourney V7 파라미터 (2026 Best Practices)
 
-각 씬 프롬프트 끝에 추가:
+⚠️ **중요**: V7에서는 --cref → --oref, --cw → --ow로 전환되었습니다.
+
+기본 구조:
 \`\`\`
---iw 2.0 --ar 9:16 --v 7 --style raw --cref [ANCHOR_URL] --cw [동적] --stylize [동적] --no [문화권 기본값], [씬별 동적]
+--iw 2.0 --ar 9:16 --v 7 --style raw
+--oref [ANCHOR_URL]  (V7에서 --cref 대체)
+--ow [동적]          (V7에서 --cw 대체)
+--stylize [동적]
+--no [문화권 기본값], [씬별 동적]
 \`\`\`
 
-**--cw 가이드:**
-- 앵커 씬 (본인): --cref 없음 (이 씬이 레퍼런스)
-- 클로즈업: --cw 80-100
-- 미디엄 샷: --cw 50
-- 와이드 샷: --cw 30
-- 배경만: --cref 생략
+**--ow (omni-weight) 동적 결정 (V7 기준, 0-1000):**
+샷 타입과 씬 설명을 분석하여 자동 결정:
 
-### 씬별 --no 동적 생성
+| 샷 타입 | --ow 값 | 사용 시기 | 효과 |
+|---------|---------|----------|------|
+| 앵커 씬 본인 | --oref 없음 | 이 씬이 레퍼런스 | - |
+| 클로즈업 (얼굴) | 400-600 | "close-up", "face", "portrait", "eyes" | 얼굴/의상 강력 보존 |
+| 미디엄 샷 (상반신) | 200-300 | "medium shot", "upper body", "waist up" | 캐릭터-구도 밸런스 |
+| 와이드 샷 (전신) | 100-150 | "wide", "full body", "entire", "landscape" | 구도 우선, 캐릭터 유사도 낮음 |
+| 배경만 (인물 없음) | --oref 생략 | "background", "no character" | - |
 
-| 씬 상태 | --no 추가 항목 |
-|--------|---------------|
-| 손에 오브젝트 들고 있음 | \`[오브젝트] on table/floor\` |
-| 눈 뜬 상태 | \`eyes closed\` |
-| 특정 동작 중 | \`[반대 동작]\` |
-| 과거 Phase | \`modern [elements]\` |
-| 현재 Phase | \`vintage [elements]\` |
+**--iw (image weight):** 2.0 (V7 기준, 구도 레퍼런스 강조)
+  - Image 1 (COMPOSITION) 레퍼런스 가중치
+
+**--stylize:** Visual Rhyme Phase 기반
+  - Phase 1-2 (과거/빈티지): 250-300
+  - Phase 3-4 (현재/사실): 100-150
+  - 대비 없는 영상: 150-200 (중간값)
+
+⚠️ 샷 타입 추론 키워드:
+- "close-up", "closeup", "face", "eyes", "portrait" → 클로즈업
+- "medium", "waist", "upper body", "half body" → 미디엄
+- "wide", "full", "entire", "landscape", "establishing" → 와이드
+
+### 씬별 --no 동적 생성 규칙 (문화권 기본값에 추가)
+
+⚠️ **레거시 강점 복원**: 강력한 네거티브 프롬프트 패턴 적용
+
+각 씬 설명을 분석하여 해당되는 모든 --no를 **자동으로 추가**하세요:
+
+**1. 오브젝트 상태 (AI 환각 방지):**
+- 손에 들고 있음 → \`--no [오브젝트] on table/floor/ground\`
+  - 예: "holding cake" → \`--no cake on table\`
+  - 예: "holding flowers" → \`--no flowers on ground, vase\`
+  - 예: "holding phone" → \`--no phone on desk, pocket\`
+
+**2. 캐릭터 상태:**
+- 눈 뜬 상태 → \`--no eyes closed, sleeping\`
+- 입 다문 상태 → \`--no mouth open, speaking, talking\`
+- 정면 응시 → \`--no looking away, profile view, turned head\`
+- 웃는 표정 → \`--no frown, sad, crying\`
+- 서 있는 상태 → \`--no sitting, lying down\`
+
+**3. 동작 상태:**
+- 숨 들이쉬는 중 → \`--no blowing, exhaling, blowing candles\`
+- 박수 중 → \`--no static hands, hands down, arms crossed\`
+- 걷는 중 → \`--no standing still, sitting, running\`
+- 문 열고 있음 → \`--no closed door, door shut\`
+
+**4. Visual Rhyme Phase (시대감 일관성):**
+- Phase 1-2 (과거/빈티지) → \`--no modern objects, LED lighting, smartphones, laptops, flat screen TV, contemporary design\`
+- Phase 3-4 (현재/사실) → \`--no vintage, sepia tone, film grain, warm retro colors, nostalgia filter, old photos\`
+
+**5. 배경 문화권 변환:**
+- 한국으로 변환 시 → \`--no Western architecture, American suburban, picket fence, large lawn\`
+- 일본으로 변환 시 → \`--no Western architecture, Korean style\`
+- 서양 유지 시 → \`--no Asian architecture, Korean apartments, Japanese homes\`
+
+⚠️ **동적 생성 예시:**
+씬 설명: "Man holding cake, eyes open, mouth closed, walking forward"
+→ --no: \`cake on table, eyes closed, mouth open, speaking, standing still, sitting\` + [문화권 기본값]
+
+⚠️ 각 씬마다 씬 설명을 **철저히 분석**하여 해당되는 모든 --no를 추가하세요.
 
 ### Visual Rhyme 대조 섹션
 
@@ -315,47 +410,98 @@ Phase B (사실/현대): Scene 08
 **독립 작성**: MOTION은 입력된 씬 설명의 동작을 기술.
 IMAGE 프롬프트 텍스트를 복붙하지 말 것.
 
-### Kling 3.0 형식 (Beat System)
+### Kling 3.0 Beat System (2026 Motion Control Best Practices)
 
-**Short Scene (< 2s):**
-\`\`\`
-Beat 0-Xs: [Camera] + [Scene]. IMMEDIATELY [action]. [Details].
-Audio: [SFX]
-Negative: [unwanted]
-\`\`\`
+⚠️ **2026 Kling 2.6/3.0 Motion Control 핵심**:
+레퍼런스 이미지 기반 생성 시 **모션을 프롬프트에 기술하지 마세요**!
+레퍼런스 이미지가 이미 캐릭터 포즈와 시작 프레임을 정의합니다.
 
-**Standard Scene (2s+):**
-\`\`\`
-Beat 0-2s: [Camera angle] + [Scene description]
-  [Subject] IMMEDIATELY [first action].
-Beat 2-4s: [Camera change if any] + [Continuation action]
-Beat 4-Ns: [Final action/hold]
-Audio: [Character: "대사"] [SFX: sounds] [Ambient: background]
-Character: [Elements reference ID] (optional)
-Negative: [unwanted elements]
-\`\`\`
+**프롬프트는 다음만 집중:**
+1. **캐릭터 외모** (레퍼런스와의 변경점만 - 있는 경우)
+2. **환경/배경** (문화권 변환 적용)
+3. **조명/분위기** (색온도, 그림자 방향)
 
-**Beat 수 규칙 (타임코드 기반 자동 계산):**
-| 씬 길이 | Beat 수 | 설명 |
-|---------|---------|------|
-| < 2초 | 1 Beat | 짧은 전환 씬 |
-| 2-4초 | 2 Beats | 일반 씬 |
-| > 4초 | 3+ Beats | 긴 액션 씬 |
-
-### Veo 3.1 형식 (Slot Structure)
-
+**Beat System 구조:**
 \`\`\`
-Subject: [Character with clothing/appearance]
-Action: [Specific motion with timing cue - "within first second"]
-Setting: [Location, time of day, era]
-Style: [Film grain, color grading, mood, era aesthetic]
-Camera: [Shot type + movement (static/handheld/zoom direction)]
-Lighting: [Color temperature, direction, intensity, shadows]
-Audio: "Dialogue: [quotes]. SFX: [sounds]. Ambient: [background]"
-Constraints: [Negative prompt - what to avoid]
+Beat 0-Xs: [Camera type], [설정].
+  IMMEDIATELY [핵심 동작 - 0.3초 내 시작].
+  [후속 동작 또는 정적 유지].
+Audio: [Ambient: 환경음] [SFX: 효과음]
+Negative: [금지 동작/요소]
 \`\`\`
 
-**최적 길이**: 150-300자 (400자 초과 시 잘림 가능)
+**Beat 수 규칙:**
+| 씬 길이 | Beat 수 | 설명 | 예시 |
+|---------|---------|------|------|
+| < 2초 | 1 Beat | 짧은 전환 | 글리치, 빠른 컷 |
+| 2-4초 | 2 Beats | 일반 씬 | 대부분의 씬 |
+| > 4초 | 3+ Beats | 긴 액션 | 복잡한 동작 시퀀스 |
+
+⚠️ **레퍼런스 이미지 사용 시 프롬프트 간결화:**
+
+❌ 잘못된 예 (모션 중복 기술):
+\`\`\`
+Korean man in denim jacket, black bowl cut hair, walking forward towards camera,
+arms swinging naturally, 1990s Korean apartment background
+\`\`\`
+
+✅ 올바른 예 (캐릭터 외모 + 환경만):
+\`\`\`
+Character: Same as image (Korean man in denim jacket)
+Environment: 1990s Korean suburban street, warm tungsten lighting (3200K)
+\`\`\`
+
+⚠️ **프레이밍 매칭 필수**: 레퍼런스가 풀바디면 이미지도 풀바디 사용
+
+### Veo 3.1 프롬프트 구조 (2026 Best Practices)
+
+⚠️ **2026 Veo 3.1 "Ingredients to Video" 핵심**:
+레퍼런스 이미지가 있으면 프롬프트는 **간결하게**!
+레퍼런스 이미지가 이미 구도, 조명, 인물 외모를 정의하므로 중복 기술 불필요.
+
+**프롬프트는 다음 3가지만 집중:**
+1. **Cinematography**: [카메라 무브먼트 - dolly, tracking, crane, POV 등]
+2. **Subject**: [레퍼런스에 없는 변경사항만]
+3. **Action**: [명확한 단일 동작 - "within first second" 타이밍 명시]
+
+**간결한 프롬프트 예시 (레퍼런스 이미지 사용 시):**
+\`\`\`
+Cinematography: Static medium shot, slight handheld movement
+Subject: Same character (레퍼런스 참조)
+Action: Looking around nervously, then fixes gaze to the right, within first second
+\`\`\`
+
+**Slot Structure (참고용 - 필요한 슬롯만 사용):**
+\`\`\`
+Subject: [인물/오브젝트 - 레퍼런스에 없는 변경사항만]
+Action: [명확한 단일 동작 + "within first second" 타이밍]
+Setting: [배경 - 문화권 변환 적용 시에만]
+Style: [필름 스타일, 시대감 - 변화가 있을 때만]
+Camera: [Shot type + movement - 카메라 무브먼트가 있을 때만]
+Lighting: [조명 - 변화가 있을 때만, 색온도 명시 e.g., "3200K"]
+Audio: "Ambient: [환경음]. SFX: [효과음]."
+Constraints: [금지 요소 - 씬별 --no 동적 생성 규칙 적용]
+\`\`\`
+
+⚠️ **중복 기술 절대 금지:**
+
+❌ 잘못된 예 (레퍼런스 내용 중복):
+\`\`\`
+Subject: Korean man in denim jacket, black bowl cut, warm skin tone, standing in 1990s Korean apartment, warm lighting
+Action: Walking forward towards camera
+\`\`\`
+→ 레퍼런스 이미지에 이미 있는 외모/배경 중복 기술
+
+✅ 올바른 예 (변경사항만):
+\`\`\`
+Cinematography: Slow forward tracking shot
+Subject: Same character (레퍼런스 참조)
+Action: Walking steadily towards camera, within first second
+Audio: "Ambient: suburban nature sounds. SFX: footsteps on pavement."
+\`\`\`
+
+⚠️ **최대 3개 레퍼런스 이미지** 지원 (Veo 3.1)
+⚠️ **Vertical video (portrait 9:16)** 네이티브 지원
 
 ### Motion Score 가이드
 
@@ -457,62 +603,135 @@ STEP 1-3의 모든 내용을 **씬별로 묶어서** 최종 출력합니다.
 
 **[Image 1: COMPOSITION]** [scene_XX.png]
 
+⚠️ **이 씬은 앵커 씬입니다**. --oref 없이 먼저 생성하세요.
+생성된 이미지 URL을 복사하여 다른 씬의 --oref에 사용합니다.
+
 [📋 COPY] NanoBanana Pro:
 \\\`\\\`\\\`text
-[한글 프롬프트 - 상세하게]
+[상세한 한글 프롬프트 - STEP 1의 캐릭터 프로필 기반]
+
+⚠️ 앵커 씬은 캐릭터 디테일을 최대한 상세하게 기술하세요:
+
+- 나이: [정확한 나이대 - e.g., "7살 남자아이", "20대 초반 남성"]
+
+- 얼굴 특징:
+  * 헤어: [컬러 + 스타일 - e.g., "검은색 단발머리 (90년대 한국 아동 스타일)"]
+  * 눈: [구체적 - e.g., "쌍꺼풀 없는 눈, 검은 동공"]
+  * 표정: [디테일 - e.g., "수줍은 미소 (입은 다문 채), 부드러운 시선"]
+  * 피부: [색조 - e.g., "따뜻한 한국인 피부톤"]
+
+- 의상: [색상, 재질, 스타일 - e.g., "중간 톤 청자켓 (데님, medium blue), 흰색 면 티셔츠"]
+
+- 포즈/동작: [앵커 씬의 포즈 - e.g., "케이크를 들고 카메라 정면 응시"]
+
+- 배경: [문화권 변환 적용 - e.g., "1990s 한국 아파트 거실, 따뜻한 백열등 조명 (3200K), 목재 가구"]
+
+- 조명: [디테일 - e.g., "창문에서 들어오는 자연광 + 실내 백열등, 부드러운 그림자"]
 \\\`\\\`\\\`
 
-[📋 COPY] Midjourney V7 (앵커용 - --cref 없음):
+[📋 COPY] Midjourney V7 (앵커용 - --oref 없음):
 \\\`\\\`\\\`text
-[영문 프롬프트]
+[영문 프롬프트 - 한글 프롬프트와 동일 내용, 캐릭터 디테일 필수]
+
+예시 구조:
+"7-year-old Korean boy: black bowl cut (1990s Korean style), single eyelids,
+shy gentle smile (lips closed), warm skin tone, holding birthday cake,
+looking at camera. 1990s Korean apartment living room, warm tungsten lighting
+(3200K), wooden furniture. Natural light from window."
+
 --iw 2.0 --ar 9:16 --v 7 --style raw --stylize [동적]
+--no [문화권 기본값], [씬별 동적]
 \\\`\\\`\\\`
+
+💾 **생성 후 필수 단계**:
+1. 생성된 이미지 URL 복사
+2. 아래 모든 씬의 [MALE_ANCHOR_URL]에 붙여넣기
+3. 각 씬의 --ow 값은 샷 타입에 따라 자동 결정됨
 
 ---
 
 ## 📍 Scene 01: [제목]
 **타임코드:** 00:00.00~00:01.67
-
-**[Image 1: COMPOSITION]** [scene01.png]
-**[Image 2: CHARACTER FACE]** [ANCHOR 사용] (또는 "배경 씬")
+**레퍼런스**: scene_01.png
+**캐릭터**: 👨 MALE (ANCHOR 참조) (또는 "배경 씬 - 캐릭터 없음")
 
 ### 🖼️ IMAGE
 
+**[Image 1: COMPOSITION]** [scene_01.png]
+**[Image 2: CHARACTER FACE]** [MALE_ANCHOR.png 또는 입력한 ANCHOR URL]
+
+**From Image 1**: Copy exact composition, lighting, camera angle, character positions, depth of field.
+**From Image 2**: Copy the Korean man's face (black bowl cut, single eyelids, shy smile, warm skin tone).
+
+⚠️ CRITICAL: 아래 프롬프트는 **변경사항만** 기술합니다.
+레퍼런스에 이미 있는 요소(구도, 조명, 캐릭터 외모)를 다시 기술하지 마세요.
+
 [📋 COPY] NanoBanana Pro:
 \\\`\\\`\\\`text
-[한글 프롬프트 - 최소 5줄]
+[변경사항 중심 한글 프롬프트 - 간결하게]
+
+⚠️ 레퍼런스에 없는 변경사항만 기술:
+
+- 인물: [ANCHOR와의 차이점만]
+  예: "걷는 동작", "한 손에 붉은 장미 꽃다발 들고 있음"
+
+- 배경: [COMPOSITION과의 차이점만 - 문화권 변환 필수]
+  예: "배경은 1990s 한국 주택가로 변환 (좁은 골목, 아파트 단지)"
+
+- 조명: [변화가 있을 때만]
+  예: "석양빛 추가 (golden hour, 5500K)"
+
+- 분위기: [추가 요소만]
+  예: "로맨틱한 분위기, 부드러운 보케"
 \\\`\\\`\\\`
 
 [📋 COPY] Midjourney V7:
 \\\`\\\`\\\`text
-[영문 프롬프트]
---iw 2.0 --ar 9:16 --v 7 --style raw --cref [ANCHOR_URL] --cw [동적] --stylize [동적] --no [제외 항목]
+[변경사항 중심 영문 프롬프트 - 간결하게]
+
+예시 구조:
+"Walking forward towards camera. Korean suburban street (1990s), narrow alley,
+apartment buildings background. Golden hour lighting (5500K), romantic atmosphere."
+
+--iw 2.0 --ar 9:16 --v 7 --style raw
+--oref [MALE_ANCHOR_URL] --ow [샷 타입 기반 자동: 클로즈업 400-600 / 미디엄 200-300 / 와이드 100-150]
+--stylize [Visual Rhyme Phase 기반: Phase 1-2는 250-300 / Phase 3-4는 100-150]
+--no [문화권 기본값], [씬별 동적 - 오브젝트/캐릭터/동작 상태 분석]
 \\\`\\\`\\\`
 
 ### 🎥 MOTION
 
+⚠️ **레퍼런스 이미지 사용 시 모션을 프롬프트에 기술하지 마세요!**
+레퍼런스 이미지가 이미 시작 프레임과 포즈를 정의합니다.
+
 [📋 COPY] Kling 3.0:
 \\\`\\\`\\\`text
-Beat 0-Xs: [카메라]. [설정]. IMMEDIATELY [동작].
-Audio: [Ambient: 배경음] [SFX: 효과음]
-Negative: [제외 요소]
+[캐릭터 외모 + 환경만 - 모션 기술 제거]
+
+Character: Same as image (Korean man in denim jacket)
+Environment: 1990s Korean suburban street, narrow alley, warm tungsten streetlights (3200K)
+Lighting: Golden hour, soft shadows
+
+⚠️ 모션은 레퍼런스 이미지가 정의함 - 프롬프트에서 제거
 \\\`\\\`\\\`
 
 [📋 COPY] Veo 3.1:
 \\\`\\\`\\\`text
-Subject: [피사체]
-Action: [동작]
-Setting: [설정]
-Style: [스타일]
-Camera: [카메라]
-Lighting: [조명]
-Audio: "[오디오]"
-Constraints: [제약]
+[간결한 3요소 구조 - Cinematography, Subject, Action만]
+
+Cinematography: Static wide shot, symmetrical composition
+Subject: Same character (레퍼런스 참조)
+Action: Walking steadily towards camera, within first second
+Setting: 1990s Korean suburban street (문화권 변환 적용)
+Audio: "Ambient: suburban nature sounds, distant traffic. SFX: footsteps on pavement."
+Constraints: [씬별 --no 동적 생성 - 예: standing still, sitting, running]
+
+⚠️ 레퍼런스 이미지 내용(구도, 조명, 외모)은 프롬프트에서 제거
 \\\`\\\`\\\`
 
 | Camera | Motion Score | Duration |
 |--------|-------------|----------|
-| [타입] | [점수] | [시간] |
+| Static / Tracking | 5 (Walking) | 00:00.00~00:01.67 |
 
 ---
 
@@ -554,16 +773,16 @@ Constraints: [제약]
 
 ---
 
-## 📊 --cref 가이드 (동적 생성)
+## 📊 --oref 가이드 (V7 동적 생성)
 
-| 샷 타입 | --cref | --cw |
+| 샷 타입 | --oref | --ow |
 |---------|--------|------|
 | 앵커 씬 (본인) | 없음 (이 씬이 레퍼런스) | - |
-| 클로즈업 | [ANCHOR_URL] | 80-100 |
-| 미디엄 샷 | [ANCHOR_URL] | 50 |
-| 와이드 샷 | [ANCHOR_URL] | 30 |
-| 남+여 함께 | [MALE_URL] [FEMALE_URL] | 50 |
-| 배경만 | --cref 생략 | 0 또는 생략 |
+| 클로즈업 | [ANCHOR_URL] | 400-600 |
+| 미디엄 샷 | [ANCHOR_URL] | 200-300 |
+| 와이드 샷 | [ANCHOR_URL] | 100-150 |
+| 남+여 함께 | [MALE_URL] [FEMALE_URL] | 200-300 |
+| 배경만 | --oref 생략 | 0 또는 생략 |
 
 ---
 

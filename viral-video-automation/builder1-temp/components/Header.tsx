@@ -10,7 +10,7 @@ export const Header: React.FC = () => {
             <Film className="w-5 h-5 text-white" />
           </div>
           <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-            오마쥬 빌더
+            오마주 공방
           </h1>
         </div>
         <div className="flex items-center gap-4 text-xs font-mono text-gray-500">
@@ -19,7 +19,7 @@ export const Header: React.FC = () => {
             GEMINI 3 PRO
           </span>
           <span className="hidden sm:inline-block px-2 py-1 bg-gray-800 rounded text-gray-300">
-            6-STEP | IMAGE + MOTION
+            5-STEP | IMAGE + MOTION
           </span>
         </div>
       </div>
