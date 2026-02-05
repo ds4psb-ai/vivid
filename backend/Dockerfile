@@ -49,6 +49,7 @@ RUN groupadd -r vivid && useradd -r -g vivid vivid
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
     curl \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 

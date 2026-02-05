@@ -5,7 +5,7 @@
  * Stitch 7 디자인 - 화이트 토큰 버튼 스타일 (완전 재현)
  */
 
-import { useState, Suspense, startTransition } from "react";
+import { useState, useEffect, Suspense, startTransition } from "react";
 import { useSearchParams } from "next/navigation";
 
 // Tool Links
@@ -16,7 +16,7 @@ const TOOL_LINKS = {
   antigravity: "https://antigravity.google",
 };
 
-type TabKey = "home" | "setup" | "credit" | "anchor" | "builder1" | "vibe" | "builder2" | "image" | "video" | "homework";
+type TabKey = "home" | "setup" | "credit" | "anchor" | "builder1" | "vibe" | "builder2" | "helper" | "image" | "video" | "homework";
 
 const NAV_SECTIONS = [
   {
@@ -34,6 +34,7 @@ const NAV_SECTIONS = [
       { key: "builder1" as TabKey, label: "이미지 프롬프트 생성기", icon: "construction" },
       { key: "vibe" as TabKey, label: "바이브 철학관", icon: "psychology" },
       { key: "builder2" as TabKey, label: "패러디 오마주 엔진", icon: "brush" },
+      { key: "helper" as TabKey, label: "빌더2 도우미", icon: "content_paste_go" },
     ],
   },
   {
@@ -207,6 +208,7 @@ function AcademyContent() {
             {activeTab === "builder1" && <Builder1Content />}
             {activeTab === "vibe" && <VibeContent />}
             {activeTab === "builder2" && <Builder2Content />}
+            {activeTab === "helper" && <Builder2HelperContent />}
             {activeTab === "image" && <ImageContent />}
             {activeTab === "video" && <VideoContent />}
             {activeTab === "homework" && <HomeworkContent />}
@@ -439,9 +441,8 @@ function AnchorContent() {
           </div>
           <button
             onClick={() => handleCopy(PROMPT_1, setCopied1)}
-            className={`absolute top-2 right-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-              copied1 ? 'bg-emerald-500 text-white' : 'bg-white text-gray-900 hover:bg-gray-100'
-            }`}
+            className={`absolute top-2 right-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${copied1 ? 'bg-emerald-500 text-white' : 'bg-white text-gray-900 hover:bg-gray-100'
+              }`}
           >
             {copied1 ? '복사됨!' : '복사'}
           </button>
@@ -461,9 +462,8 @@ function AnchorContent() {
           </div>
           <button
             onClick={() => handleCopy(PROMPT_2, setCopied2)}
-            className={`absolute top-2 right-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-              copied2 ? 'bg-emerald-500 text-white' : 'bg-white text-gray-900 hover:bg-gray-100'
-            }`}
+            className={`absolute top-2 right-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${copied2 ? 'bg-emerald-500 text-white' : 'bg-white text-gray-900 hover:bg-gray-100'
+              }`}
           >
             {copied2 ? '복사됨!' : '복사'}
           </button>
@@ -506,6 +506,185 @@ function AnchorContent() {
 
 // ============ Builder1 Content ============
 function Builder1Content() {
+  const [timestampInput, setTimestampInput] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  // Video upload states
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<"idle" | "uploading" | "processing" | "done" | "error">("idle");
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [detectedTimestamps, setDetectedTimestamps] = useState<string[]>([]);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  // Parse timestamps from Antigravity output (formats: "00:01.67" or "0:00.00")
+  const parseTimestamps = (input: string): string[] => {
+    const pattern = /\d{1,2}:\d{2}\.\d{2}/g;
+    return input.match(pattern) || [];
+  };
+
+  const parsedTimestamps = parseTimestamps(timestampInput);
+  const allTimestamps = detectedTimestamps.length > 0 ? detectedTimestamps : parsedTimestamps;
+
+  // Format for Builder1 input
+  const formatForBuilder1 = (): string => {
+    if (allTimestamps.length === 0) return "";
+    return `FFmpeg Scene Detection Results (threshold 0.18):
+${allTimestamps.map((t, i) => `- Scene ${String(i + 1).padStart(2, '0')}: ${t}`).join('\n')}
+
+위 타임스탬프를 기준으로 영상을 분석해주세요.`;
+  };
+
+  const handleCopy = async () => {
+    const formatted = formatForBuilder1();
+    if (formatted) {
+      await navigator.clipboard.writeText(formatted);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  // Handle drag events
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDragIn = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragOut = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      await processVideo(files[0]);
+    }
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      await processVideo(files[0]);
+    }
+  };
+
+  const processVideo = async (file: File) => {
+    // Validate file type
+    if (!file.type.startsWith("video/")) {
+      setErrorMessage("영상 파일만 업로드 가능합니다.");
+      setUploadStatus("error");
+      return;
+    }
+
+    // Check file size (max 100MB)
+    if (file.size > 100 * 1024 * 1024) {
+      setErrorMessage("파일 크기는 100MB 이하만 가능합니다.");
+      setUploadStatus("error");
+      return;
+    }
+
+    setUploadStatus("uploading");
+    setUploadProgress(0);
+    setErrorMessage("");
+    setDetectedTimestamps([]);
+
+    const formData = new FormData();
+    formData.append("video", file);
+
+    try {
+      // Upload with progress
+      const xhr = new XMLHttpRequest();
+
+      xhr.upload.addEventListener("progress", (event) => {
+        if (event.lengthComputable) {
+          setUploadProgress(Math.round((event.loaded / event.total) * 100));
+        }
+      });
+
+      xhr.addEventListener("load", async () => {
+        if (xhr.status === 200) {
+          const result = JSON.parse(xhr.responseText);
+          setDetectedTimestamps(result.timestamps || []);
+          setUploadStatus("done");
+        } else {
+          setErrorMessage("서버 오류가 발생했습니다.");
+          setUploadStatus("error");
+        }
+      });
+
+      xhr.addEventListener("error", () => {
+        setErrorMessage("업로드 중 오류가 발생했습니다.");
+        setUploadStatus("error");
+      });
+
+      setUploadStatus("processing");
+      xhr.open("POST", `${process.env.NEXT_PUBLIC_API_URL || ''}/api/v1/scene-detect/`);
+      xhr.send(formData);
+
+    } catch {
+      setErrorMessage("네트워크 오류가 발생했습니다.");
+      setUploadStatus("error");
+    }
+  };
+
+  const downloadFrames = async () => {
+    // Trigger download with frames
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "video/*";
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append("video", file);
+
+      setUploadStatus("uploading");
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL || ''}/api/v1/scene-detect/with-frames`,
+          { method: "POST", body: formData }
+        );
+
+        if (response.ok) {
+          const blob = await response.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "scenes.zip";
+          a.click();
+          URL.revokeObjectURL(url);
+          setUploadStatus("done");
+        } else {
+          setErrorMessage("다운로드 실패");
+          setUploadStatus("error");
+        }
+      } catch {
+        setErrorMessage("네트워크 오류");
+        setUploadStatus("error");
+      }
+    };
+    input.click();
+  };
+
+  const resetUpload = () => {
+    setUploadStatus("idle");
+    setUploadProgress(0);
+    setDetectedTimestamps([]);
+    setErrorMessage("");
+  };
+
   return (
     <div className="max-w-3xl mx-auto space-y-8">
       <PageHeader title="이미지 프롬프트 생성기" sub="영상 넣으면 → 이미지용 프롬프트 나옴" />
@@ -519,6 +698,145 @@ function Builder1Content() {
           <div className="flex gap-3"><span className="text-purple-400 font-bold">2.</span><span className="text-gray-300">STEP 1~4 순서대로 진행</span></div>
           <div className="flex gap-3"><span className="text-purple-400 font-bold">3.</span><span className="text-gray-300">결과물(.md) 다운로드</span></div>
         </div>
+      </ContentCard>
+
+      {/* Scene Detection Upload Section */}
+      <ContentCard highlight>
+        <h3 className="text-lg font-bold text-white mb-4">🎬 자동 씬 감지 (드래그앤드롭)</h3>
+        <p className="text-gray-400 text-sm mb-4">
+          영상 파일을 업로드하면 자동으로 씬 전환을 감지하고 프레임을 추출합니다.
+        </p>
+
+        {uploadStatus === "idle" && (
+          <div
+            onDragEnter={handleDragIn}
+            onDragLeave={handleDragOut}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+            className={`border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer ${isDragging
+                ? "border-purple-500 bg-purple-500/10"
+                : "border-white/20 hover:border-purple-500/50 hover:bg-purple-500/5"
+              }`}
+            onClick={() => document.getElementById("videoFileInput")?.click()}
+          >
+            <input
+              id="videoFileInput"
+              type="file"
+              accept="video/*"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            <span className="material-symbols-outlined text-4xl text-purple-400 mb-3 block">
+              cloud_upload
+            </span>
+            <p className="text-white font-medium mb-1">영상 파일을 드래그하거나 클릭</p>
+            <p className="text-gray-500 text-xs">MP4, MOV, WebM 지원 (최대 100MB)</p>
+          </div>
+        )}
+
+        {(uploadStatus === "uploading" || uploadStatus === "processing") && (
+          <div className="p-6 rounded-2xl bg-black/30 border border-purple-500/30">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="animate-spin rounded-full h-5 w-5 border-2 border-purple-500 border-t-transparent" />
+              <span className="text-white font-medium">
+                {uploadStatus === "uploading" ? `업로드 중... ${uploadProgress}%` : "씬 분석 중..."}
+              </span>
+            </div>
+            <div className="h-2 bg-black/50 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-purple-500 transition-all duration-300"
+                style={{ width: uploadStatus === "processing" ? "100%" : `${uploadProgress}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        {uploadStatus === "done" && detectedTimestamps.length > 0 && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-emerald-400 font-medium">
+                ✅ {detectedTimestamps.length}개 씬 감지 완료!
+              </p>
+              <button
+                onClick={resetUpload}
+                className="text-gray-400 text-sm hover:text-white transition-colors"
+              >
+                다시 업로드
+              </button>
+            </div>
+
+            <div className="p-3 rounded-xl bg-black/30 border border-emerald-500/20">
+              <pre className="text-emerald-200 text-xs whitespace-pre-wrap font-mono">
+                {formatForBuilder1()}
+              </pre>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleCopy}
+                className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${copied ? 'bg-emerald-500 text-white' : 'bg-white text-gray-900 hover:bg-gray-100'
+                  }`}
+              >
+                {copied ? '✅ 복사됨!' : '📋 Builder1 입력용 복사'}
+              </button>
+              <button
+                onClick={downloadFrames}
+                className="flex-1 py-3 rounded-xl bg-purple-600 text-white text-sm font-bold hover:bg-purple-700 transition-colors"
+              >
+                📦 프레임 이미지 다운로드
+              </button>
+            </div>
+          </div>
+        )}
+
+        {uploadStatus === "error" && (
+          <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30">
+            <p className="text-red-400 text-sm mb-3">{errorMessage}</p>
+            <button
+              onClick={resetUpload}
+              className="px-4 py-2 rounded-lg bg-white text-gray-900 text-sm font-bold hover:bg-gray-100 transition-colors"
+            >
+              다시 시도
+            </button>
+          </div>
+        )}
+      </ContentCard>
+
+      {/* Manual Timestamp Helper Section (Fallback) */}
+      <ContentCard>
+        <h3 className="text-lg font-bold text-white mb-4">타임스탬프 수동 입력 (백업)</h3>
+        <p className="text-gray-400 text-sm mb-4">
+          위 자동 감지가 안 되면 Antigravity에서 받은 타임스탬프를 붙여넣으세요.
+        </p>
+
+        <textarea
+          value={timestampInput}
+          onChange={(e) => setTimestampInput(e.target.value)}
+          placeholder="예: 00:00.00, 00:01.67, 00:04.56, 00:07.06..."
+          className="w-full h-24 p-3 rounded-xl bg-black/50 border border-white/10 text-gray-200 text-sm placeholder-gray-500 focus:border-purple-500/50 focus:outline-none resize-none"
+        />
+
+        {parsedTimestamps.length > 0 && detectedTimestamps.length === 0 && (
+          <div className="mt-4">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-emerald-400 text-sm font-medium">
+                {parsedTimestamps.length}개 씬 감지됨
+              </p>
+              <button
+                onClick={handleCopy}
+                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${copied ? 'bg-emerald-500 text-white' : 'bg-white text-gray-900 hover:bg-gray-100'
+                  }`}
+              >
+                {copied ? '복사됨!' : 'Builder1 입력용 복사'}
+              </button>
+            </div>
+            <div className="p-3 rounded-xl bg-black/30 border border-emerald-500/20">
+              <pre className="text-emerald-200 text-xs whitespace-pre-wrap font-mono">
+                {formatForBuilder1()}
+              </pre>
+            </div>
+          </div>
+        )}
       </ContentCard>
     </div>
   );
@@ -951,6 +1269,448 @@ function ChatBubble({ children }: { children: React.ReactNode }) {
   return (
     <div className="p-3 rounded-lg bg-black/30 border border-white/10">
       <p className="text-purple-300 text-sm">{children}</p>
+    </div>
+  );
+}
+
+// ============ Builder2 Helper Content ============
+import {
+  parseBuilder2Output,
+  findAnchorScene,
+  insertCrefUrl,
+  type Builder2Scene,
+  type Builder2ParseResult,
+} from "@/lib/builder2-md-parser";
+
+function Builder2HelperContent() {
+  const [mdInput, setMdInput] = useState("");
+  const [parseResult, setParseResult] = useState<Builder2ParseResult | null>(null);
+  const [crefUrl, setCrefUrl] = useState("");
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [activeSection, setActiveSection] = useState<"ohmage" | "variation">("ohmage");
+  const [completedScenes, setCompletedScenes] = useState<Set<string>>(new Set());
+
+  // Load completed scenes from localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("builder2-helper-completed");
+      if (saved) {
+        try {
+          setCompletedScenes(new Set(JSON.parse(saved)));
+        } catch {
+          // ignore parse errors
+        }
+      }
+    }
+  }, []);
+
+  const handleParse = () => {
+    if (!mdInput.trim()) return;
+    const result = parseBuilder2Output(mdInput);
+    setParseResult(result);
+
+    // Auto-switch to variation if no ohmage
+    if (!result.hasOhmage && result.hasVariation) {
+      setActiveSection("variation");
+    }
+  };
+
+  const handleCopy = async (text: string, key: string) => {
+    // Apply cref URL if provided
+    let finalText = text;
+    if (crefUrl && key.includes("midjourney")) {
+      finalText = insertCrefUrl(text, crefUrl);
+    }
+
+    await navigator.clipboard.writeText(finalText);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 2000);
+  };
+
+  const toggleSceneComplete = (key: string) => {
+    const newSet = new Set(completedScenes);
+    if (newSet.has(key)) {
+      newSet.delete(key);
+    } else {
+      newSet.add(key);
+    }
+    setCompletedScenes(newSet);
+
+    // Save to localStorage
+    if (typeof window !== "undefined") {
+      localStorage.setItem("builder2-helper-completed", JSON.stringify([...newSet]));
+    }
+  };
+
+  const clearProgress = () => {
+    setCompletedScenes(new Set());
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("builder2-helper-completed");
+    }
+  };
+
+  const scenes = activeSection === "ohmage"
+    ? parseResult?.ohmageScenes || []
+    : parseResult?.variationScenes || [];
+
+  const anchorScene = parseResult ? findAnchorScene(parseResult) : null;
+  const nonAnchorScenes = scenes.filter(s => !s.isAnchor);
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      <PageHeader title="빌더2 도우미" sub="빌더2 결과물을 붙여넣고, 씬별로 복사하세요" />
+
+      {/* Input Section */}
+      <ContentCard highlight>
+        <h3 className="text-lg font-bold text-white mb-3">MD 파일 붙여넣기</h3>
+        <p className="text-gray-400 text-sm mb-4">
+          빌더2 결과물(오마쥬/변주 IMAGE/MOTION 포함)을 아래에 붙여넣으세요
+        </p>
+        <textarea
+          value={mdInput}
+          onChange={(e) => setMdInput(e.target.value)}
+          placeholder="<<<OHMAGE_IMAGE_START>>>&#10;...&#10;<<<OHMAGE_IMAGE_END>>>&#10;&#10;<<<OHMAGE_MOTION_START>>>&#10;...&#10;<<<OHMAGE_MOTION_END>>>"
+          className="w-full h-48 p-4 rounded-xl bg-black/50 border border-white/10 text-gray-300 text-sm font-mono resize-none focus:outline-none focus:border-purple-500/50 placeholder-gray-600"
+        />
+        <button
+          onClick={handleParse}
+          disabled={!mdInput.trim()}
+          className="mt-4 w-full py-3 rounded-xl bg-white text-gray-900 font-bold hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          파싱하기
+        </button>
+      </ContentCard>
+
+      {/* Parse Result */}
+      {parseResult && (
+        <>
+          {/* Stats */}
+          <ContentCard>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-white">파싱 결과</h3>
+              <button
+                onClick={clearProgress}
+                className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+              >
+                진행 초기화
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                <p className="text-blue-400 font-medium text-sm">오마쥬</p>
+                <p className="text-white text-lg font-bold">{parseResult.ohmageScenes.length}개 씬</p>
+              </div>
+              <div className="p-3 rounded-lg bg-pink-500/10 border border-pink-500/20">
+                <p className="text-pink-400 font-medium text-sm">변주</p>
+                <p className="text-white text-lg font-bold">{parseResult.variationScenes.length}개 씬</p>
+              </div>
+            </div>
+
+            {/* Section Toggle */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => setActiveSection("ohmage")}
+                disabled={!parseResult.hasOhmage}
+                className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors ${activeSection === "ohmage"
+                  ? "bg-blue-500 text-white"
+                  : "bg-white/10 text-gray-400 hover:bg-white/20"
+                  } disabled:opacity-30 disabled:cursor-not-allowed`}
+              >
+                오마쥬 보기
+              </button>
+              <button
+                onClick={() => setActiveSection("variation")}
+                disabled={!parseResult.hasVariation}
+                className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors ${activeSection === "variation"
+                  ? "bg-pink-500 text-white"
+                  : "bg-white/10 text-gray-400 hover:bg-white/20"
+                  } disabled:opacity-30 disabled:cursor-not-allowed`}
+              >
+                변주 보기
+              </button>
+            </div>
+          </ContentCard>
+
+          {/* --cref Input (Optional) */}
+          <ContentCard>
+            <h3 className="text-sm font-bold text-white mb-2">--cref URL (선택)</h3>
+            <p className="text-gray-500 text-xs mb-3">
+              앵커 이미지 URL을 입력하면 Midjourney 프롬프트에 자동 삽입됩니다
+            </p>
+            <input
+              type="text"
+              value={crefUrl}
+              onChange={(e) => setCrefUrl(e.target.value)}
+              placeholder="https://example.com/anchor-image.png"
+              className="w-full p-3 rounded-lg bg-black/50 border border-white/10 text-gray-300 text-sm focus:outline-none focus:border-purple-500/50 placeholder-gray-600"
+            />
+          </ContentCard>
+
+          {/* STEP 0: Anchor Scene */}
+          {anchorScene && activeSection === "ohmage" && (
+            <div className="relative">
+              <div className="absolute -inset-1 bg-gradient-to-r from-purple-500/30 to-pink-500/30 rounded-3xl blur-lg" />
+              <ContentCard highlight>
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="px-3 py-1 rounded-full bg-purple-500 text-white text-xs font-bold">STEP 0</span>
+                  <span className="text-white font-bold">앵커 먼저!</span>
+                </div>
+                <p className="text-purple-300 text-sm mb-4">
+                  앵커 씬의 이미지를 먼저 만들고, 그 URL을 위 --cref 필드에 입력하세요
+                </p>
+                <SceneCard
+                  scene={anchorScene}
+                  sectionType={activeSection}
+                  copiedKey={copiedKey}
+                  onCopy={handleCopy}
+                  isCompleted={completedScenes.has(`${activeSection}-${anchorScene.sceneNum}`)}
+                  onToggleComplete={() => toggleSceneComplete(`${activeSection}-${anchorScene.sceneNum}`)}
+                  isAnchorHighlight
+                />
+              </ContentCard>
+            </div>
+          )}
+
+          {/* STEP 1~N: Other Scenes */}
+          {nonAnchorScenes.length > 0 && (
+            <ContentCard>
+              <div className="flex items-center gap-3 mb-4">
+                <span className="px-3 py-1 rounded-full bg-gray-500 text-white text-xs font-bold">
+                  STEP 1~{nonAnchorScenes.length}
+                </span>
+                <span className="text-white font-bold">나머지 씬</span>
+                <span className="text-gray-500 text-xs ml-auto">
+                  {completedScenes.size} / {scenes.length} 완료
+                </span>
+              </div>
+              <div className="space-y-4">
+                {nonAnchorScenes.map((scene) => (
+                  <SceneCard
+                    key={scene.sceneNum}
+                    scene={scene}
+                    sectionType={activeSection}
+                    copiedKey={copiedKey}
+                    onCopy={handleCopy}
+                    isCompleted={completedScenes.has(`${activeSection}-${scene.sceneNum}`)}
+                    onToggleComplete={() => toggleSceneComplete(`${activeSection}-${scene.sceneNum}`)}
+                  />
+                ))}
+              </div>
+            </ContentCard>
+          )}
+
+          {scenes.length === 0 && (
+            <ContentCard>
+              <p className="text-center text-gray-500 py-8">
+                {activeSection === "ohmage" ? "오마쥬" : "변주"} 섹션이 비어있습니다
+              </p>
+            </ContentCard>
+          )}
+        </>
+      )}
+
+      {/* Instructions */}
+      {!parseResult && (
+        <ContentCard>
+          <h3 className="text-lg font-bold text-white mb-4">사용 방법</h3>
+          <div className="space-y-3 text-sm">
+            <div className="flex gap-3">
+              <span className="text-purple-400 font-bold">1.</span>
+              <span className="text-gray-300">빌더2에서 결과물 전체 복사 (RAW 버튼 또는 직접 선택)</span>
+            </div>
+            <div className="flex gap-3">
+              <span className="text-purple-400 font-bold">2.</span>
+              <span className="text-gray-300">위 텍스트박스에 붙여넣기</span>
+            </div>
+            <div className="flex gap-3">
+              <span className="text-purple-400 font-bold">3.</span>
+              <span className="text-gray-300">"파싱하기" 클릭</span>
+            </div>
+            <div className="flex gap-3">
+              <span className="text-purple-400 font-bold">4.</span>
+              <span className="text-gray-300">앵커 씬(보라색 강조) 먼저 생성</span>
+            </div>
+            <div className="flex gap-3">
+              <span className="text-purple-400 font-bold">5.</span>
+              <span className="text-gray-300">앵커 이미지 URL을 --cref 필드에 입력</span>
+            </div>
+            <div className="flex gap-3">
+              <span className="text-purple-400 font-bold">6.</span>
+              <span className="text-gray-300">나머지 씬 순서대로 생성</span>
+            </div>
+          </div>
+        </ContentCard>
+      )}
+    </div>
+  );
+}
+
+// ============ Scene Card Component ============
+function SceneCard({
+  scene,
+  sectionType,
+  copiedKey,
+  onCopy,
+  isCompleted,
+  onToggleComplete,
+  isAnchorHighlight,
+}: {
+  scene: Builder2Scene;
+  sectionType: "ohmage" | "variation";
+  copiedKey: string | null;
+  onCopy: (text: string, key: string) => void;
+  isCompleted: boolean;
+  onToggleComplete: () => void;
+  isAnchorHighlight?: boolean;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const baseKey = `${sectionType}-${scene.sceneNum}`;
+
+  return (
+    <div
+      className={`p-4 rounded-xl border transition-all ${isAnchorHighlight
+        ? "border-purple-500/50 bg-purple-500/10"
+        : isCompleted
+          ? "border-emerald-500/30 bg-emerald-500/5"
+          : "border-white/10 bg-white/5"
+        }`}
+    >
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-3">
+        <button
+          onClick={onToggleComplete}
+          className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors ${isCompleted
+            ? "bg-emerald-500 border-emerald-500"
+            : "border-gray-500 hover:border-gray-400"
+            }`}
+        >
+          {isCompleted && (
+            <span className="material-symbols-outlined text-white text-sm">check</span>
+          )}
+        </button>
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <span className={`font-bold ${isAnchorHighlight ? "text-purple-300" : "text-white"}`}>
+              Scene {String(scene.sceneNum).padStart(2, "0")}
+            </span>
+            {scene.isAnchor && (
+              <span className="px-2 py-0.5 rounded text-xs font-bold bg-purple-500 text-white">
+                ANCHOR
+              </span>
+            )}
+          </div>
+          {scene.title && (
+            <p className="text-gray-400 text-xs">{scene.title} {scene.beatTimestamp && `(${scene.beatTimestamp})`}</p>
+          )}
+        </div>
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="text-gray-500 hover:text-gray-300 transition-colors"
+        >
+          <span className="material-symbols-outlined text-lg">
+            {expanded ? "expand_less" : "expand_more"}
+          </span>
+        </button>
+      </div>
+
+      {/* Copy Buttons */}
+      <div className="grid grid-cols-2 gap-2">
+        {/* IMAGE Section */}
+        <div className="space-y-2">
+          <p className="text-xs text-gray-500 font-medium">IMAGE</p>
+          <button
+            onClick={() => onCopy(scene.imagePrompts.nanoBanana, `${baseKey}-nanoBanana`)}
+            disabled={!scene.imagePrompts.nanoBanana}
+            className={`w-full py-2 px-3 rounded-lg text-xs font-bold transition-all ${copiedKey === `${baseKey}-nanoBanana`
+              ? "bg-emerald-500 text-white"
+              : scene.imagePrompts.nanoBanana
+                ? "bg-orange-500/20 text-orange-300 hover:bg-orange-500/30"
+                : "bg-white/5 text-gray-600 cursor-not-allowed"
+              }`}
+          >
+            {copiedKey === `${baseKey}-nanoBanana` ? "Copied!" : "NanoBanana"}
+          </button>
+          <button
+            onClick={() => onCopy(scene.imagePrompts.midjourney, `${baseKey}-midjourney`)}
+            disabled={!scene.imagePrompts.midjourney}
+            className={`w-full py-2 px-3 rounded-lg text-xs font-bold transition-all ${copiedKey === `${baseKey}-midjourney`
+              ? "bg-emerald-500 text-white"
+              : scene.imagePrompts.midjourney
+                ? "bg-violet-500/20 text-violet-300 hover:bg-violet-500/30"
+                : "bg-white/5 text-gray-600 cursor-not-allowed"
+              }`}
+          >
+            {copiedKey === `${baseKey}-midjourney` ? "Copied!" : "Midjourney"}
+          </button>
+        </div>
+
+        {/* MOTION Section */}
+        <div className="space-y-2">
+          <p className="text-xs text-gray-500 font-medium">MOTION</p>
+          <button
+            onClick={() => onCopy(scene.motionPrompts.kling, `${baseKey}-kling`)}
+            disabled={!scene.motionPrompts.kling}
+            className={`w-full py-2 px-3 rounded-lg text-xs font-bold transition-all ${copiedKey === `${baseKey}-kling`
+              ? "bg-emerald-500 text-white"
+              : scene.motionPrompts.kling
+                ? "bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30"
+                : "bg-white/5 text-gray-600 cursor-not-allowed"
+              }`}
+          >
+            {copiedKey === `${baseKey}-kling` ? "Copied!" : "Kling 3.0"}
+          </button>
+          <button
+            onClick={() => onCopy(scene.motionPrompts.veo, `${baseKey}-veo`)}
+            disabled={!scene.motionPrompts.veo}
+            className={`w-full py-2 px-3 rounded-lg text-xs font-bold transition-all ${copiedKey === `${baseKey}-veo`
+              ? "bg-emerald-500 text-white"
+              : scene.motionPrompts.veo
+                ? "bg-red-500/20 text-red-300 hover:bg-red-500/30"
+                : "bg-white/5 text-gray-600 cursor-not-allowed"
+              }`}
+          >
+            {copiedKey === `${baseKey}-veo` ? "Copied!" : "Veo 3.1"}
+          </button>
+        </div>
+      </div>
+
+      {/* Expanded: Show Prompts */}
+      {expanded && (
+        <div className="mt-4 space-y-3">
+          {scene.imagePrompts.nanoBanana && (
+            <div>
+              <p className="text-xs text-orange-400 font-medium mb-1">NanoBanana</p>
+              <pre className="p-3 rounded-lg bg-black/50 text-gray-300 text-xs overflow-x-auto whitespace-pre-wrap">
+                {scene.imagePrompts.nanoBanana}
+              </pre>
+            </div>
+          )}
+          {scene.imagePrompts.midjourney && (
+            <div>
+              <p className="text-xs text-violet-400 font-medium mb-1">Midjourney</p>
+              <pre className="p-3 rounded-lg bg-black/50 text-gray-300 text-xs overflow-x-auto whitespace-pre-wrap">
+                {scene.imagePrompts.midjourney}
+              </pre>
+            </div>
+          )}
+          {scene.motionPrompts.kling && (
+            <div>
+              <p className="text-xs text-cyan-400 font-medium mb-1">Kling 3.0</p>
+              <pre className="p-3 rounded-lg bg-black/50 text-gray-300 text-xs overflow-x-auto whitespace-pre-wrap">
+                {scene.motionPrompts.kling}
+              </pre>
+            </div>
+          )}
+          {scene.motionPrompts.veo && (
+            <div>
+              <p className="text-xs text-red-400 font-medium mb-1">Veo 3.1</p>
+              <pre className="p-3 rounded-lg bg-black/50 text-gray-300 text-xs overflow-x-auto whitespace-pre-wrap">
+                {scene.motionPrompts.veo}
+              </pre>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
