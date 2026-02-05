@@ -5,8 +5,8 @@
  * Stitch 7 디자인 - 화이트 토큰 버튼 스타일 (완전 재현)
  */
 
-import { useState, useEffect, Suspense, startTransition } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useEffect, Suspense, startTransition, useCallback } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 
 import { NAV_SECTIONS, ADMIN_SECTION, type TabKey } from "./academy/constants";
 import {
@@ -184,6 +184,17 @@ function AcademyContent() {
 function Sidebar({ activeTab, setActiveTab, cohort, isAdmin }: { activeTab: TabKey; setActiveTab: (tab: TabKey) => void; cohort?: string | null; isAdmin?: boolean }) {
   // Combine NAV_SECTIONS with ADMIN_SECTION if isAdmin
   const sections = isAdmin ? [...NAV_SECTIONS, ADMIN_SECTION] : NAV_SECTIONS;
+  const router = useRouter();
+
+  const handleLogout = useCallback(async () => {
+    try {
+      await api.logout();
+      router.refresh();
+      window.location.href = "/";
+    } catch {
+      window.location.href = "/";
+    }
+  }, [router]);
 
   return (
     <aside className="w-72 bg-[#080808] border-r border-white/5 flex-col justify-between shrink-0 z-20 relative hidden lg:flex">
@@ -245,13 +256,13 @@ function Sidebar({ activeTab, setActiveTab, cohort, isAdmin }: { activeTab: TabK
             <div className="text-xs text-gray-500">{cohort || "1기"}</div>
           </div>
         </div>
-        <a
-          href="/api/v1/auth/logout"
+        <button
+          onClick={handleLogout}
           className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white transition-all text-sm"
         >
           <span className="material-symbols-outlined text-base">logout</span>
           로그아웃
-        </a>
+        </button>
       </div>
     </aside>
   );
