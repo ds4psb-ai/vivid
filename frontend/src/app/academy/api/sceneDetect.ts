@@ -51,16 +51,18 @@ export function uploadVideoForSceneDetect(
 
 /**
  * Download frames as ZIP
+ * 첫 번째 감지에서 얻은 타임스탬프를 그대로 전달하여 정확한 프레임 추출
  */
 export async function downloadFramesAsZip(
   file: File,
-  threshold: number,
+  timestamps: string[],
 ): Promise<Blob> {
   const formData = new FormData();
   formData.append("video", file);
+  formData.append("timestamps", JSON.stringify(timestamps));
 
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL || ''}/api/v1/scene-detect/with-frames?threshold=${threshold}`,
+    `${process.env.NEXT_PUBLIC_API_URL || ''}/api/v1/scene-detect/extract-frames`,
     { method: "POST", body: formData }
   );
 

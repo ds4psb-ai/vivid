@@ -83,13 +83,16 @@ export function useVideoUpload(): UseVideoUploadReturn {
       return;
     }
 
+    if (detectedTimestamps.length === 0) {
+      setErrorMessage("먼저 씬 감지를 실행해주세요.");
+      return;
+    }
+
     setUploadStatus("processing");
     setErrorMessage("");
 
-    const threshold = getThresholdValue(usedThresholdMode);
-
     try {
-      const blob = await downloadFramesAsZip(uploadedFile, threshold);
+      const blob = await downloadFramesAsZip(uploadedFile, detectedTimestamps);
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -103,7 +106,7 @@ export function useVideoUpload(): UseVideoUploadReturn {
       setErrorMessage(error instanceof Error ? error.message : "네트워크 오류");
       setUploadStatus("error");
     }
-  }, [uploadedFile, usedThresholdMode]);
+  }, [uploadedFile, detectedTimestamps]);
 
   const resetUpload = useCallback(() => {
     setUploadStatus("idle");

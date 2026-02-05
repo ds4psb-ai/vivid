@@ -15,7 +15,7 @@ from math import ceil
 from pathlib import Path
 from typing import Optional
 
-from fastapi import APIRouter, File, Query, UploadFile, HTTPException
+from fastapi import APIRouter, File, Form, Query, UploadFile, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
@@ -149,41 +149,116 @@ async def scene_detect_metadata(
         os.unlink(tmp_path)
 
 
+@router.post("/extract-frames")
+async def extract_frames_from_timestamps(
+    video: UploadFile = File(...),
+    timestamps: str = Form(""),  # JSON string of timestamps array
+):
+    """
+    전달받은 타임스탬프 기준으로 프레임 추출 → ZIP 반환
+    씬 감지를 다시 실행하지 않고 정확한 프레임 추출
+    """
+    import json
+
+    if not video.filename:
+        raise HTTPException(status_code=400, detail="No video file provided")
+
+    # 타임스탬프 파싱
+    try:
+        ts_list = json.loads(timestamps) if timestamps else []
+        if not ts_list:
+            raise HTTPException(status_code=400, detail="No timestamps provided")
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid timestamps format")
+
+    # 임시 디렉토리 생성
+    work_dir = tempfile.mkdtemp(prefix="scene_detect_")
+    video_name = Path(video.filename).stem or "video"
+    suffix = Path(video.filename).suffix or ".mp4"
+    video_path = os.path.join(work_dir, f"input{suffix}")
+
+    try:
+        # 영상 저장
+        with open(video_path, "wb") as f:
+            f.write(await video.read())
+
+        duration = await asyncio.to_thread(get_video_duration, video_path)
+
+        # 프레임 추출 (전달받은 타임스탬프 사용)
+        frames_dir = os.path.join(work_dir, "frames")
+        os.makedirs(frames_dir, exist_ok=True)
+
+        for i, ts in enumerate(ts_list):
+            frame_path = os.path.join(frames_dir, f"frame_{i+1:02d}_{ts.replace(':', '-')}.jpg")
+            await asyncio.to_thread(extract_frame, video_path, ts, frame_path)
+
+        # 타임스탬프 텍스트 파일 생성
+        timestamps_path = os.path.join(work_dir, "timestamps.txt")
+        with open(timestamps_path, "w") as f:
+            f.write(f"# Scene Frames\n")
+            f.write(f"# Duration: {duration:.2f}s\n")
+            f.write(f"# Frames: {len(ts_list)}\n\n")
+            for i, ts in enumerate(ts_list):
+                f.write(f"Scene {i+1:02d}: {ts}\n")
+
+        # ZIP 생성
+        zip_buffer = BytesIO()
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+            zf.write(timestamps_path, "timestamps.txt")
+            for frame_file in sorted(os.listdir(frames_dir)):
+                frame_path = os.path.join(frames_dir, frame_file)
+                zf.write(frame_path, f"frames/{frame_file}")
+
+        zip_buffer.seek(0)
+
+        return StreamingResponse(
+            zip_buffer,
+            media_type="application/zip",
+            headers={
+                "Content-Disposition": f'attachment; filename="{video_name}_scenes.zip"'
+            }
+        )
+
+    finally:
+        # 임시 파일 정리
+        shutil.rmtree(work_dir, ignore_errors=True)
+
+
 @router.post("/with-frames")
 async def scene_detect_with_frames(
     video: UploadFile = File(...),
     threshold: float = Query(0.19, ge=0.05, le=0.5, description="Scene detection threshold"),
 ):
     """
-    씬 감지 + 프레임 이미지 추출 → ZIP 반환
-    Antigravity 방식과 동일
+    [Deprecated] 씬 감지 + 프레임 이미지 추출 → ZIP 반환
+    /extract-frames 사용 권장
     """
     if not video.filename:
         raise HTTPException(status_code=400, detail="No video file provided")
-    
+
     # 임시 디렉토리 생성
     work_dir = tempfile.mkdtemp(prefix="scene_detect_")
     video_name = Path(video.filename).stem or "video"
     suffix = Path(video.filename).suffix or ".mp4"
     video_path = os.path.join(work_dir, f"input{suffix}")
-    
+
     try:
         # 영상 저장
         with open(video_path, "wb") as f:
             f.write(await video.read())
-        
+
         # 씬 감지
         timestamps = await asyncio.to_thread(detect_scenes, video_path, threshold)
         duration = await asyncio.to_thread(get_video_duration, video_path)
-        
+
         # 프레임 추출
         frames_dir = os.path.join(work_dir, "frames")
         os.makedirs(frames_dir, exist_ok=True)
-        
+
         for i, ts in enumerate(timestamps):
             frame_path = os.path.join(frames_dir, f"frame_{i+1:02d}_{ts.replace(':', '-')}.jpg")
             await asyncio.to_thread(extract_frame, video_path, ts, frame_path)
-        
+
         # 타임스탬프 텍스트 파일 생성
         timestamps_path = os.path.join(work_dir, "timestamps.txt")
         with open(timestamps_path, "w") as f:
@@ -193,7 +268,7 @@ async def scene_detect_with_frames(
             f.write(f"# Frames: {len(timestamps)}\n\n")
             for i, ts in enumerate(timestamps):
                 f.write(f"Scene {i+1:02d}: {ts}\n")
-        
+
         # ZIP 생성
         zip_buffer = BytesIO()
         with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
@@ -201,9 +276,9 @@ async def scene_detect_with_frames(
             for frame_file in sorted(os.listdir(frames_dir)):
                 frame_path = os.path.join(frames_dir, frame_file)
                 zf.write(frame_path, f"frames/{frame_file}")
-        
+
         zip_buffer.seek(0)
-        
+
         return StreamingResponse(
             zip_buffer,
             media_type="application/zip",
@@ -211,7 +286,7 @@ async def scene_detect_with_frames(
                 "Content-Disposition": f'attachment; filename="{video_name}_scenes.zip"'
             }
         )
-    
+
     finally:
         # 임시 파일 정리
         shutil.rmtree(work_dir, ignore_errors=True)
