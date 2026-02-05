@@ -783,37 +783,42 @@ function UploadContent() {
 function PromptContent() {
   return (
     <div className="max-w-3xl mx-auto space-y-8">
-      <PageHeader title="프롬프트 생성기" sub="영상 넣으면 → 이미지/모션용 프롬프트 나옴" />
+      <PageHeader title="통합빌더" sub="영상 → 씬 분석 → 이미지/모션 프롬프트 생성" />
       <ContentCard highlight>
-        <WhiteButton href={TOOL_LINKS.builder1} large>🔍 이미지 프롬프트 생성기 열기</WhiteButton>
+        <WhiteButton href={TOOL_LINKS.builder1} large>🎬 통합빌더 열기</WhiteButton>
+        <p className="text-gray-500 text-xs mt-3 text-center">Google AI Studio에서 실행됩니다</p>
       </ContentCard>
       <ContentCard>
-        <h3 className="text-lg font-bold text-white mb-4">사용법</h3>
+        <h3 className="text-lg font-bold text-white mb-4">워크플로우</h3>
         <div className="space-y-3 text-sm">
-          <div className="flex gap-3"><span className="text-purple-400 font-bold">1.</span><span className="text-gray-300">영상 파일 업로드</span></div>
-          <div className="flex gap-3"><span className="text-purple-400 font-bold">2.</span><span className="text-gray-300">STEP 1~4 순서대로 진행</span></div>
-          <div className="flex gap-3"><span className="text-purple-400 font-bold">3.</span><span className="text-gray-300">결과물(.md) 다운로드</span></div>
+          <div className="flex gap-3"><span className="text-purple-400 font-bold">STEP 1</span><span className="text-gray-300">씬 분석 + 오마주 스타일 입력</span></div>
+          <div className="flex gap-3"><span className="text-purple-400 font-bold">STEP 2</span><span className="text-gray-300">IMAGE 프롬프트 생성</span></div>
+          <div className="flex gap-3"><span className="text-purple-400 font-bold">STEP 3</span><span className="text-gray-300">MOTION 프롬프트 생성</span></div>
+          <div className="flex gap-3"><span className="text-purple-400 font-bold">STEP 4</span><span className="text-gray-300">오마주 워크플로우 다운로드</span></div>
+          <div className="flex gap-3"><span className="text-cyan-400 font-bold">STEP 5</span><span className="text-gray-300">변주 워크플로우 (선택)</span></div>
         </div>
       </ContentCard>
       <ContentCard>
         <h3 className="text-lg font-bold text-white mb-4">오마주 vs 변주</h3>
         <div className="grid grid-cols-2 gap-4">
           <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20">
-            <p className="text-purple-400 font-bold mb-2">🎭 오마주</p>
-            <p className="text-gray-400 text-sm">원본과 유사한 구도/스타일</p>
-            <p className="text-gray-500 text-xs mt-2">Midjourney --cref 활용</p>
+            <p className="text-purple-400 font-bold mb-2">🎭 오마주 (STEP 4)</p>
+            <p className="text-gray-400 text-sm">구도/타이밍 100% 유지</p>
+            <p className="text-gray-500 text-xs mt-2">인종/문화/의상만 변경</p>
           </div>
           <div className="p-4 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
-            <p className="text-cyan-400 font-bold mb-2">✨ 변주</p>
-            <p className="text-gray-400 text-sm">나만의 스타일로 재해석</p>
-            <p className="text-gray-500 text-xs mt-2">바이브 프로필 반영</p>
+            <p className="text-cyan-400 font-bold mb-2">✨ 변주 (STEP 5)</p>
+            <p className="text-gray-400 text-sm">구도/내용 변경 가능</p>
+            <p className="text-gray-500 text-xs mt-2">A/B/C 옵션 선택</p>
           </div>
         </div>
       </ContentCard>
       <ContentCard>
-        <h3 className="text-lg font-bold text-white mb-4">패러디 오마주 엔진</h3>
-        <p className="text-gray-400 text-sm mb-4">이미지 프롬프트 생성 후, 패러디 엔진으로 모션 프롬프트 생성</p>
-        <WhiteButton href={TOOL_LINKS.builder2}>🎭 패러디 오마주 엔진 열기</WhiteButton>
+        <h3 className="text-lg font-bold text-white mb-4">다운로드 후 다음 단계</h3>
+        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+          <p className="text-emerald-300 text-sm mb-2">📥 오마쥬.md 또는 변주.md 다운로드 완료 후</p>
+          <p className="text-emerald-400 font-medium">→ 파싱 + 복사 탭에서 씬별 프롬프트 복사</p>
+        </div>
       </ContentCard>
     </div>
   );
@@ -826,8 +831,54 @@ function ParseContent() {
   const [mdInput, setMdInput] = useState("");
   const [parseResult, setParseResult] = useState<Builder2ParseResult | null>(null);
   const [activeType, setActiveType] = useState<"ohmage" | "variation">("ohmage");
-  const [crefUrl, setCrefUrl] = useState("");
+  const [crefUrl, setCrefUrl] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('academy_cref_url') || "";
+    }
+    return "";
+  });
   const [copiedStates, setCopiedStates] = useState<Record<string, boolean>>({});
+  const [completedPrompts, setCompletedPrompts] = useState<Set<string>>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('academy_parse_progress');
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    }
+    return new Set();
+  });
+  const [isDragging, setIsDragging] = useState(false);
+
+  // 파일 드래그앤드롭 핸들러
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      const file = files[0];
+      if (file.name.endsWith('.md') || file.type === 'text/markdown' || file.type === 'text/plain') {
+        const text = await file.text();
+        setMdInput(text);
+      }
+    }
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const text = await files[0].text();
+      setMdInput(text);
+    }
+  };
 
   // Parse MD when input changes
   useEffect(() => {
@@ -845,15 +896,51 @@ function ParseContent() {
     }
   }, [mdInput]);
 
+  // Save cref URL to localStorage
+  useEffect(() => {
+    if (crefUrl) {
+      localStorage.setItem('academy_cref_url', crefUrl);
+    }
+  }, [crefUrl]);
+
   const handleCopy = async (key: string, text: string) => {
     await navigator.clipboard.writeText(text);
     setCopiedStates(prev => ({ ...prev, [key]: true }));
+
+    // 진행도 저장
+    const newCompleted = new Set(completedPrompts).add(key);
+    setCompletedPrompts(newCompleted);
+    localStorage.setItem('academy_parse_progress', JSON.stringify([...newCompleted]));
+
     setTimeout(() => {
       setCopiedStates(prev => ({ ...prev, [key]: false }));
     }, 2000);
   };
 
+  const clearProgress = () => {
+    setCompletedPrompts(new Set());
+    localStorage.removeItem('academy_parse_progress');
+  };
+
   const activeScenes = activeType === "ohmage" ? parseResult?.ohmageScenes : parseResult?.variationScenes;
+
+  const totalPrompts = activeScenes?.reduce((acc, scene) => {
+    let count = 0;
+    if (scene.imagePrompts.nanoBanana) count++;
+    if (scene.imagePrompts.midjourney) count++;
+    if (scene.motionPrompts.kling) count++;
+    if (scene.motionPrompts.veo) count++;
+    return acc + count;
+  }, 0) || 0;
+
+  const completedCount = activeScenes?.reduce((acc, scene) => {
+    let count = 0;
+    if (completedPrompts.has(`${scene.sceneNum}-nanoBanana`)) count++;
+    if (completedPrompts.has(`${scene.sceneNum}-midjourney`)) count++;
+    if (completedPrompts.has(`${scene.sceneNum}-kling`)) count++;
+    if (completedPrompts.has(`${scene.sceneNum}-veo`)) count++;
+    return acc + count;
+  }, 0) || 0;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -861,22 +948,72 @@ function ParseContent() {
 
       {/* MD Input */}
       <ContentCard highlight>
-        <h3 className="text-lg font-bold text-white mb-4">📋 MD 결과물 붙여넣기</h3>
-        <textarea
-          value={mdInput}
-          onChange={(e) => setMdInput(e.target.value)}
-          placeholder="이미지 프롬프트 생성기 또는 패러디 오마주 엔진의 결과물(.md)을 여기에 붙여넣으세요..."
-          className="w-full h-40 p-4 rounded-xl bg-black/50 border border-purple-500/30 text-gray-200 text-sm placeholder-gray-600 focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/20 resize-none font-mono"
-        />
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold text-white">📋 MD 결과물</h3>
+          <label className="cursor-pointer">
+            <input
+              type="file"
+              accept=".md,text/markdown,text/plain"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            <span className="px-3 py-1.5 rounded-lg bg-white/10 text-gray-300 text-xs font-medium hover:bg-white/20 transition-colors flex items-center gap-2">
+              <span className="material-symbols-outlined text-sm">upload_file</span>
+              파일 선택
+            </span>
+          </label>
+        </div>
+        <div
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          className={`relative rounded-xl transition-all ${isDragging ? 'ring-2 ring-purple-500' : ''}`}
+        >
+          {isDragging && (
+            <div className="absolute inset-0 bg-purple-500/20 rounded-xl flex items-center justify-center z-10 pointer-events-none">
+              <span className="text-purple-300 font-bold">MD 파일을 여기에 놓으세요</span>
+            </div>
+          )}
+          <textarea
+            value={mdInput}
+            onChange={(e) => setMdInput(e.target.value)}
+            placeholder="통합빌더에서 다운로드한 MD 파일을 드래그하거나 내용을 붙여넣으세요..."
+            className="w-full h-40 p-4 rounded-xl bg-black/50 border border-purple-500/30 text-gray-200 text-sm placeholder-gray-600 focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/20 resize-none font-mono"
+          />
+        </div>
         {parseResult && (parseResult.hasOhmage || parseResult.hasVariation) && (
-          <div className="mt-3 flex items-center gap-4">
-            <span className="text-emerald-400 text-sm flex items-center gap-2">
-              <span className="material-symbols-outlined text-sm">check_circle</span>
-              파싱 완료!
-            </span>
-            <span className="text-gray-500 text-xs">
-              오마주 {parseResult.ohmageScenes.length}개 / 변주 {parseResult.variationScenes.length}개
-            </span>
+          <div className="mt-3 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <span className="text-emerald-400 text-sm flex items-center gap-2">
+                <span className="material-symbols-outlined text-sm">check_circle</span>
+                파싱 완료!
+              </span>
+              <span className="text-gray-500 text-xs">
+                오마주 {parseResult.ohmageScenes.length}개 / 변주 {parseResult.variationScenes.length}개
+              </span>
+            </div>
+            {/* 진행도 표시 */}
+            {totalPrompts > 0 && (
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-24 h-2 bg-gray-700 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-emerald-500 transition-all duration-300"
+                      style={{ width: `${(completedCount / totalPrompts) * 100}%` }}
+                    />
+                  </div>
+                  <span className="text-xs text-gray-400">{completedCount}/{totalPrompts}</span>
+                </div>
+                {completedCount > 0 && (
+                  <button
+                    onClick={clearProgress}
+                    className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+                  >
+                    초기화
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
       </ContentCard>
@@ -934,6 +1071,7 @@ function ParseContent() {
                 scene={scene}
                 crefUrl={crefUrl}
                 copiedStates={copiedStates}
+                completedPrompts={completedPrompts}
                 onCopy={handleCopy}
               />
             ))}
@@ -955,15 +1093,24 @@ function ParseContent() {
 }
 
 // ============ Scene Card Component ============
+const PROMPT_COLORS: Record<string, string> = {
+  nanoBanana: "text-orange-400",
+  midjourney: "text-violet-400",
+  kling: "text-cyan-400",
+  veo: "text-red-400",
+};
+
 function SceneCard({
   scene,
   crefUrl,
   copiedStates,
+  completedPrompts,
   onCopy,
 }: {
   scene: Builder2Scene;
   crefUrl: string;
   copiedStates: Record<string, boolean>;
+  completedPrompts: Set<string>;
   onCopy: (key: string, text: string) => void;
 }) {
   const midjourneyPrompt = crefUrl
@@ -971,10 +1118,10 @@ function SceneCard({
     : scene.imagePrompts.midjourney;
 
   const promptItems = [
-    { key: "nanoBanana", label: "NanoBanana", prompt: scene.imagePrompts.nanoBanana, color: "orange" },
-    { key: "midjourney", label: "Midjourney", prompt: midjourneyPrompt, color: "violet" },
-    { key: "kling", label: "Kling", prompt: scene.motionPrompts.kling, color: "cyan" },
-    { key: "veo", label: "Veo", prompt: scene.motionPrompts.veo, color: "red" },
+    { key: "nanoBanana", label: "NanoBanana", prompt: scene.imagePrompts.nanoBanana },
+    { key: "midjourney", label: "Midjourney", prompt: midjourneyPrompt },
+    { key: "kling", label: "Kling", prompt: scene.motionPrompts.kling },
+    { key: "veo", label: "Veo", prompt: scene.motionPrompts.veo },
   ].filter(item => item.prompt);
 
   return (
@@ -1003,22 +1150,28 @@ function SceneCard({
         {promptItems.map((item) => {
           const copyKey = `${scene.sceneNum}-${item.key}`;
           const isCopied = copiedStates[copyKey];
+          const isCompleted = completedPrompts.has(copyKey);
 
           return (
-            <div key={item.key} className="space-y-2">
+            <div key={item.key} className={`space-y-2 ${isCompleted ? 'opacity-50' : ''}`}>
               <div className="flex items-center justify-between">
-                <span className={`text-xs font-bold text-${item.color}-400`}>{item.label}</span>
+                <span className={`text-xs font-bold ${PROMPT_COLORS[item.key]}`}>
+                  {isCompleted && <span className="mr-1">✓</span>}
+                  {item.label}
+                </span>
                 <button
                   onClick={() => onCopy(copyKey, item.prompt)}
                   className={`px-2 py-1 rounded text-xs font-bold transition-all ${isCopied
                     ? "bg-emerald-500 text-white"
-                    : "bg-white text-gray-900 hover:bg-gray-100"
+                    : isCompleted
+                      ? "bg-gray-700 text-gray-400 hover:bg-gray-600"
+                      : "bg-white text-gray-900 hover:bg-gray-100"
                     }`}
                 >
-                  {isCopied ? "✓" : "복사"}
+                  {isCopied ? "✓" : isCompleted ? "재복사" : "복사"}
                 </button>
               </div>
-              <div className="p-2 rounded-lg bg-black/30 border border-white/10 max-h-20 overflow-y-auto">
+              <div className={`p-2 rounded-lg bg-black/30 border max-h-20 overflow-y-auto ${isCompleted ? 'border-emerald-500/30' : 'border-white/10'}`}>
                 <p className="text-gray-300 text-xs font-mono whitespace-pre-wrap break-all">
                   {item.prompt.slice(0, 200)}{item.prompt.length > 200 ? "..." : ""}
                 </p>
