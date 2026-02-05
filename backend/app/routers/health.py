@@ -88,9 +88,6 @@ async def health_check(db: AsyncSession = Depends(get_db)) -> HealthStatus:
         if overall_status == "healthy":
             overall_status = "degraded"
     
-    # DEBUG: 임시 디버그 정보
-    checks["_debug_master_admin_emails"] = list(settings.MASTER_ADMIN_EMAIL_SET)
-
     return HealthStatus(
         status=overall_status,
         timestamp=datetime.utcnow().isoformat() + "Z",
