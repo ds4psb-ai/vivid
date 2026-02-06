@@ -32,10 +32,10 @@ const TAB_TITLES: Record<TabKey, string> = {
   setup: "시작",
   credit: "크레딧",
   upload: "업로드",
-  prompt: "빌더",
+  prompt: "프롬프터",
   parse: "파싱",
   tools: "툴",
-  vibe: "바이브",
+  vibe: "철학관",
   homework: "과제",
   admin: "관리",
 };

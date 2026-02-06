@@ -24,7 +24,7 @@ export const HOMEWORK_DATA = {
         items: ["바이럴 영상 분석", "결과물(.md) 저장"],
       },
       {
-        title: "2. 바이브 철학관 세션",
+        title: "2. 철학관 세션",
         items: ["최소 50% 깊이 도달", "프로필(.json) 다운로드"],
       },
       {
@@ -36,7 +36,7 @@ export const HOMEWORK_DATA = {
     submission: {
       channel: "디스코드 #과제제출 채널에 업로드",
       items: ["이미지 프롬프트 생성기 결과물 (.md)"],
-      note: "바이브 철학관 프로필은 개인정보이므로 제출하지 않습니다.",
+      note: "철학관 프로필은 개인정보이므로 제출하지 않습니다.",
     },
   },
   "3강": {

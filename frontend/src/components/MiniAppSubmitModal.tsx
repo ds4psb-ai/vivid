@@ -267,7 +267,7 @@ export function MiniAppSubmitModal({ isOpen, onClose }: MiniAppSubmitModalProps)
                                                         <div className="flex flex-col items-center gap-2 text-zinc-500">
                                                             <Upload className="h-8 w-8" />
                                                             <p className="text-sm">클릭하여 ZIP 파일 선택</p>
-                                                            <p className="text-xs text-zinc-600">바이브코딩 결과물을 압축하여 업로드</p>
+                                                            <p className="text-xs text-zinc-600">철학관 결과물을 압축하여 업로드</p>
                                                         </div>
                                                     )}
                                                 </label>

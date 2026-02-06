@@ -235,7 +235,7 @@ export function UploadContent({ setActiveTab }: UploadContentProps) {
         )}
       </ContentCard>
 
-      <NextStepButton onClick={() => setActiveTab("prompt")} label="다음: 빌더" />
+      <NextStepButton onClick={() => setActiveTab("prompt")} label="다음: 프롬프터" />
     </div>
   );
 }

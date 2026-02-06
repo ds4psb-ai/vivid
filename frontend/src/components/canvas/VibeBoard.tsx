@@ -182,7 +182,7 @@ export default function VibeBoard({
                                 <Wand2 size={24} className="text-white" />
                             </div>
                             <div>
-                                <h2 className="text-2xl font-bold text-white">바이브 코딩</h2>
+                                <h2 className="text-2xl font-bold text-white">철학관 코딩</h2>
                                 <p className="text-gray-400 text-sm">원하는 분위기를 선택하면 AI 감독이 워크플로우를 설계합니다</p>
                             </div>
                         </div>

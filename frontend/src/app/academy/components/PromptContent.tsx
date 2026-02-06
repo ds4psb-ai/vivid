@@ -10,11 +10,11 @@ interface PromptContentProps {
 export function PromptContent({ setActiveTab }: PromptContentProps) {
   return (
     <div className="mx-auto w-full max-w-[var(--academy-content-max)] space-y-4">
-      <PageHeader title="빌더" sub="열고 바로 생성" />
+      <PageHeader title="프롬프터" sub="열고 바로 생성" />
 
       <ContentCard highlight>
         <WhiteButton href={TOOL_LINKS.builder} large>
-          통합빌더 열기
+          프롬프터 열기
         </WhiteButton>
       </ContentCard>
 
@@ -33,7 +33,7 @@ export function PromptContent({ setActiveTab }: PromptContentProps) {
       <ContentCard>
         <h3 className="mb-3 text-base font-semibold text-[var(--fg-0)]">빠른 이동</h3>
         <div className="grid gap-2 sm:grid-cols-2">
-          <WhiteButton href={TOOL_LINKS.vibe}>바이브</WhiteButton>
+          <WhiteButton href={TOOL_LINKS.vibe}>철학관</WhiteButton>
           <button
             type="button"
             onClick={() => setActiveTab("parse")}

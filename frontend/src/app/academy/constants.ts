@@ -33,7 +33,7 @@ export const NAV_SECTIONS: NavSection[] = [
     title: "Workflow",
     items: [
       { key: "upload", label: "영상 업로드", icon: "cloud_upload" },
-      { key: "prompt", label: "프롬프트 생성", icon: "auto_awesome" },
+      { key: "prompt", label: "프롬프터", icon: "auto_awesome" },
       { key: "parse", label: "파싱 + 복사", icon: "content_copy" },
       { key: "tools", label: "외부 툴", icon: "build" },
     ],
@@ -41,7 +41,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     title: "기타",
     items: [
-      { key: "vibe", label: "바이브 철학관", icon: "psychology" },
+      { key: "vibe", label: "철학관", icon: "psychology" },
       { key: "homework", label: "과제", icon: "assignment_turned_in" },
     ],
   },

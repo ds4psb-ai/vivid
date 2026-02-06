@@ -29,8 +29,8 @@ export function SetupContent({ setActiveTab }: SetupContentProps) {
       <ContentCard>
         <h3 className="mb-3 text-base font-semibold text-[var(--fg-0)]">바로가기</h3>
         <div className="space-y-2">
-          <WhiteButton href={TOOL_LINKS.builder}>통합빌더</WhiteButton>
-          <WhiteButton href={TOOL_LINKS.vibe}>바이브</WhiteButton>
+          <WhiteButton href={TOOL_LINKS.builder}>프롬프터</WhiteButton>
+          <WhiteButton href={TOOL_LINKS.vibe}>철학관</WhiteButton>
         </div>
       </ContentCard>
 
