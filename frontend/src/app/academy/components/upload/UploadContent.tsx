@@ -107,6 +107,40 @@ export function UploadContent({ setActiveTab }: UploadContentProps) {
     <div className="mx-auto w-full max-w-[var(--academy-content-max)] space-y-4">
       <PageHeader title="업로드" sub="영상 1개 넣고 씬 추출" />
 
+      <ContentCard>
+        <div className="mb-3 flex items-center gap-2">
+          <h3 className="text-base font-semibold text-[var(--fg-0)]">다운로드 링크</h3>
+          <span className="rounded-full border border-[var(--color-brand-primary)]/35 bg-[var(--color-brand-primary)]/10 px-2 py-0.5 text-[11px] font-semibold text-[var(--color-brand-primary)]">
+            필수
+          </span>
+        </div>
+        <div className="grid gap-2 sm:grid-cols-3">
+          {VIDEO_DOWNLOAD_SOURCES.map((source) => (
+            <div
+              key={source.platform}
+              className="rounded-xl border border-[var(--border-muted)] bg-[var(--surface-2)] p-3"
+            >
+              <p className="mb-2 text-sm font-semibold text-[var(--fg-0)]">
+                {source.platform}
+              </p>
+              <div className="space-y-1">
+                {source.links.map((link) => (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block text-sm text-[var(--fg-muted)] transition-colors hover:text-[var(--fg-0)]"
+                  >
+                    {link.label}
+                  </a>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </ContentCard>
+
       <ContentCard highlight>
         {uploadStatus === "idle" && (
           <ThresholdSelector
@@ -162,39 +196,6 @@ export function UploadContent({ setActiveTab }: UploadContentProps) {
             </button>
           </div>
         )}
-      </ContentCard>
-
-      <ContentCard>
-        <details>
-          <summary className="cursor-pointer text-sm font-medium text-[var(--fg-0)]">
-            다운로드 링크 (옵션)
-          </summary>
-          <div className="mt-3 grid gap-2 sm:grid-cols-3">
-            {VIDEO_DOWNLOAD_SOURCES.map((source) => (
-              <div
-                key={source.platform}
-                className="rounded-xl border border-[var(--border-muted)] bg-[var(--surface-2)] p-3"
-              >
-                <p className="mb-2 text-sm font-semibold text-[var(--fg-0)]">
-                  {source.platform}
-                </p>
-                <div className="space-y-1">
-                  {source.links.map((link) => (
-                    <a
-                      key={link.href}
-                      href={link.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block text-sm text-[var(--fg-muted)] transition-colors hover:text-[var(--fg-0)]"
-                    >
-                      {link.label}
-                    </a>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </details>
       </ContentCard>
 
       <ContentCard>
