@@ -55,6 +55,14 @@ export function DetectionResults({
     setVideoError(false);
   }, [videoUrl]);
 
+  // Force browser to start loading blob URL (Safari/iOS require explicit load())
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video && videoUrl) {
+      video.load();
+    }
+  }, [videoUrl]);
+
   // Use backend duration if available, otherwise fall back to local <video> metadata
   const videoDuration = backendVideoDuration > 0 ? backendVideoDuration : localDuration;
 
@@ -207,15 +215,17 @@ export function DetectionResults({
                 key={videoUrl}
                 ref={videoRef}
                 src={videoUrl || undefined}
+                preload="auto"
                 controls
                 playsInline
                 className="w-full max-h-[400px] object-contain bg-black"
                 onTimeUpdate={handleTimeUpdate}
                 onLoadedMetadata={(e) => setLocalDuration(e.currentTarget.duration)}
-                onError={() => setVideoError(true)}
-              >
-                <source src={videoUrl} type={uploadedFile?.type || "video/mp4"} />
-              </video>
+                onError={(e) => {
+                  console.error("[video] playback error:", e.currentTarget.error?.code, e.currentTarget.error?.message);
+                  setVideoError(true);
+                }}
+              />
             ) : (
               <div className="flex items-center justify-center py-8">
                 <div className="animate-spin rounded-full h-6 w-6 border-2 border-white/20 border-t-white/60" />
