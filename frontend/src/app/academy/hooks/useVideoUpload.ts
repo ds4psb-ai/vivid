@@ -21,6 +21,7 @@ interface UseVideoUploadReturn {
   usedThresholdMode: ThresholdMode;
   isDragging: boolean;
   isDownloading: boolean;
+  previewId: string | null;
 
   // Actions
   setDetectedTimestamps: (ts: string[]) => void;
@@ -42,6 +43,7 @@ export function useVideoUpload(): UseVideoUploadReturn {
   const [thresholdMode, setThresholdMode] = useState<ThresholdMode>("standard");
   const [usedThresholdMode, setUsedThresholdMode] = useState<ThresholdMode>("standard");
   const [isDownloading, setIsDownloading] = useState(false);
+  const [previewId, setPreviewId] = useState<string | null>(null);
 
   const processVideo = useCallback(async (file: File, modeOverride?: ThresholdMode) => {
     // Validate file type
@@ -66,6 +68,7 @@ export function useVideoUpload(): UseVideoUploadReturn {
     setDetectedTimestamps([]);
     setUploadedFile(file);
     setUsedThresholdMode(mode);
+    setPreviewId(null);
 
     const threshold = getThresholdValue(mode);
 
@@ -78,6 +81,7 @@ export function useVideoUpload(): UseVideoUploadReturn {
       );
       setDetectedTimestamps(result.timestamps);
       setVideoDuration(result.video_duration || 0);
+      setPreviewId(result.preview_id);
       setUploadStatus("done");
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "네트워크 오류가 발생했습니다.");
@@ -124,6 +128,7 @@ export function useVideoUpload(): UseVideoUploadReturn {
     setErrorMessage("");
     setUploadedFile(null);
     setVideoDuration(0);
+    setPreviewId(null);
   }, []);
 
   return {
@@ -137,6 +142,7 @@ export function useVideoUpload(): UseVideoUploadReturn {
     usedThresholdMode,
     isDragging,
     isDownloading,
+    previewId,
     setDetectedTimestamps,
     setThresholdMode,
     setIsDragging,

@@ -15,6 +15,7 @@ interface DetectionResultsProps {
   onReset: () => void;
   onReanalyze: (mode: ThresholdMode) => void;
   onDownloadFrames: () => void;
+  previewId: string | null;
 }
 
 export function DetectionResults({
@@ -27,6 +28,7 @@ export function DetectionResults({
   onReset,
   onReanalyze,
   onDownloadFrames,
+  previewId,
 }: DetectionResultsProps) {
   const [copied, setCopied] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -37,30 +39,30 @@ export function DetectionResults({
   const videoRef = useRef<HTMLVideoElement>(null);
   const rafRef = useRef<number | null>(null);
 
-  // useState+useEffect: cleanup only runs when uploadedFile changes, avoiding
-  // the useMemo race where revokeObjectURL fires while <video> is still loading.
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  // 서버 트랜스코딩 preview URL (H.264, 모든 브라우저 호환)
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
+  const serverVideoUrl = previewId
+    ? `${apiUrl}/api/v1/scene-detect/preview/${previewId}`
+    : null;
+
+  // Blob URL fallback (서버 preview가 없을 때)
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
   useEffect(() => {
     if (!uploadedFile) {
-      setVideoUrl(null);
+      setBlobUrl(null);
       return;
     }
     const url = URL.createObjectURL(uploadedFile);
-    setVideoUrl(url);
+    setBlobUrl(url);
     return () => URL.revokeObjectURL(url);
   }, [uploadedFile]);
 
-  // Reset video error whenever the URL changes (e.g. re-upload or re-analyze)
+  // 서버 preview 우선, blob fallback
+  const videoUrl = serverVideoUrl || blobUrl;
+
+  // Reset video error whenever the URL changes
   useEffect(() => {
     setVideoError(false);
-  }, [videoUrl]);
-
-  // Force browser to start loading blob URL (Safari/iOS require explicit load())
-  useEffect(() => {
-    const video = videoRef.current;
-    if (video && videoUrl) {
-      video.load();
-    }
   }, [videoUrl]);
 
   // Use backend duration if available, otherwise fall back to local <video> metadata
@@ -221,10 +223,7 @@ export function DetectionResults({
                 className="w-full max-h-[400px] object-contain bg-black"
                 onTimeUpdate={handleTimeUpdate}
                 onLoadedMetadata={(e) => setLocalDuration(e.currentTarget.duration)}
-                onError={(e) => {
-                  console.error("[video] playback error:", e.currentTarget.error?.code, e.currentTarget.error?.message);
-                  setVideoError(true);
-                }}
+                onError={() => setVideoError(true)}
               />
             ) : (
               <div className="flex items-center justify-center py-8">

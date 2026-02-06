@@ -1,23 +1,46 @@
 """
 Scene Detection API
 영상 업로드 → FFmpeg로 씬 감지 + 프레임 추출 → ZIP 반환
++ H.264 트랜스코딩 preview 서빙 (브라우저 코덱 호환성)
 """
 import asyncio
 import base64
+import logging
 import os
 import re
 import shutil
 import subprocess
 import tempfile
+import time
+import uuid
 import zipfile
 from io import BytesIO
 from math import ceil
 from pathlib import Path
 from fastapi import APIRouter, File, Form, Query, UploadFile, HTTPException
-from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/api/v1/scene-detect", tags=["scene-detect"])
+
+# ── Preview store (H.264 트랜스코딩된 영상 임시 저장) ──
+_preview_store: dict[str, tuple[str, float]] = {}  # id → (path, created_at)
+_PREVIEW_TTL = 1800  # 30분
+
+
+def _cleanup_old_previews() -> None:
+    """TTL 초과 preview 파일 정리"""
+    now = time.time()
+    expired = [pid for pid, (_, created) in _preview_store.items()
+               if now - created > _PREVIEW_TTL]
+    for pid in expired:
+        path, _ = _preview_store.pop(pid)
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
 
 
 class SceneDetectResult(BaseModel):
@@ -26,6 +49,7 @@ class SceneDetectResult(BaseModel):
     frame_count: int
     video_duration: float
     threshold: float
+    preview_id: str | None = None
 
 
 def run_ffmpeg_command(cmd: list[str], timeout: int = 120) -> subprocess.CompletedProcess:
@@ -80,6 +104,56 @@ def detect_scenes(video_path: str, threshold: float = 0.19) -> list[str]:
     return timestamps
 
 
+def get_video_codec(video_path: str) -> str:
+    """ffprobe로 비디오 코덱 확인"""
+    cmd = [
+        "ffprobe", "-v", "error",
+        "-select_streams", "v:0",
+        "-show_entries", "stream=codec_name",
+        "-of", "default=noprint_wrappers=1:nokey=1",
+        video_path,
+    ]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+        return result.stdout.strip().lower()
+    except Exception:
+        return ""
+
+
+def create_web_preview(input_path: str, output_path: str) -> bool:
+    """
+    브라우저 호환 H.264/AAC MP4 생성.
+    이미 H.264면 remux만 (초고속), 아니면 트랜스코딩.
+    """
+    codec = get_video_codec(input_path)
+
+    if codec == "h264":
+        # remux only — 재인코딩 없이 컨테이너만 MP4로 변환
+        cmd = [
+            "ffmpeg", "-y", "-i", input_path,
+            "-c:v", "copy", "-c:a", "aac", "-b:a", "128k",
+            "-movflags", "+faststart",
+            output_path,
+        ]
+    else:
+        # 풀 트랜스코딩 → H.264 (max 1280x720)
+        cmd = [
+            "ffmpeg", "-y", "-i", input_path,
+            "-c:v", "libx264", "-preset", "fast", "-crf", "23",
+            "-c:a", "aac", "-b:a", "128k",
+            "-movflags", "+faststart",
+            "-vf", "scale='min(1280,iw)':'min(720,ih)':force_original_aspect_ratio=decrease",
+            output_path,
+        ]
+
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        return result.returncode == 0 and os.path.exists(output_path)
+    except Exception as e:
+        logger.warning("preview transcode failed: %s", e)
+        return False
+
+
 def get_video_duration(video_path: str) -> float:
     """영상 길이 추출"""
     cmd = [
@@ -132,19 +206,49 @@ async def scene_detect_metadata(
         tmp.write(await video.read())
         tmp_path = tmp.name
     
+    preview_id = str(uuid.uuid4())
+    preview_path = os.path.join(tempfile.gettempdir(), f"preview_{preview_id}.mp4")
+
     try:
-        # 씬 감지
-        timestamps = await asyncio.to_thread(detect_scenes, tmp_path, threshold)
-        duration = await asyncio.to_thread(get_video_duration, tmp_path)
-        
+        # 씬 감지 + H.264 트랜스코딩 병렬 실행
+        timestamps, duration, transcode_ok = await asyncio.gather(
+            asyncio.to_thread(detect_scenes, tmp_path, threshold),
+            asyncio.to_thread(get_video_duration, tmp_path),
+            asyncio.to_thread(create_web_preview, tmp_path, preview_path),
+        )
+
+        if transcode_ok:
+            _preview_store[preview_id] = (preview_path, time.time())
+        else:
+            preview_id = None
+            try:
+                os.unlink(preview_path)
+            except OSError:
+                pass
+
+        _cleanup_old_previews()
+
         return SceneDetectResult(
             timestamps=timestamps,
             frame_count=len(timestamps),
             video_duration=duration,
             threshold=threshold,
+            preview_id=preview_id,
         )
     finally:
         os.unlink(tmp_path)
+
+
+@router.get("/preview/{preview_id}")
+async def get_preview(preview_id: str):
+    """트랜스코딩된 H.264 영상 서빙 (브라우저 호환)"""
+    if preview_id not in _preview_store:
+        raise HTTPException(status_code=404, detail="Preview not found or expired")
+    path, _ = _preview_store[preview_id]
+    if not os.path.exists(path):
+        _preview_store.pop(preview_id, None)
+        raise HTTPException(status_code=404, detail="Preview file not found")
+    return FileResponse(path, media_type="video/mp4")
 
 
 @router.post("/extract-frames")

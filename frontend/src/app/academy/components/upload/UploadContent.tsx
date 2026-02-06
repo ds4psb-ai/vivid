@@ -28,6 +28,7 @@ export function UploadContent({ setActiveTab }: UploadContentProps) {
     usedThresholdMode,
     isDragging,
     isDownloading,
+    previewId,
     setDetectedTimestamps,
     setThresholdMode,
     setIsDragging,
@@ -214,6 +215,7 @@ export function UploadContent({ setActiveTab }: UploadContentProps) {
             onReset={resetUpload}
             onReanalyze={handleReanalyze}
             onDownloadFrames={downloadFrames}
+            previewId={previewId}
           />
         )}
 

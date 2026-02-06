@@ -4,6 +4,7 @@ export type ThresholdMode = "precise" | "standard";
 export interface SceneDetectResult {
   timestamps: string[];
   video_duration: number;
+  preview_id: string | null;
 }
 
 export interface ThumbnailItem {
@@ -42,6 +43,7 @@ export function uploadVideoForSceneDetect(
         resolve({
           timestamps: result.timestamps || [],
           video_duration: result.video_duration || 0,
+          preview_id: result.preview_id || null,
         });
       } else {
         try {
