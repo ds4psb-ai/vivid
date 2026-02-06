@@ -40,12 +40,11 @@ export const startAnalysisChat = async (
   const finalSystemPrompt = SYSTEM_PROMPT_TEMPLATE;
 
   // Initialize Chat with ThinkingMode HIGH for better reasoning
-  // temperature 0.3: 간결 프롬프트 + 자연스러운 변형 밸런스
   currentChat = ai.chats.create({
     model: GEMINI_MODEL,
     config: {
       systemInstruction: finalSystemPrompt,
-      temperature: 0.3,
+      temperature: 0.2,
       maxOutputTokens: 32768,
       thinkingConfig: { thinkingLevel: ThinkingLevel.HIGH },
     },
@@ -107,9 +106,15 @@ export const sendUserFeedback = async (
     });
   }
 
+  // 변주 요청 시 temperature 0.3으로 올려서 자연스러운 변형 허용
+  const isVariation = /변주|variation/i.test(message);
+
   try {
     const response = await currentChat.sendMessage({
-      message: parts
+      message: parts,
+      ...(isVariation && {
+        config: { temperature: 0.3, maxOutputTokens: 32768 },
+      }),
     });
 
     const text = response.text;
