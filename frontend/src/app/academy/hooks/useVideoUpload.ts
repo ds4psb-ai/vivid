@@ -19,11 +19,12 @@ interface UseVideoUploadReturn {
   thresholdMode: ThresholdMode;
   usedThresholdMode: ThresholdMode;
   isDragging: boolean;
+  isDownloading: boolean;
 
   // Actions
   setThresholdMode: (mode: ThresholdMode) => void;
   setIsDragging: (dragging: boolean) => void;
-  processVideo: (file: File) => Promise<void>;
+  processVideo: (file: File, modeOverride?: ThresholdMode) => Promise<void>;
   downloadFrames: () => Promise<void>;
   resetUpload: () => void;
 }
@@ -37,8 +38,9 @@ export function useVideoUpload(): UseVideoUploadReturn {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [thresholdMode, setThresholdMode] = useState<ThresholdMode>("standard");
   const [usedThresholdMode, setUsedThresholdMode] = useState<ThresholdMode>("standard");
+  const [isDownloading, setIsDownloading] = useState(false);
 
-  const processVideo = useCallback(async (file: File) => {
+  const processVideo = useCallback(async (file: File, modeOverride?: ThresholdMode) => {
     // Validate file type
     if (!file.type.startsWith("video/")) {
       setErrorMessage("영상 파일만 업로드 가능합니다.");
@@ -53,14 +55,16 @@ export function useVideoUpload(): UseVideoUploadReturn {
       return;
     }
 
+    const mode = modeOverride || thresholdMode;
+
     setUploadStatus("uploading");
     setUploadProgress(0);
     setErrorMessage("");
     setDetectedTimestamps([]);
     setUploadedFile(file);
-    setUsedThresholdMode(thresholdMode);
+    setUsedThresholdMode(mode);
 
-    const threshold = getThresholdValue(thresholdMode);
+    const threshold = getThresholdValue(mode);
 
     try {
       const result = await uploadVideoForSceneDetect(
@@ -88,7 +92,7 @@ export function useVideoUpload(): UseVideoUploadReturn {
       return;
     }
 
-    setUploadStatus("processing");
+    setIsDownloading(true);
     setErrorMessage("");
 
     try {
@@ -101,10 +105,11 @@ export function useVideoUpload(): UseVideoUploadReturn {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      setUploadStatus("done");
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "네트워크 오류");
       setUploadStatus("error");
+    } finally {
+      setIsDownloading(false);
     }
   }, [uploadedFile, detectedTimestamps]);
 
@@ -125,6 +130,7 @@ export function useVideoUpload(): UseVideoUploadReturn {
     thresholdMode,
     usedThresholdMode,
     isDragging,
+    isDownloading,
     setThresholdMode,
     setIsDragging,
     processVideo,

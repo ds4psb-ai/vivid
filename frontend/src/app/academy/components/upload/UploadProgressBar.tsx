@@ -24,7 +24,7 @@ export function UploadProgressBar({ uploadStatus, uploadProgress }: UploadProgre
             {uploadStatus === "uploading" ? "업로드 중..." : "씬 분석 중..."}
           </p>
           <p className="text-gray-500 text-sm">
-            {uploadStatus === "uploading" ? `${uploadProgress}% 완료` : "FFmpeg 처리 중"}
+            {uploadStatus === "uploading" ? `${uploadProgress}% 완료` : "영상 분석 중"}
           </p>
         </div>
       </div>

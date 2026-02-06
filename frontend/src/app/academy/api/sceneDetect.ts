@@ -35,7 +35,12 @@ export function uploadVideoForSceneDetect(
         const result = JSON.parse(xhr.responseText);
         resolve({ timestamps: result.timestamps || [] });
       } else {
-        reject(new Error("서버 오류가 발생했습니다."));
+        try {
+          const err = JSON.parse(xhr.responseText);
+          reject(new Error(err.detail || "서버 오류가 발생했습니다."));
+        } catch {
+          reject(new Error(`서버 오류 (${xhr.status})`));
+        }
       }
     });
 
@@ -43,7 +48,10 @@ export function uploadVideoForSceneDetect(
       reject(new Error("업로드 중 오류가 발생했습니다."));
     });
 
-    onStatusChange("processing");
+    xhr.upload.addEventListener("loadend", () => {
+      onStatusChange("processing");
+    });
+
     xhr.open("POST", `${process.env.NEXT_PUBLIC_API_URL || ''}/api/v1/scene-detect/?threshold=${threshold}`);
     xhr.send(formData);
   });

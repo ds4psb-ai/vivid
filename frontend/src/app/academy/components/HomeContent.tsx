@@ -9,7 +9,7 @@ interface HomeContentProps {
 export function HomeContent({ setActiveTab }: HomeContentProps) {
   const workflowSteps = [
     { key: "upload" as TabKey, num: 1, label: "영상 업로드", icon: "cloud_upload", sub: "드래그앤드롭" },
-    { key: "upload" as TabKey, num: 2, label: "컷 나누기", icon: "content_cut", sub: "FFmpeg 분석" },
+    { key: "upload" as TabKey, num: 2, label: "컷 나누기", icon: "content_cut", sub: "자동 씬 분석" },
     { key: "prompt" as TabKey, num: 3, label: "프롬프트", icon: "auto_awesome", sub: "AI Studio" },
     { key: "parse" as TabKey, num: 4, label: "파싱", icon: "content_copy", sub: "복사" },
     { key: "tools" as TabKey, num: 5, label: "제작", icon: "build", sub: "외부툴" },

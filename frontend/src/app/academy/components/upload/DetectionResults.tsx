@@ -7,6 +7,7 @@ interface DetectionResultsProps {
   detectedTimestamps: string[];
   usedThresholdMode: ThresholdMode;
   uploadedFile: File | null;
+  isDownloading: boolean;
   onReset: () => void;
   onReanalyze: (mode: ThresholdMode) => void;
   onDownloadFrames: () => void;
@@ -16,6 +17,7 @@ export function DetectionResults({
   detectedTimestamps,
   usedThresholdMode,
   uploadedFile,
+  isDownloading,
   onReset,
   onReanalyze,
   onDownloadFrames,
@@ -103,13 +105,20 @@ export function DetectionResults({
         </button>
         <button
           onClick={onDownloadFrames}
-          className="py-4 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 transition-all flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(168,85,247,0.3)]"
+          disabled={isDownloading}
+          className={`py-4 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white transition-all flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(168,85,247,0.3)] ${isDownloading ? 'opacity-70 cursor-not-allowed' : 'hover:from-purple-700 hover:to-indigo-700'}`}
         >
-          <span className="material-symbols-outlined text-lg">download</span>
+          {isDownloading ? (
+            <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
+          ) : (
+            <span className="material-symbols-outlined text-lg">download</span>
+          )}
           <div className="flex flex-col items-start">
-            <span className="font-bold text-sm">프레임 이미지 다운로드</span>
+            <span className="font-bold text-sm">
+              {isDownloading ? '프레임 추출 중...' : '프레임 이미지 다운로드'}
+            </span>
             <span className="text-xs text-purple-100">
-              ZIP으로 frame_01.jpg, frame_02.jpg... 추출
+              {isDownloading ? '잠시만 기다려주세요' : 'ZIP으로 frame_01.jpg, frame_02.jpg... 추출'}
             </span>
           </div>
         </button>

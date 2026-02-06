@@ -26,6 +26,7 @@ export function UploadContent({ setActiveTab }: UploadContentProps) {
     thresholdMode,
     usedThresholdMode,
     isDragging,
+    isDownloading,
     setThresholdMode,
     setIsDragging,
     processVideo,
@@ -96,7 +97,7 @@ export function UploadContent({ setActiveTab }: UploadContentProps) {
   const handleReanalyze = async (mode: "precise" | "standard") => {
     if (uploadedFile) {
       setThresholdMode(mode);
-      await processVideo(uploadedFile);
+      await processVideo(uploadedFile, mode);
     }
   };
 
@@ -170,7 +171,7 @@ export function UploadContent({ setActiveTab }: UploadContentProps) {
           </div>
           <div>
             <h3 className="text-lg font-bold text-white">STEP 1. 자동 씬 감지</h3>
-            <p className="text-gray-500 text-xs">FFmpeg 기반 정밀 분석</p>
+            <p className="text-gray-500 text-xs">AI 정밀 분석</p>
           </div>
         </div>
 
@@ -205,6 +206,7 @@ export function UploadContent({ setActiveTab }: UploadContentProps) {
             detectedTimestamps={detectedTimestamps}
             usedThresholdMode={usedThresholdMode}
             uploadedFile={uploadedFile}
+            isDownloading={isDownloading}
             onReset={resetUpload}
             onReanalyze={handleReanalyze}
             onDownloadFrames={downloadFrames}
