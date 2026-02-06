@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import type { ThresholdMode } from "../../api/sceneDetect";
 import { SceneTimeline } from "./SceneTimeline";
 
@@ -34,15 +34,22 @@ export function DetectionResults({
   const videoRef = useRef<HTMLVideoElement>(null);
   const rafRef = useRef<number | null>(null);
 
-  // useMemo is SSR-safe here: uploadedFile is always null on initial render
-  const videoUrl = useMemo(
-    () => (uploadedFile ? URL.createObjectURL(uploadedFile) : null),
-    [uploadedFile],
-  );
+  // useState+useEffect: cleanup only runs when uploadedFile changes, avoiding
+  // the useMemo race where revokeObjectURL fires while <video> is still loading.
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   useEffect(() => {
-    return () => {
-      if (videoUrl) URL.revokeObjectURL(videoUrl);
-    };
+    if (!uploadedFile) {
+      setVideoUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(uploadedFile);
+    setVideoUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [uploadedFile]);
+
+  // Reset video error whenever the URL changes (e.g. re-upload or re-analyze)
+  useEffect(() => {
+    setVideoError(false);
   }, [videoUrl]);
 
   // Use backend duration if available, otherwise fall back to local <video> metadata
@@ -147,6 +154,7 @@ export function DetectionResults({
               </div>
             ) : videoUrl ? (
               <video
+                key={videoUrl}
                 ref={videoRef}
                 src={videoUrl}
                 controls

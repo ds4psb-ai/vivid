@@ -170,7 +170,7 @@ function SceneTimelineInner({
             <div
               key={`${i}-${ts}`}
               ref={isActive ? activeRef : undefined}
-              className={`flex-shrink-0 w-[120px] rounded-xl overflow-hidden border transition-all cursor-pointer ${
+              className={`flex-shrink-0 w-[180px] rounded-xl overflow-hidden border transition-all cursor-pointer ${
                 isActive
                   ? "border-purple-500 ring-2 ring-purple-500/40 bg-purple-500/10"
                   : "border-white/10 bg-white/5 hover:border-white/20"
