@@ -14,6 +14,10 @@ interface SceneTimelineProps {
   currentTime: number;
   onTimestampsChange: (ts: string[]) => void;
   onSeek: (seconds: number) => void;
+  /** Index of scene selected for comparison (from parent) */
+  compareIndex?: number | null;
+  /** Called when user clicks the compare button on a scene card */
+  onCompare?: (index: number | null) => void;
 }
 
 function SceneTimelineInner({
@@ -23,6 +27,8 @@ function SceneTimelineInner({
   currentTime,
   onTimestampsChange,
   onSeek,
+  compareIndex,
+  onCompare,
 }: SceneTimelineProps) {
   const { frames, isExtracting, extractionError, extractAll } = useFrameExtractor();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -170,10 +176,12 @@ function SceneTimelineInner({
             <div
               key={`${i}-${ts}`}
               ref={isActive ? activeRef : undefined}
-              className={`flex-shrink-0 w-[180px] rounded-xl overflow-hidden border transition-all cursor-pointer ${
-                isActive
-                  ? "border-purple-500 ring-2 ring-purple-500/40 bg-purple-500/10"
-                  : "border-white/10 bg-white/5 hover:border-white/20"
+              className={`flex-shrink-0 w-[260px] rounded-xl overflow-hidden border transition-all cursor-pointer ${
+                compareIndex === i
+                  ? "border-cyan-500 ring-2 ring-cyan-500/40 bg-cyan-500/10"
+                  : isActive
+                    ? "border-purple-500 ring-2 ring-purple-500/40 bg-purple-500/10"
+                    : "border-white/10 bg-white/5 hover:border-white/20"
               }`}
               onClick={() => onSeek(parseTimestampToSeconds(ts))}
             >
@@ -225,6 +233,22 @@ function SceneTimelineInner({
                   >
                     +
                   </button>
+                  {onCompare && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onCompare(compareIndex === i ? null : i);
+                      }}
+                      className={`w-7 h-7 rounded-md flex items-center justify-center transition-all ${
+                        compareIndex === i
+                          ? "bg-cyan-500/20 text-cyan-300"
+                          : "bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 hover:text-cyan-300"
+                      }`}
+                      title="비교"
+                    >
+                      <span className="material-symbols-outlined text-sm">compare</span>
+                    </button>
+                  )}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();

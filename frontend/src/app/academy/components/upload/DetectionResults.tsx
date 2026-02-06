@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import type { ThresholdMode } from "../../api/sceneDetect";
 import { SceneTimeline } from "./SceneTimeline";
+import { parseTimestampToSeconds } from "../../hooks/useFrameExtractor";
 
 interface DetectionResultsProps {
   detectedTimestamps: string[];
@@ -31,6 +32,8 @@ export function DetectionResults({
   const [currentTime, setCurrentTime] = useState(0);
   const [localDuration, setLocalDuration] = useState(0);
   const [videoError, setVideoError] = useState(false);
+  const [compareIndex, setCompareIndex] = useState<number | null>(null);
+  const [capturedFrame, setCapturedFrame] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const rafRef = useRef<number | null>(null);
 
@@ -79,6 +82,47 @@ export function DetectionResults({
       setCurrentTime(seconds);
     }
   }, []);
+
+  // Capture current video frame to canvas dataURL
+  const captureVideoFrame = useCallback((): string | null => {
+    const video = videoRef.current;
+    if (!video || video.readyState < 2) return null;
+    const canvas = document.createElement("canvas");
+    canvas.width = 320;
+    canvas.height = 180;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    const scale = Math.min(320 / video.videoWidth, 180 / video.videoHeight);
+    const w = video.videoWidth * scale;
+    const h = video.videoHeight * scale;
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, 320, 180);
+    ctx.drawImage(video, (320 - w) / 2, (180 - h) / 2, w, h);
+    return canvas.toDataURL("image/jpeg", 0.8);
+  }, []);
+
+  // Handle compare button
+  const handleCompare = useCallback((index: number | null) => {
+    if (index === null) {
+      setCompareIndex(null);
+      setCapturedFrame(null);
+      return;
+    }
+    setCompareIndex(index);
+    // Seek to the timestamp, then capture after a short delay for the seek to complete
+    const ts = detectedTimestamps[index];
+    if (ts && videoRef.current) {
+      const seconds = parseTimestampToSeconds(ts);
+      videoRef.current.currentTime = seconds;
+      setCurrentTime(seconds);
+      // Capture frame after seek completes
+      const onSeeked = () => {
+        videoRef.current?.removeEventListener("seeked", onSeeked);
+        setCapturedFrame(captureVideoFrame());
+      };
+      videoRef.current.addEventListener("seeked", onSeeked);
+    }
+  }, [detectedTimestamps, captureVideoFrame]);
 
   // Format for Builder1 input
   const formatForBuilder1 = (): string => {
@@ -148,22 +192,32 @@ export function DetectionResults({
           {/* Video player */}
           <div className="rounded-xl overflow-hidden bg-black/30 border border-white/10">
             {videoError ? (
-              <div className="flex items-center justify-center gap-2 py-8 text-gray-400 text-sm">
-                <span className="material-symbols-outlined text-base">error_outline</span>
-                비디오를 재생할 수 없습니다. 타임라인에서 씬을 확인하세요.
+              <div className="flex flex-col items-center justify-center gap-3 py-8">
+                <span className="material-symbols-outlined text-2xl text-gray-500">error_outline</span>
+                <p className="text-gray-400 text-sm">비디오를 재생할 수 없습니다</p>
+                <button
+                  onClick={() => setVideoError(false)}
+                  className="px-4 py-2 rounded-lg bg-white/10 text-sm text-gray-300 hover:bg-white/20 transition-all"
+                >
+                  다시 시도
+                </button>
               </div>
             ) : videoUrl ? (
               <video
                 key={videoUrl}
                 ref={videoRef}
-                src={videoUrl}
                 controls
                 playsInline
                 className="w-full"
                 onTimeUpdate={handleTimeUpdate}
                 onLoadedMetadata={(e) => setLocalDuration(e.currentTarget.duration)}
-                onError={() => setVideoError(true)}
-              />
+              >
+                <source
+                  src={videoUrl}
+                  type={uploadedFile?.type || "video/mp4"}
+                  onError={() => setVideoError(true)}
+                />
+              </video>
             ) : (
               <div className="flex items-center justify-center py-8">
                 <div className="animate-spin rounded-full h-6 w-6 border-2 border-white/20 border-t-white/60" />
@@ -179,7 +233,19 @@ export function DetectionResults({
             currentTime={currentTime}
             onTimestampsChange={onTimestampsChange}
             onSeek={handleSeek}
+            compareIndex={compareIndex}
+            onCompare={handleCompare}
           />
+
+          {/* Side-by-side comparison panel */}
+          {compareIndex !== null && detectedTimestamps[compareIndex] && (
+            <ComparePanel
+              compareIndex={compareIndex}
+              timestamp={detectedTimestamps[compareIndex]}
+              capturedFrame={capturedFrame}
+              onClose={() => { setCompareIndex(null); setCapturedFrame(null); }}
+            />
+          )}
         </div>
       ) : (
         /* Fallback: text list when no file */
@@ -233,6 +299,105 @@ export function DetectionResults({
           프롬프트의 &quot;구도 레퍼런스&quot;로 사용됩니다.
         </p>
       </div>
+    </div>
+  );
+}
+
+/* ──────────────── Compare Panel ──────────────── */
+
+function ComparePanel({
+  compareIndex,
+  timestamp,
+  capturedFrame,
+  onClose,
+}: {
+  compareIndex: number;
+  timestamp: string;
+  capturedFrame: string | null;
+  onClose: () => void;
+}) {
+  return (
+    <div className="rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="material-symbols-outlined text-cyan-400 text-lg">compare</span>
+          <p className="text-sm font-bold text-cyan-300">
+            Scene {compareIndex + 1} 비교 ({timestamp})
+          </p>
+        </div>
+        <button
+          onClick={onClose}
+          className="w-7 h-7 rounded-md bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all flex items-center justify-center"
+        >
+          <span className="material-symbols-outlined text-sm">close</span>
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        {/* Video Frame (canvas capture) */}
+        <div className="space-y-2">
+          <p className="text-[10px] font-mono text-gray-500 uppercase tracking-wider text-center">
+            Video Frame
+          </p>
+          <div className="rounded-lg overflow-hidden bg-black/50 border border-white/10 aspect-video flex items-center justify-center">
+            {capturedFrame ? (
+              <img src={capturedFrame} alt="Video frame" className="w-full h-full object-contain" />
+            ) : (
+              <div className="flex flex-col items-center gap-1 text-gray-500">
+                <span className="material-symbols-outlined text-xl">videocam</span>
+                <span className="text-[10px]">캡처 중...</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Extracted Thumbnail */}
+        <div className="space-y-2">
+          <p className="text-[10px] font-mono text-gray-500 uppercase tracking-wider text-center">
+            Extracted Thumbnail
+          </p>
+          <div className="rounded-lg overflow-hidden bg-black/50 border border-white/10 aspect-video flex items-center justify-center">
+            <CompareThumb timestamp={timestamp} />
+          </div>
+        </div>
+      </div>
+
+      <p className="text-xs text-cyan-400/60 text-center">
+        이 컷 포인트가 정확한가요? 타임라인에서 +/- 버튼으로 미세 조정하세요.
+      </p>
+    </div>
+  );
+}
+
+/** Renders the extracted thumbnail for a timestamp by reading from SceneTimeline's frame cache via DOM */
+function CompareThumb({ timestamp }: { timestamp: string }) {
+  // Find the thumbnail from already-rendered SceneTimeline img elements
+  const [thumbUrl, setThumbUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    // SceneTimeline renders thumbnails as <img alt="Scene N">, find by walking the DOM
+    const imgs = document.querySelectorAll<HTMLImageElement>("img[alt^='Scene ']");
+    // Match by finding the card that contains this timestamp
+    for (const img of imgs) {
+      const card = img.closest("[class*='flex-shrink-0']");
+      if (card) {
+        const tsText = card.querySelector(".font-mono")?.textContent;
+        if (tsText?.trim() === timestamp) {
+          setThumbUrl(img.src);
+          return;
+        }
+      }
+    }
+  }, [timestamp]);
+
+  if (thumbUrl) {
+    return <img src={thumbUrl} alt="Extracted thumbnail" className="w-full h-full object-contain" />;
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-1 text-gray-500">
+      <span className="material-symbols-outlined text-xl">image</span>
+      <span className="text-[10px]">썸네일 없음</span>
     </div>
   );
 }
