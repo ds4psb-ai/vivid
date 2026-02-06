@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useMemo, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import type { ThresholdMode } from "../../api/sceneDetect";
 import { SceneTimeline } from "./SceneTimeline";
 
@@ -32,17 +32,16 @@ export function DetectionResults({
   const videoRef = useRef<HTMLVideoElement>(null);
   const rafRef = useRef<number | null>(null);
 
-  const videoUrl = useMemo(
-    () => (uploadedFile ? URL.createObjectURL(uploadedFile) : null),
-    [uploadedFile],
-  );
-
-  // Cleanup object URL on unmount
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   useEffect(() => {
-    return () => {
-      if (videoUrl) URL.revokeObjectURL(videoUrl);
-    };
-  }, [videoUrl]);
+    if (!uploadedFile) {
+      setVideoUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(uploadedFile);
+    setVideoUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [uploadedFile]);
 
   // Throttled timeupdate via rAF
   const handleTimeUpdate = useCallback(() => {
@@ -132,23 +131,34 @@ export function DetectionResults({
       </div>
 
       {/* Video player + Scene Timeline */}
-      {uploadedFile && videoUrl && !videoError ? (
+      {uploadedFile ? (
         <div className="space-y-4">
           {/* Video player */}
           <div className="rounded-xl overflow-hidden bg-black/30 border border-white/10">
-            <video
-              ref={videoRef}
-              src={videoUrl}
-              controls
-              playsInline
-              className="w-full"
-              onTimeUpdate={handleTimeUpdate}
-              onLoadedMetadata={(e) => setVideoDuration(e.currentTarget.duration)}
-              onError={() => setVideoError(true)}
-            />
+            {videoError ? (
+              <div className="flex items-center justify-center gap-2 py-8 text-gray-400 text-sm">
+                <span className="material-symbols-outlined text-base">error_outline</span>
+                비디오를 재생할 수 없습니다. 타임라인에서 씬을 확인하세요.
+              </div>
+            ) : videoUrl ? (
+              <video
+                ref={videoRef}
+                src={videoUrl}
+                controls
+                playsInline
+                className="w-full"
+                onTimeUpdate={handleTimeUpdate}
+                onLoadedMetadata={(e) => setVideoDuration(e.currentTarget.duration)}
+                onError={() => setVideoError(true)}
+              />
+            ) : (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-6 w-6 border-2 border-white/20 border-t-white/60" />
+              </div>
+            )}
           </div>
 
-          {/* Scene timeline */}
+          {/* Scene timeline - always rendered */}
           <SceneTimeline
             file={uploadedFile}
             timestamps={detectedTimestamps}
@@ -159,7 +169,7 @@ export function DetectionResults({
           />
         </div>
       ) : (
-        /* Fallback: text list when video fails */
+        /* Fallback: text list when no file */
         <div className="p-4 rounded-xl bg-black/30 border border-emerald-500/20 overflow-hidden">
           <pre className="text-emerald-200 text-xs whitespace-pre-wrap font-mono leading-relaxed">
             {formatForBuilder1()}
