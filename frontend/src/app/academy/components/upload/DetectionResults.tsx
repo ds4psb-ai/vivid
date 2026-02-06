@@ -312,7 +312,7 @@ export function DetectionResults({
             isDownloading ? "cursor-not-allowed opacity-70" : "hover:opacity-90"
           }`}
         >
-          {isDownloading ? "추출 중" : "프레임"}
+          {isDownloading ? "저장 중" : "저장"}
         </button>
       </div>
     </div>
