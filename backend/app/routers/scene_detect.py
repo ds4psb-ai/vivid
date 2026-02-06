@@ -17,7 +17,7 @@ import zipfile
 from io import BytesIO
 from math import ceil
 from pathlib import Path
-from fastapi import APIRouter, File, Form, Query, UploadFile, HTTPException
+from fastapi import APIRouter, File, Form, Query, Request, UploadFile, HTTPException
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 
@@ -120,14 +120,34 @@ def get_video_codec(video_path: str) -> str:
         return ""
 
 
+def _get_pixel_format(video_path: str) -> str:
+    """ffprobe로 픽셀 포맷 확인"""
+    cmd = [
+        "ffprobe", "-v", "error",
+        "-select_streams", "v:0",
+        "-show_entries", "stream=pix_fmt",
+        "-of", "default=noprint_wrappers=1:nokey=1",
+        video_path,
+    ]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+        return result.stdout.strip().lower()
+    except Exception:
+        return ""
+
+
 def create_web_preview(input_path: str, output_path: str) -> bool:
     """
     브라우저 호환 H.264/AAC MP4 생성.
-    이미 H.264면 remux만 (초고속), 아니면 트랜스코딩.
+    H.264 + yuv420p면 remux만 (초고속), 아니면 풀 트랜스코딩.
+    - pix_fmt yuv420p 강제 (10-bit → 8-bit)
+    - profile main / level 4.0 (HW 디코더 호환)
+    - portrait/landscape 자동 대응 스케일 필터
     """
     codec = get_video_codec(input_path)
+    pix_fmt = _get_pixel_format(input_path)
 
-    if codec == "h264":
+    if codec == "h264" and pix_fmt == "yuv420p":
         # remux only — 재인코딩 없이 컨테이너만 MP4로 변환
         cmd = [
             "ffmpeg", "-y", "-i", input_path,
@@ -136,21 +156,40 @@ def create_web_preview(input_path: str, output_path: str) -> bool:
             output_path,
         ]
     else:
-        # 풀 트랜스코딩 → H.264 (max 1280x720)
+        # 풀 트랜스코딩 → H.264 (max longest-side 1280, 짝수 보정)
         cmd = [
             "ffmpeg", "-y", "-i", input_path,
-            "-c:v", "libx264", "-preset", "fast", "-crf", "23",
+            "-c:v", "libx264", "-profile:v", "main", "-level:v", "4.0",
+            "-preset", "fast", "-crf", "23",
+            "-pix_fmt", "yuv420p",
             "-c:a", "aac", "-b:a", "128k",
             "-movflags", "+faststart",
-            "-vf", "scale='min(1280,iw)':'min(720,ih)':force_original_aspect_ratio=decrease",
+            "-vf",
+            "scale='if(gte(iw,ih),min(1280,iw),-2)'"
+            ":'if(gte(iw,ih),-2,min(1280,ih))'"
+            ",pad=ceil(iw/2)*2:ceil(ih/2)*2",
             output_path,
         ]
 
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
-        return result.returncode == 0 and os.path.exists(output_path)
+        if result.returncode != 0:
+            logger.error(
+                "FFmpeg transcode FAIL (code=%d) codec=%s pix_fmt=%s\nstderr: %s",
+                result.returncode, codec, pix_fmt,
+                result.stderr[-2000:] if result.stderr else "(empty)",
+            )
+            return False
+        if not os.path.exists(output_path):
+            logger.error("FFmpeg returned 0 but no output: %s", output_path)
+            return False
+        logger.info("Preview OK: %s/%s → h264/yuv420p", codec, pix_fmt)
+        return True
+    except subprocess.TimeoutExpired:
+        logger.error("FFmpeg transcode timeout 300s")
+        return False
     except Exception as e:
-        logger.warning("preview transcode failed: %s", e)
+        logger.warning("preview transcode exception: %s", e)
         return False
 
 
@@ -240,15 +279,48 @@ async def scene_detect_metadata(
 
 
 @router.get("/preview/{preview_id}")
-async def get_preview(preview_id: str):
-    """트랜스코딩된 H.264 영상 서빙 (브라우저 호환)"""
+async def get_preview(preview_id: str, request: Request):
+    """트랜스코딩된 H.264 영상 서빙 (브라우저 호환 + Range 지원)"""
     if preview_id not in _preview_store:
         raise HTTPException(status_code=404, detail="Preview not found or expired")
     path, _ = _preview_store[preview_id]
     if not os.path.exists(path):
         _preview_store.pop(preview_id, None)
         raise HTTPException(status_code=404, detail="Preview file not found")
-    return FileResponse(path, media_type="video/mp4")
+
+    file_size = os.path.getsize(path)
+    range_header = request.headers.get("range")
+
+    if range_header:
+        range_match = re.match(r"bytes=(\d+)-(\d*)", range_header)
+        if range_match:
+            start = int(range_match.group(1))
+            end = int(range_match.group(2)) if range_match.group(2) else file_size - 1
+            end = min(end, file_size - 1)
+            length = end - start + 1
+
+            def iter_file():
+                with open(path, "rb") as f:
+                    f.seek(start)
+                    remaining = length
+                    while remaining > 0:
+                        chunk = f.read(min(8192, remaining))
+                        if not chunk:
+                            break
+                        remaining -= len(chunk)
+                        yield chunk
+
+            return StreamingResponse(
+                iter_file(), status_code=206, media_type="video/mp4",
+                headers={
+                    "Content-Range": f"bytes {start}-{end}/{file_size}",
+                    "Content-Length": str(length),
+                    "Accept-Ranges": "bytes",
+                },
+            )
+
+    return FileResponse(path, media_type="video/mp4",
+                        headers={"Accept-Ranges": "bytes"})
 
 
 @router.post("/extract-frames")

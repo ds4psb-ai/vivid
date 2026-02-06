@@ -39,9 +39,10 @@ export function DetectionResults({
   const videoRef = useRef<HTMLVideoElement>(null);
   const rafRef = useRef<number | null>(null);
 
-  // 서버 트랜스코딩 preview URL (same-origin rewrite proxy → CORS 회피)
+  // 서버 트랜스코딩 preview URL (백엔드 직접 — Range 지원 + CORS OK)
+  const backendUrl = process.env.NEXT_PUBLIC_API_URL || '';
   const serverVideoUrl = previewId
-    ? `/api/v1/scene-detect/preview/${previewId}`
+    ? `${backendUrl}/api/v1/scene-detect/preview/${previewId}`
     : null;
 
   // Blob URL fallback (서버 preview가 없을 때)
