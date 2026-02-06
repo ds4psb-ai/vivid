@@ -371,7 +371,7 @@ else:
     ]
 
 # H1.1: Explicit allowed methods (no wildcard for security)
-CORS_ALLOWED_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
+CORS_ALLOWED_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"]
 
 app.add_middleware(
     CORSMiddleware,

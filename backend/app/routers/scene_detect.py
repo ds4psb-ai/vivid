@@ -343,6 +343,7 @@ async def scene_detect_metadata(
         os.unlink(tmp_path)
 
 
+@router.head("/preview/{preview_id}")
 @router.get("/preview/{preview_id}")
 async def get_preview(preview_id: str, request: Request):
     """트랜스코딩된 H.264 영상 서빙 (브라우저 호환 + Range 지원)"""
