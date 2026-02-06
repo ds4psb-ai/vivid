@@ -20,6 +20,11 @@
  *    - [📋 COPY] markers for easy copy
  */
 
+export interface SceneRefInfo {
+  composition: string;  // "scene_01.png"
+  face: 'MALE_ANCHOR' | 'FEMALE_ANCHOR' | 'BOTH' | 'NONE';
+}
+
 export interface Builder2Scene {
   sceneNum: number;
   title: string;
@@ -35,6 +40,7 @@ export interface Builder2Scene {
   isAnchor: boolean;
   frameFile: string;           // "frame_01_00-00.00.jpg"
   anchorRefs: string[];        // ["MALE"] - 이 씬에서 참조하는 앵커
+  refInfo?: SceneRefInfo;      // [REF] 태그에서 파싱
 }
 
 export interface AnchorInfo {
@@ -46,6 +52,12 @@ export interface AnchorInfo {
   frameFile: string;     // "frame_02_00-01.67.jpg"
 }
 
+export interface ParseWarning {
+  sceneNum: number | null;
+  type: 'lazy_pattern' | 'missing_param' | 'missing_prompt';
+  message: string;
+}
+
 export interface Builder2ParseResult {
   ohmageScenes: Builder2Scene[];
   variationScenes: Builder2Scene[];
@@ -53,6 +65,7 @@ export interface Builder2ParseResult {
   hasVariation: boolean;
   anchorSceneNum: number | null;
   anchors: AnchorInfo[];  // 앵커 정보 목록
+  warnings: ParseWarning[];
 }
 
 type TagName =
@@ -60,6 +73,16 @@ type TagName =
   | "OHMAGE_MOTION"
   | "VARIATION_IMAGE"
   | "VARIATION_MOTION";
+
+// ANTI-LAZY detection patterns
+const LAZY_PATTERNS = [
+  { pattern: /위와\s*동일/g, label: '위와 동일' },
+  { pattern: /이하\s*생략/g, label: '이하 생략' },
+  { pattern: /similar\s+to\s+Scene/gi, label: 'similar to Scene' },
+  { pattern: /같은\s*방식으로/g, label: '같은 방식으로' },
+  { pattern: /\(생략\)/g, label: '(생략)' },
+  { pattern: /\(skip\)/gi, label: '(skip)' },
+];
 
 /**
  * Extract content between <<<TAG_START>>> and <<<TAG_END>>> delimiters
@@ -109,6 +132,31 @@ function extractCodeBlock(text: string): string {
 }
 
 /**
+ * Extract prompt text with fallback when code fences are missing.
+ * Tries code block first, then falls back to raw text after the label line.
+ */
+function extractPromptWithFallback(block: string, labelPattern: RegExp): string {
+  // Try code block first
+  const codeBlockMatch = block.match(
+    new RegExp(labelPattern.source + '[^\\n]*\\n```(?:text)?\\s*\\n?([\\s\\S]*?)```', labelPattern.flags)
+  );
+  if (codeBlockMatch && codeBlockMatch[1]?.trim()) {
+    return codeBlockMatch[1].trim();
+  }
+
+  // Fallback: grab text after the label line until next section marker or end
+  const fallbackMatch = block.match(
+    new RegExp(labelPattern.source + '[^\\n]*\\n([\\s\\S]*?)(?=\\n(?:\\[📋|#{2,3}\\s|---)|$)', labelPattern.flags)
+  );
+  if (fallbackMatch && fallbackMatch[1]?.trim()) {
+    // Remove leading/trailing empty lines and common markdown artifacts
+    return fallbackMatch[1].trim();
+  }
+
+  return '';
+}
+
+/**
  * Generate frame file name from scene number and timestamp
  * timestamp: "00:00.00~00:01.67" → "frame_01_00-00.00.jpg"
  */
@@ -129,25 +177,118 @@ function generateFrameFileName(sceneNum: number, timestamp: string): string {
  */
 function extractAnchorRefs(block: string): string[] {
   const refs: string[] = [];
-  // Check for various anchor reference patterns
+
+  // [REF] tag pattern (highest priority)
+  const refTag = parseRefTag(block);
+  if (refTag) {
+    if (refTag.face === 'MALE_ANCHOR') return ['MALE'];
+    if (refTag.face === 'FEMALE_ANCHOR') return ['FEMALE'];
+    if (refTag.face === 'BOTH') return ['MALE', 'FEMALE'];
+    if (refTag.face === 'NONE') return [];
+  }
+
+  // Legacy: Check for various anchor reference patterns
   if (block.includes('[MALE_ANCHOR') ||
       block.includes('MALE ANCHOR') ||
-      block.includes('[Image 2: CHARACTER FACE]') && block.toLowerCase().includes('male')) {
+      (block.includes('[Image 2: CHARACTER FACE]') && block.toLowerCase().includes('male'))) {
     refs.push('MALE');
   }
   if (block.includes('[FEMALE_ANCHOR') ||
       block.includes('FEMALE ANCHOR') ||
-      block.includes('[Image 2: CHARACTER FACE]') && block.toLowerCase().includes('female')) {
+      (block.includes('[Image 2: CHARACTER FACE]') && block.toLowerCase().includes('female'))) {
     refs.push('FEMALE');
   }
-  // Generic anchor reference
+  // Generic anchor reference (--cref or --oref)
   if (refs.length === 0 &&
       (block.includes('[ANCHOR') ||
        block.includes('--cref') ||
+       block.includes('--oref') ||
        (block.includes('[Image 2:') && block.includes('ANCHOR')))) {
     refs.push('MALE'); // Default to MALE if generic anchor reference
   }
   return refs;
+}
+
+/**
+ * Parse [REF] tag from a scene block
+ * Format: [REF: COMP=scene_XX.png, FACE=MALE_ANCHOR]
+ */
+function parseRefTag(block: string): SceneRefInfo | undefined {
+  const match = block.match(/\[REF:\s*COMP=([^,\]]+)(?:,\s*FACE=([^\]]+))?\]/i);
+  if (!match) return undefined;
+  return {
+    composition: match[1].trim(),
+    face: (match[2]?.trim() || 'NONE') as SceneRefInfo['face'],
+  };
+}
+
+/**
+ * Detect ANTI-LAZY patterns in a scene block
+ */
+function detectLazyPatterns(block: string, sceneNum: number): ParseWarning[] {
+  const warnings: ParseWarning[] = [];
+  for (const { pattern, label } of LAZY_PATTERNS) {
+    // Reset lastIndex for global patterns
+    pattern.lastIndex = 0;
+    if (pattern.test(block)) {
+      warnings.push({
+        sceneNum,
+        type: 'lazy_pattern',
+        message: `LAZY 패턴 감지: "${label}"`,
+      });
+    }
+  }
+  return warnings;
+}
+
+/**
+ * Validate MJ parameters in a Midjourney prompt
+ */
+function validateMJParams(prompt: string, sceneNum: number, isAnchor: boolean): ParseWarning[] {
+  const warnings: ParseWarning[] = [];
+  if (!prompt) return warnings;
+
+  // --ar missing
+  if (!prompt.includes('--ar')) {
+    warnings.push({
+      sceneNum,
+      type: 'missing_param',
+      message: '--ar (종횡비) 누락',
+    });
+  }
+
+  // --v missing
+  if (!prompt.includes('--v ')) {
+    warnings.push({
+      sceneNum,
+      type: 'missing_param',
+      message: '--v (버전) 누락',
+    });
+  }
+
+  // Non-anchor scene missing --oref
+  if (!isAnchor && !prompt.includes('--oref') && !prompt.includes('--cref')) {
+    warnings.push({
+      sceneNum,
+      type: 'missing_param',
+      message: '비앵커 씬에 --oref 누락',
+    });
+  }
+
+  // --ow > 500 warning
+  const owMatch = prompt.match(/--ow\s+(\d+)/);
+  if (owMatch) {
+    const owValue = parseInt(owMatch[1], 10);
+    if (owValue > 500) {
+      warnings.push({
+        sceneNum,
+        type: 'missing_param',
+        message: `--ow ${owValue} > 500 (권장: 50-250)`,
+      });
+    }
+  }
+
+  return warnings;
 }
 
 /**
@@ -178,23 +319,11 @@ function parseImageSection(content: string): Map<number, Builder2Scene> {
       block.includes("(ANCHOR)") ||
       block.includes("(앵커)");
 
-    // Extract NanoBanana prompt
-    let nanoBanana = "";
-    const nanoBananaMatch = block.match(
-      /(?:\[📋\s*COPY\]|NanoBanana)[^\n]*\n```(?:text)?\s*\n?([\s\S]*?)```/i
-    );
-    if (nanoBananaMatch) {
-      nanoBanana = nanoBananaMatch[1].trim();
-    }
+    // Extract NanoBanana prompt (with fallback)
+    const nanoBanana = extractPromptWithFallback(block, /(?:\[📋\s*COPY\]\s*)?NanoBanana/i);
 
-    // Extract Midjourney prompt (comes after NanoBanana)
-    let midjourney = "";
-    const midjourneyMatch = block.match(
-      /(?:Midjourney|MJ)[^\n]*\n```(?:text)?\s*\n?([\s\S]*?)```/i
-    );
-    if (midjourneyMatch) {
-      midjourney = midjourneyMatch[1].trim();
-    }
+    // Extract Midjourney prompt (with fallback)
+    const midjourney = extractPromptWithFallback(block, /(?:\[📋\s*COPY\]\s*)?(?:Midjourney|MJ)/i);
 
     scenes.set(sceneNum, {
       sceneNum,
@@ -205,6 +334,7 @@ function parseImageSection(content: string): Map<number, Builder2Scene> {
       isAnchor,
       frameFile: generateFrameFileName(sceneNum, timestamp),
       anchorRefs: extractAnchorRefs(block),
+      refInfo: parseRefTag(block),
     });
   }
 
@@ -232,23 +362,11 @@ function parseMotionSection(
 
     const sceneNum = parseInt(headerMatch[1], 10);
 
-    // Extract Kling prompt
-    let kling = "";
-    const klingMatch = block.match(
-      /(?:\[📋\s*COPY\]|Kling)[^\n]*\n```(?:text)?\s*\n?([\s\S]*?)```/i
-    );
-    if (klingMatch) {
-      kling = klingMatch[1].trim();
-    }
+    // Extract Kling prompt (with fallback)
+    const kling = extractPromptWithFallback(block, /(?:\[📋\s*COPY\]\s*)?Kling/i);
 
-    // Extract Veo prompt
-    let veo = "";
-    const veoMatch = block.match(
-      /(?:Veo)[^\n]*\n```(?:text)?\s*\n?([\s\S]*?)```/i
-    );
-    if (veoMatch) {
-      veo = veoMatch[1].trim();
-    }
+    // Extract Veo prompt (with fallback)
+    const veo = extractPromptWithFallback(block, /(?:\[📋\s*COPY\]\s*)?Veo/i);
 
     // Merge with existing scene or create new
     if (existingScenes.has(sceneNum)) {
@@ -281,40 +399,24 @@ function parseMotionSection(
 /**
  * Parse IMAGE prompts from unified format block
  * Supports both direct tool names and [📋 COPY] markers
+ * Falls back to raw text when code fences are missing
  */
 function parseUnifiedImagePrompts(content: string): { nanoBanana: string; midjourney: string } {
-  // Try [📋 COPY] NanoBanana format first, then direct NanoBanana
-  const nanoBananaMatch = content.match(
-    /(?:\[📋\s*COPY\]\s*)?NanoBanana[^\n]*\n```(?:text)?\s*\n?([\s\S]*?)```/i
-  );
-  // Try [📋 COPY] Midjourney format first, then direct Midjourney/MJ
-  const midjourneyMatch = content.match(
-    /(?:\[📋\s*COPY\]\s*)?(?:Midjourney|MJ)[^\n]*\n```(?:text)?\s*\n?([\s\S]*?)```/i
-  );
-
   return {
-    nanoBanana: nanoBananaMatch?.[1]?.trim() || '',
-    midjourney: midjourneyMatch?.[1]?.trim() || '',
+    nanoBanana: extractPromptWithFallback(content, /(?:\[📋\s*COPY\]\s*)?NanoBanana/i),
+    midjourney: extractPromptWithFallback(content, /(?:\[📋\s*COPY\]\s*)?(?:Midjourney|MJ)/i),
   };
 }
 
 /**
  * Parse MOTION prompts from unified format block
  * Supports both direct tool names and [📋 COPY] markers
+ * Falls back to raw text when code fences are missing
  */
 function parseUnifiedMotionPrompts(content: string): { kling: string; veo: string } {
-  // Try [📋 COPY] Kling format first, then direct Kling
-  const klingMatch = content.match(
-    /(?:\[📋\s*COPY\]\s*)?Kling[^\n]*\n```(?:text)?\s*\n?([\s\S]*?)```/i
-  );
-  // Try [📋 COPY] Veo format first, then direct Veo
-  const veoMatch = content.match(
-    /(?:\[📋\s*COPY\]\s*)?Veo[^\n]*\n```(?:text)?\s*\n?([\s\S]*?)```/i
-  );
-
   return {
-    kling: klingMatch?.[1]?.trim() || '',
-    veo: veoMatch?.[1]?.trim() || '',
+    kling: extractPromptWithFallback(content, /(?:\[📋\s*COPY\]\s*)?Kling/i),
+    veo: extractPromptWithFallback(content, /(?:\[📋\s*COPY\]\s*)?Veo/i),
   };
 }
 
@@ -459,8 +561,44 @@ function parseAnchorInfo(content: string, scenes: Builder2Scene[]): AnchorInfo[]
 }
 
 /**
+ * Collect all warnings for parsed scenes
+ */
+function collectWarnings(scenes: Builder2Scene[], rawContent: string): ParseWarning[] {
+  const warnings: ParseWarning[] = [];
+
+  // Split raw content into scene blocks for lazy pattern detection
+  // Use flexible scene split: ## followed by optional emoji, then Scene
+  const sceneBlockPattern = /(?=##\s*(?:📍\s*)?Scene\s*\d+)/i;
+  const rawBlocks = rawContent.split(sceneBlockPattern);
+
+  for (const scene of scenes) {
+    // Find matching raw block for this scene
+    const scenePattern = new RegExp(`Scene\\s*0?${scene.sceneNum}[:\\s]`, 'i');
+    const matchingBlock = rawBlocks.find(b => scenePattern.test(b)) || '';
+
+    // ANTI-LAZY detection
+    warnings.push(...detectLazyPatterns(matchingBlock, scene.sceneNum));
+
+    // MJ parameter validation
+    warnings.push(...validateMJParams(scene.imagePrompts.midjourney, scene.sceneNum, scene.isAnchor));
+
+    // Missing prompt warnings
+    if (!scene.imagePrompts.nanoBanana && !scene.imagePrompts.midjourney) {
+      warnings.push({
+        sceneNum: scene.sceneNum,
+        type: 'missing_prompt',
+        message: 'IMAGE 프롬프트 없음 (NanoBanana + MJ 모두 빈 값)',
+      });
+    }
+  }
+
+  return warnings;
+}
+
+/**
  * Parse unified workflow format (v8.0)
  * New format: ## 📍 Scene XX + ### 🖼️ IMAGE + ### 🎥 MOTION
+ * Also supports headers without 📍 emoji
  */
 function parseUnifiedWorkflow(content: string): Builder2ParseResult {
   const result: Builder2ParseResult = {
@@ -470,6 +608,7 @@ function parseUnifiedWorkflow(content: string): Builder2ParseResult {
     hasVariation: false,
     anchorSceneNum: null,
     anchors: [],
+    warnings: [],
   };
 
   // Check if this is a variation workflow
@@ -488,12 +627,12 @@ function parseUnifiedWorkflow(content: string): Builder2ParseResult {
     }
   }
 
-  // Split by scene markers: ## 📍 Scene or ## ⭐ (anchor section)
-  const sceneBlocks = content.split(/(?=## 📍 Scene|## ⭐)/i);
+  // Split by scene markers: ## 📍 Scene or ## Scene (emoji optional) or ## ⭐ (anchor section)
+  const sceneBlocks = content.split(/(?=##\s*(?:📍\s*)?Scene\s+\d|##\s*⭐)/i);
 
   for (const block of sceneBlocks) {
     // Handle anchor scenes in ⭐ section
-    if (block.includes('## ⭐')) {
+    if (block.match(/^##\s*⭐/)) {
       // Parse anchor scenes within the anchor section
       const anchorSceneBlocks = block.split(/(?=### 👨|### 👩)/);
       for (const anchorBlock of anchorSceneBlocks) {
@@ -507,6 +646,7 @@ function parseUnifiedWorkflow(content: string): Builder2ParseResult {
         // Extract prompts
         const imagePrompts = parseUnifiedImagePrompts(anchorBlock);
         const motionPrompts = parseUnifiedMotionPrompts(anchorBlock);
+        const anchorRefInfo = parseRefTag(anchorBlock);
 
         const scene: Builder2Scene = {
           sceneNum,
@@ -517,6 +657,7 @@ function parseUnifiedWorkflow(content: string): Builder2ParseResult {
           isAnchor: true,
           frameFile: generateFrameFileName(sceneNum, ''),
           anchorRefs: [], // Anchor scenes don't reference other anchors
+          refInfo: anchorRefInfo,
         };
 
         if (isVariation) {
@@ -528,37 +669,35 @@ function parseUnifiedWorkflow(content: string): Builder2ParseResult {
       continue;
     }
 
-    // Handle regular scenes
-    if (!block.includes('## 📍 Scene')) continue;
-
-    // Extract scene header
-    const headerMatch = block.match(/## 📍 Scene\s*(\d+)[:\s]+([^\n]+)/i);
+    // Handle regular scenes - flexible header (📍 optional)
+    const headerMatch = block.match(/##\s*(?:📍\s*)?Scene\s*(\d+)[:\s]+([^\n]+)/i);
     if (!headerMatch) continue;
 
     const sceneNum = parseInt(headerMatch[1], 10);
     const title = headerMatch[2].trim();
 
-    // Extract timecode - supports both "타임코드:" and inline "(00:00.00~00:01.67)" formats
+    // Extract timecode - flexible timestamp parsing (leading zero optional, fractional optional)
     let timestamp = '';
-    const timestampMatch = block.match(/타임코드[:\s]*(\d+:\d+\.\d+)~(\d+:\d+\.\d+)/i);
+    // Pattern: supports "0:00.00", "00:00.00", "0:00", "00:00" formats
+    const timestampMatch = block.match(/타임코드[:\s]*(\d+:\d+(?:\.\d+)?)~(\d+:\d+(?:\.\d+)?)/i);
     if (timestampMatch) {
       timestamp = `${timestampMatch[1]}~${timestampMatch[2]}`;
     } else {
-      // Try inline format: Scene 01: Title (00:00.00~00:01.67)
-      const inlineMatch = block.match(/\((\d+:\d+\.\d+)[~-](\d+:\d+\.\d+)\)/);
+      // Try inline format: Scene 01: Title (00:00.00~00:01.67) or (0:00~0:03)
+      const inlineMatch = block.match(/\((\d+:\d+(?:\.\d+)?)[~-](\d+:\d+(?:\.\d+)?)\)/);
       if (inlineMatch) {
         timestamp = `${inlineMatch[1]}~${inlineMatch[2]}`;
       }
     }
 
-    // Extract IMAGE section
-    const imageSection = block.match(/### 🖼️ IMAGE\s*\n([\s\S]*?)(?=### 🎥|## 📍|## ✅|$)/i);
+    // Extract IMAGE section (flexible emoji matching)
+    const imageSection = block.match(/###\s*(?:🖼️?\s*)?IMAGE\s*\n([\s\S]*?)(?=###\s*(?:🎥?\s*)?MOTION|##\s*(?:📍\s*)?Scene|## ✅|$)/i);
     const imagePrompts = imageSection
       ? parseUnifiedImagePrompts(imageSection[1])
       : parseUnifiedImagePrompts(block); // Fallback: search entire block
 
-    // Extract MOTION section
-    const motionSection = block.match(/### 🎥 MOTION\s*\n([\s\S]*?)(?=## 📍|## ✅|$)/i);
+    // Extract MOTION section (flexible emoji matching)
+    const motionSection = block.match(/###\s*(?:🎥?\s*)?MOTION\s*\n([\s\S]*?)(?=##\s*(?:📍\s*)?Scene|## ✅|$)/i);
     const motionPrompts = motionSection
       ? parseUnifiedMotionPrompts(motionSection[1])
       : parseUnifiedMotionPrompts(block); // Fallback: search entire block
@@ -567,6 +706,8 @@ function parseUnifiedWorkflow(content: string): Builder2ParseResult {
     const isAnchor = anchorSceneNums.has(sceneNum) ||
       block.toUpperCase().includes('ANCHOR') ||
       block.includes('앵커');
+
+    const refInfo = parseRefTag(block);
 
     const scene: Builder2Scene = {
       sceneNum,
@@ -577,6 +718,7 @@ function parseUnifiedWorkflow(content: string): Builder2ParseResult {
       isAnchor,
       frameFile: generateFrameFileName(sceneNum, timestamp),
       anchorRefs: isAnchor ? [] : extractAnchorRefs(block),
+      refInfo,
     };
 
     if (isVariation) {
@@ -597,6 +739,9 @@ function parseUnifiedWorkflow(content: string): Builder2ParseResult {
   const allScenes = [...result.ohmageScenes, ...result.variationScenes];
   result.anchors = parseAnchorInfo(content, allScenes);
 
+  // Collect warnings
+  result.warnings = collectWarnings(allScenes, content);
+
   return result;
 }
 
@@ -612,6 +757,7 @@ export function parseBuilder2Output(content: string): Builder2ParseResult {
     hasVariation: false,
     anchorSceneNum: null,
     anchors: [],
+    warnings: [],
   };
 
   // 1. Try legacy <<<TAG>>> format first (backward compatibility)
@@ -661,11 +807,14 @@ export function parseBuilder2Output(content: string): Builder2ParseResult {
     }
     result.anchors = parseAnchorInfo(content, allScenes);
 
+    // Collect warnings for legacy format too
+    result.warnings = collectWarnings(allScenes, content);
+
     return result;
   }
 
-  // 2. Try new v8.0 unified format
-  if (content.includes('## 📍 Scene') || content.includes('## ⭐') || content.includes('오마쥬 워크플로우')) {
+  // 2. Try new v8.0 unified format (📍 emoji optional in detection)
+  if (content.match(/##\s*(?:📍\s*)?Scene\s+\d/i) || content.includes('## ⭐') || content.includes('오마쥬 워크플로우')) {
     return parseUnifiedWorkflow(content);
   }
 
@@ -696,31 +845,46 @@ export function findAnchorScene(
 }
 
 /**
- * Insert --cref URL into Midjourney prompt if placeholder exists
+ * Insert --cref/--oref URL into Midjourney prompt if placeholder exists
+ * Supports both legacy --cref (V6) and V7 --oref
  */
 export function insertCrefUrl(prompt: string, crefUrl: string): string {
   if (!crefUrl.trim()) return prompt;
 
-  // Replace placeholder like [ANCHOR_URL] or --cref [URL]
+  // Replace placeholder like [ANCHOR_URL], [MALE_ANCHOR_URL], [FEMALE_ANCHOR_URL]
   let result = prompt
-    .replace(/\[ANCHOR_URL\]/gi, crefUrl)
-    .replace(/--cref\s*\[URL\]/gi, `--cref ${crefUrl}`);
+    .replace(/\[(?:MALE_|FEMALE_)?ANCHOR_URL\]/gi, crefUrl)
+    .replace(/--(?:cref|oref)\s*\[URL\]/gi, (match) => {
+      const param = match.startsWith('--oref') ? '--oref' : '--cref';
+      return `${param} ${crefUrl}`;
+    });
 
-  // If no placeholder found but prompt has --cref without URL, add URL
-  if (result === prompt && result.includes("--cref")) {
-    result = result.replace(/--cref(?!\s+http)/i, `--cref ${crefUrl}`);
+  // If no placeholder found but prompt has --oref/--cref without URL, add URL
+  if (result === prompt) {
+    if (result.includes("--oref")) {
+      result = result.replace(/--oref(?!\s+http)/i, `--oref ${crefUrl}`);
+    } else if (result.includes("--cref")) {
+      result = result.replace(/--cref(?!\s+http)/i, `--cref ${crefUrl}`);
+    }
   }
 
-  // If no --cref at all, add it before --ar or at end
-  if (!result.includes("--cref")) {
+  // If no --oref or --cref at all, add --oref (V7 default) before --ar or at end
+  if (!result.includes("--cref") && !result.includes("--oref")) {
     if (result.includes("--ar")) {
-      result = result.replace("--ar", `--cref ${crefUrl} --ar`);
+      result = result.replace("--ar", `--oref ${crefUrl} --ar`);
     } else {
-      result = `${result} --cref ${crefUrl}`;
+      result = `${result} --oref ${crefUrl}`;
     }
   }
 
   return result;
+}
+
+/**
+ * Get warnings for a specific scene
+ */
+export function getSceneWarnings(warnings: ParseWarning[], sceneNum: number): ParseWarning[] {
+  return warnings.filter(w => w.sceneNum === sceneNum);
 }
 
 /**

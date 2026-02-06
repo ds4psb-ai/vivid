@@ -193,14 +193,14 @@ Phase B (사실/현대): Scene 08
 (대비 없으면 단일 Phase)
 \`\`\`
 
-**4. 씬별 --cw 가이드**
+**4. 씬별 --ow 가이드 (V7)**
 \`\`\`
-| 샷 타입 | --cw | 예시 씬 |
+| 샷 타입 | --ow | 예시 씬 |
 |--------|------|---------|
-| 클로즈업 | 80-100 | [앵커 씬] |
-| 미디엄 | 50 | [해당 씬] |
-| 와이드 | 30 | [해당 씬] |
-| 배경만 | 0 | [해당 씬] |
+| 클로즈업 | 150-250 | [앵커 씬] |
+| 미디엄 | 80-150 | [해당 씬] |
+| 와이드 | 30-80 | [해당 씬] |
+| 배경만 | --oref 생략 | [해당 씬] |
 \`\`\`
 
 **5. 🎬 구도 분석**
@@ -234,27 +234,24 @@ Phase B (사실/현대): Scene 08
 > **STEP 2에서 모든 씬의 IMAGE 프롬프트를 한 번에 출력합니다.**
 > Phase 1-2, Phase 3-4를 나누지 않고 **전체 씬 한꺼번에 생성**!
 
-### 듀얼 레퍼런스 라벨 형식 (2026 Best Practices)
+### [REF] 태그 시스템
 
-⚠️ **레거시 강점 복원**: 듀얼 레퍼런스 명확화 패턴 적용
+각 씬 출력 시 프롬프트 앞에 레퍼런스 태그 **한 줄만** 출력:
 
-\`\`\`markdown
-**[Image 1: COMPOSITION]** [scene_XX.png]
-**[Image 2: CHARACTER FACE]** [MALE_ANCHOR.png 또는 FEMALE_ANCHOR.png]
-
-**From Image 1**: Copy exact composition, lighting, camera angle, character positions, depth of field.
-**From Image 2**: Copy the [타겟 문화권] [character]'s face (hair style, hair color, eyes, eyebrows, expression, skin tone).
-
-⚠️ CRITICAL: 아래 프롬프트는 **변경사항만** 기술하세요.
-레퍼런스에 이미 있는 요소(구도, 조명, 카메라 앵글, 기존 외모)를 다시 기술하지 마세요.
-
-예시:
-❌ 잘못된 예: "Wide shot of Korean man in denim jacket, warm lighting, 1990s apartment"
-   → 레퍼런스에 이미 있는 내용 중복
-
-✅ 올바른 예: "Walking forward towards camera. 배경은 1990s 한국 아파트로 변환."
-   → 변경사항(동작, 배경 문화권 변환)만 기술
 \`\`\`
+[REF: COMP=scene_XX.png, FACE=MALE_ANCHOR]
+\`\`\`
+
+태그 문법:
+- COMP: 구도 레퍼런스 (씬 프레임). 항상 포함.
+- FACE: 캐릭터 레퍼런스. MALE_ANCHOR / FEMALE_ANCHOR / BOTH / NONE
+- 앵커 씬: [REF: COMP=scene_XX.png, FACE=NONE] (자기 자신이 레퍼런스)
+
+⚠️ 규칙:
+- COMP 이미지의 구도/화각/카메라높이/피사체위치를 100% 유지
+- FACE 이미지의 얼굴/외모를 정확히 참조
+- 프롬프트에는 레퍼런스에 없는 **변경사항만** 기술
+- "From Image 1: Copy exact..." 같은 가이드 텍스트는 출력하지 않음
 
 ### Midjourney V7 파라미터 (2026 Best Practices)
 
@@ -272,12 +269,15 @@ Phase B (사실/현대): Scene 08
 **--ow (omni-weight) 동적 결정 (V7 기준, 0-1000):**
 샷 타입과 씬 설명을 분석하여 자동 결정:
 
+⚠️ **2026 MJ V7 --ow Sweet Spot**: 50-250 범위 권장. 500 초과 시 품질 저하.
+레퍼런스 이미지가 핵심 앵커 → --ow는 보조적 가중치만 담당.
+
 | 샷 타입 | --ow 값 | 사용 시기 | 효과 |
 |---------|---------|----------|------|
 | 앵커 씬 본인 | --oref 없음 | 이 씬이 레퍼런스 | - |
-| 클로즈업 (얼굴) | 400-600 | "close-up", "face", "portrait", "eyes" | 얼굴/의상 강력 보존 |
-| 미디엄 샷 (상반신) | 200-300 | "medium shot", "upper body", "waist up" | 캐릭터-구도 밸런스 |
-| 와이드 샷 (전신) | 100-150 | "wide", "full body", "entire", "landscape" | 구도 우선, 캐릭터 유사도 낮음 |
+| 클로즈업 (얼굴) | 150-250 | "close-up", "face", "portrait", "eyes" | 얼굴 유사도 유지 + 자연스러운 변형 허용 |
+| 미디엄 샷 (상반신) | 80-150 | "medium shot", "upper body", "waist up" | 캐릭터-구도 밸런스 |
+| 와이드 샷 (전신) | 30-80 | "wide", "full body", "entire", "landscape" | 구도 우선, 캐릭터 실루엣만 유지 |
 | 배경만 (인물 없음) | --oref 생략 | "background", "no character" | - |
 
 **--iw (image weight):** 2.0 (V7 기준, 구도 레퍼런스 강조)
@@ -352,8 +352,7 @@ Phase B (사실/현대): Scene 08
 
 ## Scene 01: [제목] (00:00.00~00:01.67)
 
-**[Image 1: COMPOSITION]** [scene01.png]
-**[Image 2: CHARACTER FACE]** [ANCHOR.png] (또는 "배경 씬 - 캐릭터 없음")
+[REF: COMP=scene_01.png, FACE=MALE_ANCHOR]
 
 [📋 COPY] NanoBanana Pro:
 \\\`\\\`\\\`text
@@ -368,7 +367,7 @@ Phase B (사실/현대): Scene 08
 [📋 COPY] Midjourney V7:
 \\\`\\\`\\\`text
 [영문 프롬프트]
---iw 2.0 --ar 9:16 --v 7 --style raw --cref [ANCHOR_URL] --cw 50 --stylize 250 --no [제외 항목]
+--iw 2.0 --ar 9:16 --v 7 --style raw --oref [ANCHOR_URL] --ow [샷 기반 동적: 150-250/80-150/30-80] --stylize [Phase 동적] --no [문화권 + 씬 동적]
 \\\`\\\`\\\`
 
 ---
@@ -410,24 +409,23 @@ Phase B (사실/현대): Scene 08
 **독립 작성**: MOTION은 입력된 씬 설명의 동작을 기술.
 IMAGE 프롬프트 텍스트를 복붙하지 말 것.
 
-### Kling 3.0 Beat System (2026 Motion Control Best Practices)
+### Kling 3.0 간결 프롬프트 (2026 Best Practices)
 
-⚠️ **2026 Kling 2.6/3.0 Motion Control 핵심**:
-레퍼런스 이미지 기반 생성 시 **모션을 프롬프트에 기술하지 마세요**!
-레퍼런스 이미지가 이미 캐릭터 포즈와 시작 프레임을 정의합니다.
+⚠️ **핵심 원칙**: "Short prompts create coherent scenes. Let the reference do the work."
+- 입력 이미지가 anchor point → 구도/인물/조명은 이미지가 처리
+- 프롬프트는 **마이크로모션만**: breathing, blinking, fabric sway
+- 목표: **35단어 이내**
 
-**프롬프트는 다음만 집중:**
-1. **캐릭터 외모** (레퍼런스와의 변경점만 - 있는 경우)
-2. **환경/배경** (문화권 변환 적용)
-3. **조명/분위기** (색온도, 그림자 방향)
-
-**Beat System 구조:**
+**간결 프롬프트 구조:**
 \`\`\`
-Beat 0-Xs: [Camera type], [설정].
-  IMMEDIATELY [핵심 동작 - 0.3초 내 시작].
-  [후속 동작 또는 정적 유지].
-Audio: [Ambient: 환경음] [SFX: 효과음]
-Negative: [금지 동작/요소]
+[주요 동작 1개]. [마이크로모션 2-3개].
+Audio: "[환경음]. [효과음]."
+\`\`\`
+
+**예시:**
+\`\`\`
+Walking forward slowly. Subtle breathing, hair sway in breeze, fabric folds shifting.
+Audio: "Distant traffic hum. Soft footsteps on pavement."
 \`\`\`
 
 **Beat 수 규칙:**
@@ -437,67 +435,53 @@ Negative: [금지 동작/요소]
 | 2-4초 | 2 Beats | 일반 씬 | 대부분의 씬 |
 | > 4초 | 3+ Beats | 긴 액션 | 복잡한 동작 시퀀스 |
 
-⚠️ **레퍼런스 이미지 사용 시 프롬프트 간결화:**
-
-❌ 잘못된 예 (모션 중복 기술):
+❌ 잘못된 예 (중복 + 장황):
 \`\`\`
 Korean man in denim jacket, black bowl cut hair, walking forward towards camera,
-arms swinging naturally, 1990s Korean apartment background
+arms swinging naturally, 1990s Korean apartment background, warm lighting
 \`\`\`
 
-✅ 올바른 예 (캐릭터 외모 + 환경만):
+✅ 올바른 예 (마이크로모션 중심):
 \`\`\`
-Character: Same as image (Korean man in denim jacket)
-Environment: 1990s Korean suburban street, warm tungsten lighting (3200K)
+Walking forward steadily. Gentle breathing, jacket fabric shifting, slight head tilt.
+Audio: "Quiet neighborhood ambience. Rhythmic footsteps."
 \`\`\`
 
 ⚠️ **프레이밍 매칭 필수**: 레퍼런스가 풀바디면 이미지도 풀바디 사용
 
-### Veo 3.1 프롬프트 구조 (2026 Best Practices)
+### Veo 3.1 간결 프롬프트 (2026 Best Practices)
 
-⚠️ **2026 Veo 3.1 "Ingredients to Video" 핵심**:
-레퍼런스 이미지가 있으면 프롬프트는 **간결하게**!
-레퍼런스 이미지가 이미 구도, 조명, 인물 외모를 정의하므로 중복 기술 불필요.
+⚠️ **핵심 원칙**: Image-to-video = 50-100 words. 이미지가 60-70% 처리.
+Subject/Setting/Lighting/Style은 레퍼런스 이미지가 제공 → 프롬프트에서 제거.
 
-**프롬프트는 다음 3가지만 집중:**
-1. **Cinematography**: [카메라 무브먼트 - dolly, tracking, crane, POV 등]
-2. **Subject**: [레퍼런스에 없는 변경사항만]
-3. **Action**: [명확한 단일 동작 - "within first second" 타이밍 명시]
-
-**간결한 프롬프트 예시 (레퍼런스 이미지 사용 시):**
+**3개 핵심 슬롯만 사용:**
 \`\`\`
-Cinematography: Static medium shot, slight handheld movement
-Subject: Same character (레퍼런스 참조)
-Action: Looking around nervously, then fixes gaze to the right, within first second
-\`\`\`
-
-**Slot Structure (참고용 - 필요한 슬롯만 사용):**
-\`\`\`
-Subject: [인물/오브젝트 - 레퍼런스에 없는 변경사항만]
-Action: [명확한 단일 동작 + "within first second" 타이밍]
-Setting: [배경 - 문화권 변환 적용 시에만]
-Style: [필름 스타일, 시대감 - 변화가 있을 때만]
-Camera: [Shot type + movement - 카메라 무브먼트가 있을 때만]
-Lighting: [조명 - 변화가 있을 때만, 색온도 명시 e.g., "3200K"]
+Cinematography: [카메라 무브먼트]
+Action: [단일 동작 + "within first second"]
 Audio: "Ambient: [환경음]. SFX: [효과음]."
-Constraints: [금지 요소 - 씬별 --no 동적 생성 규칙 적용]
 \`\`\`
 
-⚠️ **중복 기술 절대 금지:**
-
-❌ 잘못된 예 (레퍼런스 내용 중복):
+**예시:**
 \`\`\`
-Subject: Korean man in denim jacket, black bowl cut, warm skin tone, standing in 1990s Korean apartment, warm lighting
+Cinematography: Slow forward tracking shot, slight handheld sway
+Action: Walking steadily towards camera, within first second
+Audio: "Ambient: suburban nature sounds, distant traffic. SFX: footsteps on pavement."
+\`\`\`
+
+❌ 잘못된 예 (8개 슬롯, 레퍼런스 내용 중복):
+\`\`\`
+Subject: Korean man in denim jacket, black bowl cut, warm skin tone
+Setting: 1990s Korean apartment, warm lighting
+Lighting: Tungsten 3200K, soft shadows
 Action: Walking forward towards camera
 \`\`\`
-→ 레퍼런스 이미지에 이미 있는 외모/배경 중복 기술
+→ 이미지에 이미 있는 외모/배경/조명 중복
 
-✅ 올바른 예 (변경사항만):
+✅ 올바른 예 (3개 핵심 슬롯):
 \`\`\`
-Cinematography: Slow forward tracking shot
-Subject: Same character (레퍼런스 참조)
-Action: Walking steadily towards camera, within first second
-Audio: "Ambient: suburban nature sounds. SFX: footsteps on pavement."
+Cinematography: Static medium shot, subtle drift right
+Action: Looking around nervously, then fixes gaze to the right, within first second
+Audio: "Ambient: quiet room tone. SFX: subtle cloth rustle."
 \`\`\`
 
 ⚠️ **최대 3개 레퍼런스 이미지** 지원 (Veo 3.1)
@@ -518,7 +502,7 @@ Audio: "Ambient: suburban nature sounds. SFX: footsteps on pavement."
 - Action: 정적 또는 UI 오버레이
 - Camera: Static
 - Motion Score: 1-2 (정적)
-- --cref 불필요 → 생략
+- --oref 불필요 → 생략
 
 ### 📋 출력 형식
 
@@ -527,24 +511,17 @@ Audio: "Ambient: suburban nature sounds. SFX: footsteps on pavement."
 
 ## Scene 01: [제목] (00:00.00~00:01.67)
 
-[📋 COPY] Kling 3.0:
+[📋 COPY] Kling 3.0 (35단어 이내):
 \\\`\\\`\\\`text
-Beat 0-1.67s: Medium shot, static camera. [Scene description].
-  IMMEDIATELY [subject] [action].
-Audio: [Ambient: background sounds] [SFX: specific sounds]
-Negative: [unwanted elements based on scene state]
+[주요 동작 1개]. [마이크로모션 2-3개].
+Audio: "[환경음]. [효과음]."
 \\\`\\\`\\\`
 
-[📋 COPY] Veo 3.1:
+[📋 COPY] Veo 3.1 (3개 핵심 슬롯):
 \\\`\\\`\\\`text
-Subject: [Detailed subject description]
-Action: [Specific motion with timing cue]
-Setting: [Location, time of day, era details]
-Style: [Visual style, film grain, color grading]
-Camera: [Shot type + movement]
-Lighting: [Color temperature, direction, shadows]
-Audio: "Ambient: [background]. SFX: [effects]"
-Constraints: [Negative prompt matching scene state]
+Cinematography: [카메라 무브먼트]
+Action: [단일 동작 + "within first second"]
+Audio: "Ambient: [환경음]. SFX: [효과음]."
 \\\`\\\`\\\`
 
 | Camera | Motion Score | Duration |
@@ -601,7 +578,7 @@ STEP 1-3의 모든 내용을 **씬별로 묶어서** 최종 출력합니다.
 
 ### 👨 MALE ANCHOR (Scene XX: [제목])
 
-**[Image 1: COMPOSITION]** [scene_XX.png]
+[REF: COMP=scene_XX.png, FACE=NONE]
 
 ⚠️ **이 씬은 앵커 씬입니다**. --oref 없이 먼저 생성하세요.
 생성된 이미지 URL을 복사하여 다른 씬의 --oref에 사용합니다.
@@ -652,81 +629,58 @@ looking at camera. 1990s Korean apartment living room, warm tungsten lighting
 
 ## 📍 Scene 01: [제목]
 **타임코드:** 00:00.00~00:01.67
-**레퍼런스**: scene_01.png
-**캐릭터**: 👨 MALE (ANCHOR 참조) (또는 "배경 씬 - 캐릭터 없음")
 
 ### 🖼️ IMAGE
 
-**[Image 1: COMPOSITION]** [scene_01.png]
-**[Image 2: CHARACTER FACE]** [MALE_ANCHOR.png 또는 입력한 ANCHOR URL]
-
-**From Image 1**: Copy exact composition, lighting, camera angle, character positions, depth of field.
-**From Image 2**: Copy the Korean man's face (black bowl cut, single eyelids, shy smile, warm skin tone).
-
-⚠️ CRITICAL: 아래 프롬프트는 **변경사항만** 기술합니다.
-레퍼런스에 이미 있는 요소(구도, 조명, 캐릭터 외모)를 다시 기술하지 마세요.
+[REF: COMP=scene_01.png, FACE=MALE_ANCHOR]
 
 [📋 COPY] NanoBanana Pro:
 \\\`\\\`\\\`text
-[변경사항 중심 한글 프롬프트 - 간결하게]
+[비앵커 씬: 레퍼런스 첨부 시 1-2문장 (15-30단어)]
+"[동작] + [변경사항만]"
 
-⚠️ 레퍼런스에 없는 변경사항만 기술:
-
-- 인물: [ANCHOR와의 차이점만]
-  예: "걷는 동작", "한 손에 붉은 장미 꽃다발 들고 있음"
-
-- 배경: [COMPOSITION과의 차이점만 - 문화권 변환 필수]
-  예: "배경은 1990s 한국 주택가로 변환 (좁은 골목, 아파트 단지)"
-
-- 조명: [변화가 있을 때만]
-  예: "석양빛 추가 (golden hour, 5500K)"
-
-- 분위기: [추가 요소만]
-  예: "로맨틱한 분위기, 부드러운 보케"
+예시:
+"앞으로 걸어옴. 배경은 1990s 한국 아파트 단지 좁은 골목으로 변환."
 \\\`\\\`\\\`
 
 [📋 COPY] Midjourney V7:
 \\\`\\\`\\\`text
 [변경사항 중심 영문 프롬프트 - 간결하게]
 
-예시 구조:
-"Walking forward towards camera. Korean suburban street (1990s), narrow alley,
-apartment buildings background. Golden hour lighting (5500K), romantic atmosphere."
-
 --iw 2.0 --ar 9:16 --v 7 --style raw
---oref [MALE_ANCHOR_URL] --ow [샷 타입 기반 자동: 클로즈업 400-600 / 미디엄 200-300 / 와이드 100-150]
+--oref [MALE_ANCHOR_URL] --ow [샷 타입 기반 자동: 클로즈업 150-250 / 미디엄 80-150 / 와이드 30-80]
 --stylize [Visual Rhyme Phase 기반: Phase 1-2는 250-300 / Phase 3-4는 100-150]
 --no [문화권 기본값], [씬별 동적 - 오브젝트/캐릭터/동작 상태 분석]
 \\\`\\\`\\\`
 
 ### 🎥 MOTION
 
-⚠️ **레퍼런스 이미지 사용 시 모션을 프롬프트에 기술하지 마세요!**
-레퍼런스 이미지가 이미 시작 프레임과 포즈를 정의합니다.
+⚠️ **레퍼런스 이미지가 anchor point → 프롬프트는 마이크로모션만!**
 
 [📋 COPY] Kling 3.0:
 \\\`\\\`\\\`text
-[캐릭터 외모 + 환경만 - 모션 기술 제거]
+[마이크로모션 중심 - 35단어 이내]
 
-Character: Same as image (Korean man in denim jacket)
-Environment: 1990s Korean suburban street, narrow alley, warm tungsten streetlights (3200K)
-Lighting: Golden hour, soft shadows
+[주요 동작 1개]. [마이크로모션 2-3개].
+Audio: "[환경음]. [효과음]."
 
-⚠️ 모션은 레퍼런스 이미지가 정의함 - 프롬프트에서 제거
+예시:
+Walking forward steadily. Gentle breathing, jacket fabric shifting, slight head tilt.
+Audio: "Quiet neighborhood ambience. Rhythmic footsteps."
 \\\`\\\`\\\`
 
 [📋 COPY] Veo 3.1:
 \\\`\\\`\\\`text
-[간결한 3요소 구조 - Cinematography, Subject, Action만]
+[3개 핵심 슬롯만 - 50-100 words]
 
+Cinematography: [카메라 무브먼트]
+Action: [단일 동작 + "within first second"]
+Audio: "Ambient: [환경음]. SFX: [효과음]."
+
+예시:
 Cinematography: Static wide shot, symmetrical composition
-Subject: Same character (레퍼런스 참조)
 Action: Walking steadily towards camera, within first second
-Setting: 1990s Korean suburban street (문화권 변환 적용)
 Audio: "Ambient: suburban nature sounds, distant traffic. SFX: footsteps on pavement."
-Constraints: [씬별 --no 동적 생성 - 예: standing still, sitting, running]
-
-⚠️ 레퍼런스 이미지 내용(구도, 조명, 외모)은 프롬프트에서 제거
 \\\`\\\`\\\`
 
 | Camera | Motion Score | Duration |
@@ -762,7 +716,7 @@ Constraints: [씬별 --no 동적 생성 - 예: standing still, sitting, running]
 ### 이미지 생성 (Midjourney V7)
 - [ ] 👨 MALE ANCHOR (Scene XX) → URL 복사
 - [ ] 👩 FEMALE ANCHOR (Scene XX) → URL 복사
-- [ ] Scene 01 (--cref 앵커 참조)
+- [ ] Scene 01 (--oref 앵커 참조)
 - [ ] Scene 02
 [모든 씬 나열]
 
@@ -778,10 +732,10 @@ Constraints: [씬별 --no 동적 생성 - 예: standing still, sitting, running]
 | 샷 타입 | --oref | --ow |
 |---------|--------|------|
 | 앵커 씬 (본인) | 없음 (이 씬이 레퍼런스) | - |
-| 클로즈업 | [ANCHOR_URL] | 400-600 |
-| 미디엄 샷 | [ANCHOR_URL] | 200-300 |
-| 와이드 샷 | [ANCHOR_URL] | 100-150 |
-| 남+여 함께 | [MALE_URL] [FEMALE_URL] | 200-300 |
+| 클로즈업 | [ANCHOR_URL] | 150-250 |
+| 미디엄 샷 | [ANCHOR_URL] | 80-150 |
+| 와이드 샷 | [ANCHOR_URL] | 30-80 |
+| 남+여 함께 | [MALE_URL] [FEMALE_URL] | 80-150 |
 | 배경만 | --oref 생략 | 0 또는 생략 |
 
 ---
@@ -965,7 +919,7 @@ STEP 1 (입력 정리):
 STEP 2 (IMAGE 프롬프트 - 전체):
 - 모든 Phase (1~4) 한 번에 출력
 - 듀얼 레퍼런스 라벨
-- Midjourney V7 파라미터 (동적 --cw, --stylize, --no)
+- Midjourney V7 파라미터 (동적 --ow, --stylize, --no)
 - Visual Rhyme 대조 섹션 포함
 → ⏸️ 멈춤: "다음" 입력 대기
 
@@ -978,7 +932,7 @@ STEP 3 (MOTION 프롬프트):
 STEP 4 (통합 워크플로우):
 - 앵커 먼저 → 씬별 IMAGE+MOTION 묶음
 - 작업 체크리스트
-- --cref 가이드
+- --oref 가이드
 → ⏸️ 멈춤: "변주" 입력 시에만 STEP 5
 
 STEP 5 (변주 - 선택):
