@@ -140,23 +140,24 @@ function SceneTimelineInner({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-xs text-gray-400 font-medium">씬 타임라인</p>
+        <p className="text-xs text-[var(--fg-muted)] font-medium">타임라인</p>
         <div className="flex items-center gap-2">
           {extractionError && (
             <button
               onClick={() => extractAll(file, timestamps)}
-              className="px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-medium hover:bg-amber-500/20 transition-all flex items-center gap-1"
+              className="px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs font-medium hover:bg-amber-500/20 transition-all flex items-center gap-1"
             >
               <span className="material-symbols-outlined text-sm">refresh</span>
-              썸네일 재시도
+              재시도
             </button>
           )}
           <button
             onClick={addScene}
-            className="px-3 py-1.5 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs font-medium hover:bg-purple-500/20 transition-all flex items-center gap-1"
+            className="w-8 h-8 rounded-lg bg-[var(--color-brand-primary)] text-white hover:opacity-90 transition-all flex items-center justify-center"
+            title="씬 추가"
+            aria-label="씬 추가"
           >
             <span className="material-symbols-outlined text-sm">add</span>
-            씬 추가
           </button>
         </div>
       </div>

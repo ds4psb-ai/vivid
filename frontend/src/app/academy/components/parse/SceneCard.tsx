@@ -2,6 +2,7 @@
 
 import type { Builder2Scene, AnchorInfo, ParseWarning, SceneRefInfo } from "@/lib/builder2-md-parser";
 import { ContentCard } from "../shared";
+import { AnchorHint } from "./AnchorHint";
 
 const PROMPT_COLORS: Record<string, string> = {
   nanoBanana: "text-orange-400",
@@ -69,19 +70,19 @@ export function SceneCard({
       <div className="flex items-center gap-3 mb-4">
         <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${scene.isAnchor
           ? "bg-amber-500/20 text-amber-400"
-          : "bg-purple-500/20 text-purple-400"
+          : "bg-[var(--color-brand-primary)]/15 text-[var(--color-brand-primary)]"
           }`}>
           {scene.sceneNum}
         </span>
         <div>
-          <h3 className="text-white font-bold">{scene.title || `Scene ${scene.sceneNum}`}</h3>
+          <h3 className="text-[var(--fg-0)] font-bold">{scene.title || `Scene ${scene.sceneNum}`}</h3>
           {scene.beatTimestamp && (
-            <p className="text-gray-500 text-xs">{scene.beatTimestamp}</p>
+            <p className="text-[var(--fg-muted)] text-xs">{scene.beatTimestamp}</p>
           )}
         </div>
         <div className="ml-auto flex items-center gap-2">
           {warnings.length > 0 && (
-            <span className="px-2 py-1 rounded text-xs font-bold bg-yellow-500/20 text-yellow-400">
+            <span className="px-2 py-1 rounded text-xs font-bold bg-yellow-500/20 text-yellow-700 dark:text-yellow-300">
               {warnings.length} warning{warnings.length > 1 ? 's' : ''}
             </span>
           )}
@@ -96,67 +97,52 @@ export function SceneCard({
       {/* 앵커 씬 특별 가이드 */}
       {scene.isAnchor && (
         <div className="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-          <p className="text-xs font-bold text-amber-200 mb-2">⭐ 이 씬은 앵커 씬입니다</p>
-          <div className="text-xs text-amber-100 space-y-1">
-            <div>• 이 씬의 이미지가 다른 씬에서 캐릭터 레퍼런스로 사용됩니다</div>
-            <div>• --oref 파라미터 없이 먼저 생성하세요</div>
-            <div>
-              • 생성 후{' '}
-              <code className="ml-1 px-2 py-1 bg-black/40 rounded text-green-300 font-mono">
-                anchor_male.jpg
-              </code>{' '}
-              (또는 anchor_female.jpg)로 저장
-            </div>
+          <div className="flex items-center gap-2 mb-1">
+            <p className="text-xs font-bold text-amber-700 dark:text-amber-200">앵커</p>
+            <AnchorHint />
           </div>
+          <p className="text-xs text-amber-800 dark:text-amber-100">
+            <code className="ml-1 rounded bg-amber-200/40 dark:bg-amber-900/40 px-2 py-1 font-mono text-emerald-700 dark:text-emerald-300">
+              anchor_{scene.refInfo?.face === "FEMALE_ANCHOR" ? "female" : "male"}.jpg
+            </code>
+            저장
+          </p>
         </div>
       )}
 
       {/* 이미지 첨부 가이드 (비앵커 씬) */}
       {!scene.isAnchor && (
         <div className="mb-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
-          <p className="text-xs font-bold text-blue-200 mb-2">📎 이미지 첨부 가이드:</p>
+          <p className="text-xs font-bold text-blue-700 dark:text-blue-200 mb-2">첨부</p>
 
           {/* Image 1: COMPOSITION (씬 프레임) */}
           <div className="mb-2">
             <div className="flex items-start gap-2">
-              <span className="text-xs text-blue-300 shrink-0">Image 1 (구도):</span>
-              <code className="px-2 py-1 bg-black/40 rounded text-blue-200 font-mono text-xs">
+              <span className="text-xs text-blue-700 dark:text-blue-300 shrink-0">Image 1:</span>
+              <code className="px-2 py-1 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-900 dark:text-blue-100 font-mono text-xs">
                 {scene.frameFile}
               </code>
             </div>
-            <p className="text-xs text-blue-100/70 ml-[88px] mt-0.5">
-              → 구도/화각/카메라높이/피사체위치를 100% 유지
-            </p>
           </div>
 
           {/* Image 2: CHARACTER FACE (앵커 이미지들) */}
           {relevantAnchors.length > 0 && (
             <div className="mb-2">
               <div className="flex items-start gap-2">
-                <span className="text-xs text-blue-300 shrink-0">Image 2 (캐릭터):</span>
+                <span className="text-xs text-blue-700 dark:text-blue-300 shrink-0">Image 2:</span>
                 <div className="flex flex-wrap gap-1">
                   {relevantAnchors.map((anchor) => (
                     <code
                       key={anchor.key}
-                      className="px-2 py-1 bg-black/40 rounded text-green-200 font-mono text-xs"
+                      className="px-2 py-1 rounded bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-200 font-mono text-xs"
                     >
                       anchor_{anchor.key.toLowerCase()}.jpg
                     </code>
                   ))}
                 </div>
               </div>
-              <p className="text-xs text-blue-100/70 ml-[88px] mt-0.5">
-                → 얼굴/외모/헤어/표정을 정확히 참조
-              </p>
             </div>
           )}
-
-          {/* 도구별 첨부 방법 */}
-          <div className="mt-2 text-xs text-blue-100 space-y-1">
-            <div>• <strong>NanoBanana Pro</strong>: 두 이미지 모두 드래그앤드롭</div>
-            <div>• <strong>Midjourney</strong>: --oref에 앵커 URL 사용</div>
-            <div>• <strong>Kling/Veo</strong>: 생성된 이미지 첨부</div>
-          </div>
         </div>
       )}
 
@@ -168,7 +154,7 @@ export function SceneCard({
               key={i}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs ${WARNING_COLORS[w.type]}`}
             >
-              <span className="font-mono font-bold text-[10px] px-1.5 py-0.5 rounded bg-black/30">
+              <span className="font-mono font-bold text-[10px] px-1.5 py-0.5 rounded bg-[var(--surface-3)]">
                 {WARNING_ICONS[w.type]}
               </span>
               <span>{w.message}</span>
@@ -195,15 +181,15 @@ export function SceneCard({
                   className={`px-2 py-1 rounded text-xs font-bold transition-all ${isCopied
                     ? "bg-emerald-500 text-white"
                     : isCompleted
-                      ? "bg-gray-700 text-gray-400 hover:bg-gray-600"
-                      : "bg-white text-gray-900 hover:bg-gray-100"
+                      ? "bg-[var(--surface-3)] text-[var(--fg-muted)] hover:opacity-90"
+                      : "bg-[var(--fg-0)] text-[var(--bg-0)] hover:opacity-90"
                     }`}
                 >
                   {isCopied ? "✓" : isCompleted ? "재복사" : "복사"}
                 </button>
               </div>
-              <div className={`p-2 rounded-lg bg-black/30 border max-h-20 overflow-y-auto ${isCompleted ? 'border-emerald-500/30' : 'border-white/10'}`}>
-                <p className="text-gray-300 text-xs font-mono whitespace-pre-wrap break-all">
+              <div className={`p-2 rounded-lg bg-[var(--surface-2)] border max-h-20 overflow-y-auto ${isCompleted ? 'border-emerald-500/30' : 'border-[var(--border-muted)]'}`}>
+                <p className="text-[var(--fg-muted)] text-xs font-mono whitespace-pre-wrap break-all">
                   {item.prompt.slice(0, 200)}{item.prompt.length > 200 ? "..." : ""}
                 </p>
               </div>

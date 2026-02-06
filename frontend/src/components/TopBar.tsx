@@ -33,6 +33,7 @@ interface TopBarProps {
     showBackButton?: boolean;
     backHref?: string;
     session?: AuthSession | null;
+    hasSidebar?: boolean;
 }
 
 export default function TopBar({
@@ -47,6 +48,7 @@ export default function TopBar({
     showBackButton = false,
     backHref = "/",
     session,
+    hasSidebar = false,
 }: TopBarProps) {
     const { t } = useLanguage();
     const router = useRouter();
@@ -105,7 +107,11 @@ export default function TopBar({
 
     return (
         <header
-            className="fixed left-60 right-0 top-0 z-30 flex h-14 items-center justify-between border-b border-[var(--border-muted)] bg-[var(--bg-0)]/80 px-4 backdrop-blur-xl"
+            className={`fixed right-0 top-0 z-30 flex h-14 items-center justify-between border-b border-[var(--border-muted)] bg-[var(--bg-0)]/80 px-4 backdrop-blur-xl ${
+              hasSidebar
+                ? "left-0 md:left-[var(--sidebar-current,var(--sidebar-collapsed))]"
+                : "left-0"
+            }`}
             role="banner"
         >
             {/* Left Section */}

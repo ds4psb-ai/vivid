@@ -8,8 +8,8 @@ interface PageHeaderProps {
 export function PageHeader({ title, sub }: PageHeaderProps) {
   return (
     <div className="mb-8">
-      <h2 className="text-3xl font-bold text-white mb-2">{title}</h2>
-      <p className="text-gray-400">{sub}</p>
+      <h2 className="text-3xl font-bold text-[var(--fg-0)] mb-2">{title}</h2>
+      <p className="text-[var(--fg-muted)]">{sub}</p>
     </div>
   );
 }

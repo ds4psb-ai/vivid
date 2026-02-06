@@ -4,7 +4,6 @@ import type { TabKey } from "../../constants";
 import { PageHeader, ContentCard, NextStepButton } from "../shared";
 import { useMDParse } from "../../hooks/useMDParse";
 import { MDInput } from "./MDInput";
-import { ImageAttachmentGuide } from "./ImageAttachmentGuide";
 import { AnchorGuidePanel } from "./AnchorGuidePanel";
 import { SceneCard } from "./SceneCard";
 
@@ -60,7 +59,7 @@ export function ParseContent({ setActiveTab }: ParseContentProps) {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <PageHeader title="파싱 + 복사" sub="MD 결과물 붙여넣기 → 씬별 프롬프트 복사" />
+      <PageHeader title="파싱 + 복사" sub="붙여넣기 → 복사" />
 
       {/* MD Input */}
       <MDInput
@@ -87,10 +86,10 @@ export function ParseContent({ setActiveTab }: ParseContentProps) {
                 onClick={() => setActiveType("ohmage")}
                 disabled={!parseResult.hasOhmage}
                 className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeType === "ohmage"
-                  ? "bg-purple-500 text-white"
+                  ? "bg-[var(--color-brand-primary)] text-white"
                   : parseResult.hasOhmage
-                    ? "bg-white/10 text-gray-400 hover:bg-white/20"
-                    : "bg-white/5 text-gray-600 cursor-not-allowed"
+                    ? "bg-[var(--surface-2)] border border-[var(--border-muted)] text-[var(--fg-muted)] hover:bg-[var(--surface-3)] hover:text-[var(--fg-0)]"
+                    : "bg-[var(--surface-2)] border border-[var(--border-muted)] text-[var(--fg-muted)]/50 cursor-not-allowed"
                   }`}
               >
                 🎭 오마주 ({parseResult.ohmageScenes.length})
@@ -101,8 +100,8 @@ export function ParseContent({ setActiveTab }: ParseContentProps) {
                 className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeType === "variation"
                   ? "bg-cyan-500 text-white"
                   : parseResult.hasVariation
-                    ? "bg-white/10 text-gray-400 hover:bg-white/20"
-                    : "bg-white/5 text-gray-600 cursor-not-allowed"
+                    ? "bg-[var(--surface-2)] border border-[var(--border-muted)] text-[var(--fg-muted)] hover:bg-[var(--surface-3)] hover:text-[var(--fg-0)]"
+                    : "bg-[var(--surface-2)] border border-[var(--border-muted)] text-[var(--fg-muted)]/50 cursor-not-allowed"
                   }`}
               >
                 ✨ 변주 ({parseResult.variationScenes.length})
@@ -111,9 +110,6 @@ export function ParseContent({ setActiveTab }: ParseContentProps) {
 
           </div>
 
-          {/* Image Attachment Workflow Guide */}
-          <ImageAttachmentGuide />
-
           {/* Anchor Guide Panel */}
           {parseResult.anchors.length > 0 && (
             <AnchorGuidePanel anchors={parseResult.anchors} />
@@ -121,13 +117,8 @@ export function ParseContent({ setActiveTab }: ParseContentProps) {
 
           {/* Global warnings summary */}
           {warnings.length > 0 && (
-            <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
-              <p className="text-xs font-bold text-yellow-300 mb-1">
-                {warnings.length}개 경고 감지됨
-              </p>
-              <p className="text-xs text-yellow-200/70">
-                아래 씬 카드에서 개별 경고를 확인하세요.
-              </p>
+            <div className="px-3 py-2 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-xs font-semibold text-yellow-700 dark:text-yellow-300">
+              warning {warnings.length}
             </div>
           )}
 
@@ -152,13 +143,13 @@ export function ParseContent({ setActiveTab }: ParseContentProps) {
       {!parseResult && (
         <ContentCard>
           <div className="text-center py-8">
-            <span className="material-symbols-outlined text-4xl text-gray-600 mb-4 block">content_paste</span>
-            <p className="text-gray-500">MD 파일 내용을 위에 붙여넣으면 씬별로 파싱됩니다</p>
+            <span className="material-symbols-outlined text-4xl text-[var(--fg-muted)] mb-4 block">content_paste</span>
+            <p className="text-[var(--fg-muted)]">MD 붙여넣기</p>
           </div>
         </ContentCard>
       )}
 
-      <NextStepButton onClick={() => setActiveTab("tools")} label="외부 툴" />
+      <NextStepButton onClick={() => setActiveTab("tools")} label="툴 이동" />
     </div>
   );
 }

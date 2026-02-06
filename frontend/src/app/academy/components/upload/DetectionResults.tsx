@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import type { ThresholdMode } from "../../api/sceneDetect";
 import { SceneTimeline } from "./SceneTimeline";
 import { parseTimestampToSeconds } from "../../hooks/useFrameExtractor";
@@ -33,7 +33,7 @@ export function DetectionResults({
   const [copied, setCopied] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [localDuration, setLocalDuration] = useState(0);
-  const [videoError, setVideoError] = useState(false);
+  const [errorVideoUrl, setErrorVideoUrl] = useState<string | null>(null);
   const [compareIndex, setCompareIndex] = useState<number | null>(null);
   const [capturedFrame, setCapturedFrame] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -45,34 +45,29 @@ export function DetectionResults({
     ? `${backendUrl}/api/v1/scene-detect/preview/${previewId}`
     : null;
 
-  // Blob URL fallback (서버 preview가 없을 때)
-  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const blobUrl = useMemo(
+    () => (uploadedFile ? URL.createObjectURL(uploadedFile) : null),
+    [uploadedFile],
+  );
+
   useEffect(() => {
-    if (!uploadedFile) {
-      setBlobUrl(null);
-      return;
-    }
-    const url = URL.createObjectURL(uploadedFile);
-    setBlobUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [uploadedFile]);
+    return () => {
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+    };
+  }, [blobUrl]);
 
   // 서버 preview 실패 시 blob fallback
-  const [serverFailed, setServerFailed] = useState(false);
+  const [failedPreviewId, setFailedPreviewId] = useState<string | null>(null);
+  const serverFailed = !!previewId && failedPreviewId === previewId;
   const videoUrl = (serverVideoUrl && !serverFailed) ? serverVideoUrl : blobUrl;
-  const [debugInfo, setDebugInfo] = useState<string[]>([]);
+  const videoError = !!videoUrl && errorVideoUrl === videoUrl;
   const addDebug = useCallback((msg: string) => {
-    const ts = new Date().toISOString().slice(11, 23);
-    const line = `[${ts}] ${msg}`;
     console.log(`[VideoDebug] ${msg}`);
-    setDebugInfo(prev => [...prev.slice(-19), line]);
   }, []);
 
-  // previewId 변경 시 실패 상태 리셋
-  useEffect(() => {
-    setServerFailed(false);
-    addDebug(`previewId changed: ${previewId ?? "null"}`);
-  }, [previewId, addDebug]);
+  const markServerFailed = useCallback(() => {
+    if (previewId) setFailedPreviewId(previewId);
+  }, [previewId]);
 
   // Log URL resolution
   useEffect(() => {
@@ -88,19 +83,14 @@ export function DetectionResults({
         addDebug(`Preflight result: ${res.status} ${res.statusText}, content-type=${res.headers.get("content-type")}, content-length=${res.headers.get("content-length")}`);
         if (!res.ok) {
           addDebug(`Server preview not OK (${res.status}), falling back to blob`);
-          setServerFailed(true);
+          markServerFailed();
         }
       })
       .catch(err => {
         addDebug(`Preflight fetch error: ${err.message}`);
-        setServerFailed(true);
+        markServerFailed();
       });
-  }, [serverVideoUrl, serverFailed, addDebug]);
-
-  // Reset video error whenever the URL changes
-  useEffect(() => {
-    setVideoError(false);
-  }, [videoUrl]);
+  }, [serverVideoUrl, serverFailed, addDebug, markServerFailed]);
 
   // Use backend duration if available, otherwise fall back to local <video> metadata
   const videoDuration = backendVideoDuration > 0 ? backendVideoDuration : localDuration;
@@ -196,19 +186,19 @@ export function DetectionResults({
               <span className="material-symbols-outlined text-emerald-400">check_circle</span>
             </div>
             <div>
-              <p className="text-emerald-400 font-bold">
-                {detectedTimestamps.length}개 씬 감지 완료!
+              <p className="text-emerald-700 dark:text-emerald-300 font-bold">
+                {detectedTimestamps.length}개 감지
               </p>
-              <p className="text-emerald-400/60 text-xs flex items-center gap-1.5 mt-0.5">
-                {usedThresholdMode === "precise" ? "⚡ 정밀 모드" : "🎯 표준 모드"}로 분석됨
+              <p className="text-emerald-800/80 dark:text-emerald-300/80 text-xs mt-0.5">
+                {usedThresholdMode === "precise" ? "정밀" : "표준"}
               </p>
             </div>
           </div>
           <button
             onClick={onReset}
-            className="px-3 py-1.5 rounded-lg text-gray-400 text-sm hover:text-white hover:bg-white/5 transition-all"
+            className="px-3 py-1.5 rounded-lg text-[var(--fg-muted)] text-sm hover:text-[var(--fg-0)] hover:bg-[var(--surface-2)] transition-all"
           >
-            다시 업로드
+            초기화
           </button>
         </div>
 
@@ -216,19 +206,19 @@ export function DetectionResults({
         {uploadedFile && usedThresholdMode === "standard" && (
           <button
             onClick={() => onReanalyze("precise")}
-            className="w-full py-3 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-300 text-sm font-medium hover:bg-purple-500/20 hover:border-purple-500/50 transition-all flex items-center justify-center gap-2"
+            className="w-full py-2.5 rounded-lg bg-[var(--color-brand-primary)]/10 border border-[var(--color-brand-primary)]/30 text-[var(--color-brand-primary)] text-sm font-medium hover:bg-[var(--color-brand-primary)]/20 transition-all flex items-center justify-center gap-2"
           >
             <span className="material-symbols-outlined text-base">search</span>
-            혹시 놓친 씬이 있나요? ⚡ 정밀 모드로 다시 분석해보기
+            정밀 재분석
           </button>
         )}
         {uploadedFile && usedThresholdMode === "precise" && (
           <button
             onClick={() => onReanalyze("standard")}
-            className="w-full py-2.5 rounded-lg bg-white/5 border border-white/10 text-gray-300 text-sm font-medium hover:bg-white/10 hover:border-white/20 transition-all flex items-center justify-center gap-2"
+            className="w-full py-2.5 rounded-lg bg-[var(--surface-2)] border border-[var(--border-muted)] text-[var(--fg-muted)] text-sm font-medium hover:bg-[var(--surface-3)] hover:text-[var(--fg-0)] transition-all flex items-center justify-center gap-2"
           >
             <span className="material-symbols-outlined text-base">refresh</span>
-            씬이 너무 많나요? 🎯 표준 모드로 다시 분석해보기
+            표준 재분석
           </button>
         )}
       </div>
@@ -243,7 +233,7 @@ export function DetectionResults({
                 <span className="material-symbols-outlined text-2xl text-gray-500">error_outline</span>
                 <p className="text-gray-400 text-sm">비디오를 재생할 수 없습니다</p>
                 <button
-                  onClick={() => setVideoError(false)}
+                  onClick={() => setErrorVideoUrl(null)}
                   className="px-4 py-2 rounded-lg bg-white/10 text-sm text-gray-300 hover:bg-white/20 transition-all"
                 >
                   다시 시도
@@ -274,10 +264,10 @@ export function DetectionResults({
                   addDebug(`VIDEO onError: ${errDetail}, src=${vid.src?.slice(0, 80)}, networkState=${vid.networkState}, readyState=${vid.readyState}`);
                   if (serverVideoUrl && !serverFailed) {
                     addDebug("→ Falling back to blob URL");
-                    setServerFailed(true);
+                    markServerFailed();
                   } else {
                     addDebug("→ Final failure (both server & blob failed)");
-                    setVideoError(true);
+                    setErrorVideoUrl(videoUrl ?? "__no_url__");
                   }
                 }}
               />
@@ -326,55 +316,26 @@ export function DetectionResults({
           className={`py-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
             copied
               ? "bg-emerald-500 text-white shadow-[0_0_20px_rgba(52,211,153,0.3)]"
-              : "bg-white text-gray-900 hover:bg-gray-100 shadow-[0_4px_20px_rgba(255,255,255,0.1)]"
+              : "bg-[var(--fg-0)] text-[var(--bg-0)] hover:opacity-90"
           }`}
         >
           <span className="material-symbols-outlined text-lg">
             {copied ? "check" : "content_copy"}
           </span>
-          {copied ? "복사됨!" : "Builder1 입력용 복사"}
+          {copied ? "복사됨" : "복사"}
         </button>
         <button
           onClick={onDownloadFrames}
           disabled={isDownloading}
-          className={`py-4 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white transition-all flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(168,85,247,0.3)] ${isDownloading ? "opacity-70 cursor-not-allowed" : "hover:from-purple-700 hover:to-indigo-700"}`}
+          className={`py-4 rounded-xl bg-[var(--color-brand-primary)] text-white transition-all flex items-center justify-center gap-2 ${isDownloading ? "opacity-70 cursor-not-allowed" : "hover:opacity-90"}`}
         >
           {isDownloading ? (
             <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
           ) : (
             <span className="material-symbols-outlined text-lg">download</span>
           )}
-          <div className="flex flex-col items-start">
-            <span className="font-bold text-sm">
-              {isDownloading ? "프레임 추출 중..." : "프레임 이미지 다운로드"}
-            </span>
-            <span className="text-xs text-purple-100">
-              {isDownloading ? "잠시만 기다려주세요" : "ZIP으로 frame_01.jpg, frame_02.jpg... 추출"}
-            </span>
-          </div>
+          <span className="font-bold text-sm">{isDownloading ? "추출 중" : "프레임"}</span>
         </button>
-      </div>
-
-      {/* Debug panel */}
-      {debugInfo.length > 0 && (
-        <details className="mt-2 rounded-lg bg-gray-900/80 border border-yellow-500/30 text-[10px] font-mono">
-          <summary className="px-3 py-1.5 text-yellow-400 cursor-pointer select-none">
-            Video Debug ({debugInfo.length} logs) | url={videoUrl?.slice(0, 50)} | serverFailed={String(serverFailed)}
-          </summary>
-          <div className="px-3 pb-2 max-h-48 overflow-y-auto space-y-0.5">
-            {debugInfo.map((line, i) => (
-              <div key={i} className="text-gray-400 whitespace-pre-wrap break-all">{line}</div>
-            ))}
-          </div>
-        </details>
-      )}
-
-      {/* Download info */}
-      <div className="mt-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
-        <p className="text-xs text-blue-200">
-          💡 다운로드 후 압축 해제하면 씬별 프레임 이미지를 얻을 수 있습니다. 이 이미지들이 각
-          프롬프트의 &quot;구도 레퍼런스&quot;로 사용됩니다.
-        </p>
       </div>
     </div>
   );
@@ -399,7 +360,7 @@ function ComparePanel({
         <div className="flex items-center gap-2">
           <span className="material-symbols-outlined text-cyan-400 text-lg">compare</span>
           <p className="text-sm font-bold text-cyan-300">
-            Scene {compareIndex + 1} 비교 ({timestamp})
+            Scene {compareIndex + 1} ({timestamp})
           </p>
         </div>
         <button
@@ -438,33 +399,25 @@ function ComparePanel({
           </div>
         </div>
       </div>
-
-      <p className="text-xs text-cyan-400/60 text-center">
-        이 컷 포인트가 정확한가요? 타임라인에서 +/- 버튼으로 미세 조정하세요.
-      </p>
     </div>
   );
 }
 
 /** Renders the extracted thumbnail for a timestamp by reading from SceneTimeline's frame cache via DOM */
 function CompareThumb({ timestamp }: { timestamp: string }) {
-  // Find the thumbnail from already-rendered SceneTimeline img elements
-  const [thumbUrl, setThumbUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    // SceneTimeline renders thumbnails as <img alt="Scene N">, find by walking the DOM
+  const thumbUrl = useMemo(() => {
+    if (typeof document === "undefined") return null;
     const imgs = document.querySelectorAll<HTMLImageElement>("img[alt^='Scene ']");
-    // Match by finding the card that contains this timestamp
     for (const img of imgs) {
       const card = img.closest("[class*='flex-shrink-0']");
       if (card) {
         const tsText = card.querySelector(".font-mono")?.textContent;
         if (tsText?.trim() === timestamp) {
-          setThumbUrl(img.src);
-          return;
+          return img.src;
         }
       }
     }
+    return null;
   }, [timestamp]);
 
   if (thumbUrl) {

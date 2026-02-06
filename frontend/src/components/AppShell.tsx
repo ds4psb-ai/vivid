@@ -4,7 +4,7 @@
  * AppShell - Global Layout Component
  *
  * 2026 Sidebar layout:
- * - Left collapsible sidebar (CrebitSidebar)
+ * - Left collapsible sidebar (Global/Academy variants)
  * - TopBar for Canvas/project controls
  * - Chokki AI assistant FAB
  *
@@ -16,10 +16,13 @@ import { usePathname } from "next/navigation";
 import { ChokkiFABSkeleton } from "./ChokkiFABSkeleton";
 import TopBar from "./TopBar";
 import { CrebitSidebar } from "./sidebar/CrebitSidebar";
+import { StudioSidebar } from "./sidebar/StudioSidebar";
 import { CrebitNavbar } from "./home/CrebitNavbar";
+import { AcademyMobileNav } from "./academy/AcademyMobileNav";
 import { useCreditBalance } from "@/hooks/useCreditBalance";
 import { useSessionContext } from "@/contexts/SessionContext";
 import { CreditProvider } from "@/components/CreditGate";
+import type { TabKey } from "@/app/academy/constants";
 
 // Lazy load heavy AgentChatAccordion to reduce initial bundle
 const AgentChatAccordion = lazy(() =>
@@ -40,6 +43,12 @@ interface AppShellProps {
   showTopBar?: boolean;
   /** Show Chokki AI assistant FAB */
   showChokki?: boolean;
+  /** Select navigation family for this page */
+  navVariant?: "global" | "academy";
+  /** Current academy tab (used by academy mobile nav) */
+  academyCurrentTab?: TabKey;
+  /** Academy tab navigation handler */
+  onAcademyTabChange?: (tab: TabKey) => void;
   projectName?: string;
   creditBalance?: number;
   isSaving?: boolean;
@@ -96,6 +105,9 @@ export default function AppShell({
   showNavbar,
   showTopBar = false,
   showChokki = true,
+  navVariant = "global",
+  academyCurrentTab = "home",
+  onAcademyTabChange,
   projectName = "Untitled Canvas",
   creditBalance,
   isSaving = false,
@@ -135,12 +147,23 @@ export default function AppShell({
     <CreditProvider>
       <div className="min-h-screen bg-[var(--bg-0)]">
         {/* Sidebar – desktop only */}
-        {shouldShowNav && <CrebitSidebar />}
+        {shouldShowNav && (
+          <>
+            {navVariant === "academy" ? <CrebitSidebar /> : <StudioSidebar />}
+          </>
+        )}
 
         {/* Mobile Navbar – md 이하에서만 표시 */}
         {shouldShowNav && (
           <div className="md:hidden">
-            <CrebitNavbar showSpacer={!showTopBar} />
+            {navVariant === "academy" ? (
+              <AcademyMobileNav
+                currentTab={academyCurrentTab}
+                onTabChange={onAcademyTabChange}
+              />
+            ) : (
+              <CrebitNavbar showSpacer={!showTopBar} />
+            )}
           </div>
         )}
 
@@ -157,6 +180,7 @@ export default function AppShell({
             showBackButton={showBackButton}
             backHref={backHref}
             session={session}
+            hasSidebar={shouldShowNav}
           />
         )}
 

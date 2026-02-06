@@ -7,7 +7,13 @@ interface ContentCardProps {
 
 export function ContentCard({ children, highlight }: ContentCardProps) {
   return (
-    <div className={`p-6 rounded-2xl border ${highlight ? 'border-purple-500/30 bg-purple-500/5' : 'border-white/10 bg-white/5'}`}>
+    <div
+      className={`p-6 rounded-2xl border ${
+        highlight
+          ? "border-[var(--color-brand-primary)]/30 bg-[var(--surface-2)]"
+          : "border-[var(--border-muted)] bg-[var(--surface-1)]"
+      }`}
+    >
       {children}
     </div>
   );

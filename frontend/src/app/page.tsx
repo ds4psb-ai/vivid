@@ -113,15 +113,12 @@ function RootContent() {
 
   // Has access → AppShell + Academy content (tab bar removed, sidebar handles navigation)
   return (
-    <AppShell showChokki={false}>
-      <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
-
-      <style jsx global>{`
-        .glow-text {
-          text-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
-        }
-      `}</style>
-
+    <AppShell
+      showChokki={false}
+      navVariant="academy"
+      academyCurrentTab={activeTab}
+      onAcademyTabChange={handleTabChange}
+    >
       <div className="min-h-screen">
         {/* Simple Header */}
         <div className="px-6 pt-5 pb-3">
@@ -129,7 +126,7 @@ function RootContent() {
           <p className="text-[10px] font-mono text-[var(--fg-muted)] uppercase tracking-widest mt-0.5">
             Creative Automation Suite v2.0
             {accessState.accessInfo?.cohort && (
-              <span className="ml-3 text-purple-400">{accessState.accessInfo.cohort}</span>
+              <span className="ml-3 text-[var(--color-brand-primary)]">{accessState.accessInfo.cohort}</span>
             )}
           </p>
         </div>
