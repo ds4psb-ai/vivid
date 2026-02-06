@@ -14,10 +14,6 @@ interface SceneTimelineProps {
   currentTime: number;
   onTimestampsChange: (ts: string[]) => void;
   onSeek: (seconds: number) => void;
-  /** Index of scene selected for comparison (from parent) */
-  compareIndex?: number | null;
-  /** Called when user clicks the compare button on a scene card */
-  onCompare?: (index: number | null) => void;
 }
 
 function SceneTimelineInner({
@@ -27,18 +23,22 @@ function SceneTimelineInner({
   currentTime,
   onTimestampsChange,
   onSeek,
-  compareIndex,
-  onCompare,
 }: SceneTimelineProps) {
-  const { frames, isExtracting, extractionError, extractAll } = useFrameExtractor();
+  const { frames, isExtracting, extractionError, extractAll, updateSingleFrame, removeFrame, insertFrame } =
+    useFrameExtractor();
   const scrollRef = useRef<HTMLDivElement>(null);
   const activeRef = useRef<HTMLDivElement>(null);
   const debounceTimers = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
   const [pendingExtracts, setPendingExtracts] = useState<Set<number>>(new Set());
+  const skipNextExtractRef = useRef(false);
 
-  // Extract all frames when timestamps change
+  // Extract all frames when timestamps change (skip if local +/- change)
   useEffect(() => {
     if (file && timestamps.length > 0) {
+      if (skipNextExtractRef.current) {
+        skipNextExtractRef.current = false;
+        return;
+      }
       extractAll(file, timestamps);
     }
   }, [file, timestamps, extractAll]);
@@ -83,37 +83,41 @@ function SceneTimelineInner({
       const newTs = formatSecondsToTimestamp(newSec);
       const updated = [...timestamps];
       updated[index] = newTs;
+
+      skipNextExtractRef.current = true;
       onTimestampsChange(updated);
 
       // Mark pending extract
       setPendingExtracts((prev) => new Set(prev).add(index));
 
-      // Debounce frame re-extraction
+      // Debounce single-frame re-extraction
       const existing = debounceTimers.current.get(index);
       if (existing) clearTimeout(existing);
       debounceTimers.current.set(
         index,
-        setTimeout(() => {
+        setTimeout(async () => {
+          await updateSingleFrame(file, index, newTs);
           setPendingExtracts((prev) => {
             const next = new Set(prev);
             next.delete(index);
             return next;
           });
-          // extractAll will be triggered by timestamps change useEffect
           debounceTimers.current.delete(index);
         }, 300),
       );
     },
-    [timestamps, videoDuration, onTimestampsChange],
+    [timestamps, videoDuration, onTimestampsChange, file, updateSingleFrame],
   );
 
   const deleteScene = useCallback(
     (index: number) => {
       if (timestamps.length <= 1) return;
       const updated = timestamps.filter((_, i) => i !== index);
+      skipNextExtractRef.current = true;
       onTimestampsChange(updated);
+      removeFrame(index);
     },
-    [timestamps, onTimestampsChange],
+    [timestamps, onTimestampsChange, removeFrame],
   );
 
   const addScene = useCallback(() => {
@@ -134,8 +138,10 @@ function SceneTimelineInner({
 
     const updated = [...timestamps];
     updated.splice(insertIdx, 0, newTs);
+    skipNextExtractRef.current = true;
     onTimestampsChange(updated);
-  }, [timestamps, currentTime, onTimestampsChange]);
+    insertFrame(file, insertIdx, newTs);
+  }, [timestamps, currentTime, onTimestampsChange, file, insertFrame]);
 
   return (
     <div className="space-y-3">
@@ -178,11 +184,9 @@ function SceneTimelineInner({
               key={`${i}-${ts}`}
               ref={isActive ? activeRef : undefined}
               className={`flex-shrink-0 w-[260px] rounded-xl overflow-hidden border transition-all cursor-pointer ${
-                compareIndex === i
-                  ? "border-cyan-500 ring-2 ring-cyan-500/40 bg-cyan-500/10"
-                  : isActive
-                    ? "border-purple-500 ring-2 ring-purple-500/40 bg-purple-500/10"
-                    : "border-white/10 bg-white/5 hover:border-white/20"
+                isActive
+                  ? "border-purple-500 ring-2 ring-purple-500/40 bg-purple-500/10"
+                  : "border-white/10 bg-white/5 hover:border-white/20"
               }`}
               onClick={() => onSeek(parseTimestampToSeconds(ts))}
             >
@@ -234,22 +238,6 @@ function SceneTimelineInner({
                   >
                     +
                   </button>
-                  {onCompare && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onCompare(compareIndex === i ? null : i);
-                      }}
-                      className={`w-7 h-7 rounded-md flex items-center justify-center transition-all ${
-                        compareIndex === i
-                          ? "bg-cyan-500/20 text-cyan-300"
-                          : "bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 hover:text-cyan-300"
-                      }`}
-                      title="비교"
-                    >
-                      <span className="material-symbols-outlined text-sm">compare</span>
-                    </button>
-                  )}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();

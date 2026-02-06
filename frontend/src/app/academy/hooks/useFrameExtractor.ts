@@ -15,6 +15,9 @@ interface UseFrameExtractorReturn {
   extractionError: string | null;
   extractAll: (file: File, timestamps: string[]) => Promise<void>;
   extractSingle: (file: File, seconds: number) => Promise<string>;
+  updateSingleFrame: (file: File, index: number, timestamp: string) => Promise<void>;
+  removeFrame: (index: number) => void;
+  insertFrame: (file: File, index: number, timestamp: string) => Promise<void>;
 }
 
 /** "00:01.67" → 1.67 */
@@ -44,6 +47,7 @@ export function useFrameExtractor(): UseFrameExtractorReturn {
   const [extractionError, setExtractionError] = useState<string | null>(null);
   const cacheRef = useRef<Map<string, string>>(new Map());
   const videoUrlRef = useRef<string | null>(null);
+  const versionRef = useRef<Map<number, number>>(new Map());
 
   // Cleanup object URL on unmount
   useEffect(() => {
@@ -194,5 +198,76 @@ export function useFrameExtractor(): UseFrameExtractorReturn {
     [createVideoElement, extractFrame],
   );
 
-  return { frames, isExtracting, extractionError, extractAll, extractSingle };
+  const updateSingleFrame = useCallback(
+    async (file: File, index: number, timestamp: string) => {
+      const version = (versionRef.current.get(index) ?? 0) + 1;
+      versionRef.current.set(index, version);
+
+      const seconds = parseTimestampToSeconds(timestamp);
+
+      // 1) Client canvas attempt
+      try {
+        const video = await createVideoElement(file);
+        const canvas = document.createElement("canvas");
+        const thumbnailUrl = await extractFrame(video, canvas, seconds);
+        cacheRef.current.set(timestamp, thumbnailUrl);
+
+        // Stale check
+        if (versionRef.current.get(index) !== version) return;
+        setFrames((prev) => {
+          const next = [...prev];
+          next[index] = { timestamp, seconds, thumbnailUrl };
+          return next;
+        });
+        return;
+      } catch {
+        // Fall through to backend
+      }
+
+      // 2) Backend FFmpeg fallback (single timestamp)
+      try {
+        const [thumb] = await fetchThumbnails(file, [timestamp]);
+        if (thumb && versionRef.current.get(index) === version) {
+          cacheRef.current.set(timestamp, thumb.data_url);
+          setFrames((prev) => {
+            const next = [...prev];
+            next[index] = { timestamp, seconds, thumbnailUrl: thumb.data_url };
+            return next;
+          });
+        }
+      } catch {
+        // Both methods failed — leave frame as-is
+      }
+    },
+    [createVideoElement, extractFrame],
+  );
+
+  const removeFrame = useCallback((index: number) => {
+    setFrames((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
+  const insertFrame = useCallback(
+    async (file: File, index: number, timestamp: string) => {
+      const seconds = parseTimestampToSeconds(timestamp);
+      // Insert empty frame placeholder, then fill asynchronously
+      setFrames((prev) => {
+        const next = [...prev];
+        next.splice(index, 0, { timestamp, seconds, thumbnailUrl: "" });
+        return next;
+      });
+      await updateSingleFrame(file, index, timestamp);
+    },
+    [updateSingleFrame],
+  );
+
+  return {
+    frames,
+    isExtracting,
+    extractionError,
+    extractAll,
+    extractSingle,
+    updateSingleFrame,
+    removeFrame,
+    insertFrame,
+  };
 }

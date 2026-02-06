@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import type { ThresholdMode } from "../../api/sceneDetect";
 import { SceneTimeline } from "./SceneTimeline";
-import { parseTimestampToSeconds } from "../../hooks/useFrameExtractor";
 
 interface DetectionResultsProps {
   detectedTimestamps: string[];
@@ -34,8 +33,6 @@ export function DetectionResults({
   const [currentTime, setCurrentTime] = useState(0);
   const [localDuration, setLocalDuration] = useState(0);
   const [errorVideoUrl, setErrorVideoUrl] = useState<string | null>(null);
-  const [compareIndex, setCompareIndex] = useState<number | null>(null);
-  const [capturedFrame, setCapturedFrame] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const rafRef = useRef<number | null>(null);
 
@@ -94,55 +91,6 @@ export function DetectionResults({
       setCurrentTime(seconds);
     }
   }, []);
-
-  const captureVideoFrame = useCallback((): string | null => {
-    const video = videoRef.current;
-    if (!video || video.readyState < 2) return null;
-
-    const canvas = document.createElement("canvas");
-    canvas.width = 320;
-    canvas.height = 180;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return null;
-
-    const scale = Math.min(320 / video.videoWidth, 180 / video.videoHeight);
-    const w = video.videoWidth * scale;
-    const h = video.videoHeight * scale;
-
-    ctx.fillStyle = "#000";
-    ctx.fillRect(0, 0, 320, 180);
-    ctx.drawImage(video, (320 - w) / 2, (180 - h) / 2, w, h);
-
-    return canvas.toDataURL("image/jpeg", 0.8);
-  }, []);
-
-  const handleCompare = useCallback(
-    (index: number | null) => {
-      if (index === null) {
-        setCompareIndex(null);
-        setCapturedFrame(null);
-        return;
-      }
-
-      setCompareIndex(index);
-      const ts = detectedTimestamps[index];
-
-      if (ts && videoRef.current) {
-        const seconds = parseTimestampToSeconds(ts);
-        videoRef.current.currentTime = seconds;
-        setCurrentTime(seconds);
-
-        const onSeeked = () => {
-          videoRef.current?.removeEventListener("seeked", onSeeked);
-          setCapturedFrame(captureVideoFrame());
-        };
-
-        videoRef.current.addEventListener("seeked", onSeeked);
-      }
-    },
-    [detectedTimestamps, captureVideoFrame]
-  );
 
   const formatForBuilder1 = () => detectedTimestamps.join("\n");
 
@@ -258,21 +206,7 @@ export function DetectionResults({
             currentTime={currentTime}
             onTimestampsChange={onTimestampsChange}
             onSeek={handleSeek}
-            compareIndex={compareIndex}
-            onCompare={handleCompare}
           />
-
-          {compareIndex !== null && detectedTimestamps[compareIndex] && (
-            <ComparePanel
-              compareIndex={compareIndex}
-              timestamp={detectedTimestamps[compareIndex]}
-              capturedFrame={capturedFrame}
-              onClose={() => {
-                setCompareIndex(null);
-                setCapturedFrame(null);
-              }}
-            />
-          )}
         </div>
       ) : (
         <pre className="rounded-xl border border-[var(--border-muted)] bg-[var(--surface-2)] p-3 font-mono text-xs text-[var(--fg-muted)]">
@@ -306,76 +240,4 @@ export function DetectionResults({
       </div>
     </div>
   );
-}
-
-function ComparePanel({
-  compareIndex,
-  timestamp,
-  capturedFrame,
-  onClose,
-}: {
-  compareIndex: number;
-  timestamp: string;
-  capturedFrame: string | null;
-  onClose: () => void;
-}) {
-  return (
-    <div className="space-y-3 rounded-xl border border-[var(--border-muted)] bg-[var(--surface-2)] p-3">
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-[var(--fg-0)]">
-          Scene {compareIndex + 1} · {timestamp}
-        </p>
-        <button
-          type="button"
-          onClick={onClose}
-          className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-[var(--border-muted)] text-[var(--fg-muted)] hover:text-[var(--fg-0)]"
-        >
-          <span className="material-symbols-outlined text-[16px]" aria-hidden>
-            close
-          </span>
-        </button>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1">
-          <p className="text-xs text-[var(--fg-muted)]">Video</p>
-          <div className="flex aspect-video items-center justify-center overflow-hidden rounded-lg border border-[var(--border-muted)] bg-black/50">
-            {capturedFrame ? (
-              <img src={capturedFrame} alt="Video frame" className="h-full w-full object-contain" />
-            ) : (
-              <span className="text-xs text-gray-400">캡처 중</span>
-            )}
-          </div>
-        </div>
-
-        <div className="space-y-1">
-          <p className="text-xs text-[var(--fg-muted)]">Extracted</p>
-          <div className="flex aspect-video items-center justify-center overflow-hidden rounded-lg border border-[var(--border-muted)] bg-black/50">
-            <CompareThumb timestamp={timestamp} />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function CompareThumb({ timestamp }: { timestamp: string }) {
-  const thumbUrl = useMemo(() => {
-    if (typeof document === "undefined") return null;
-    const imgs = document.querySelectorAll<HTMLImageElement>("img[alt^='Scene ']");
-    for (const img of imgs) {
-      const card = img.closest("[class*='flex-shrink-0']");
-      if (card) {
-        const tsText = card.querySelector(".font-mono")?.textContent;
-        if (tsText?.trim() === timestamp) return img.src;
-      }
-    }
-    return null;
-  }, [timestamp]);
-
-  if (thumbUrl) {
-    return <img src={thumbUrl} alt="Extracted thumbnail" className="h-full w-full object-contain" />;
-  }
-
-  return <span className="text-xs text-gray-400">썸네일 없음</span>;
 }
