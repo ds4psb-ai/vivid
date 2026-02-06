@@ -163,15 +163,25 @@ export function HomeContent({ setActiveTab, hasAccess }: HomeContentProps) {
       </section>
 
       {!hasAccess && (
-        <p className="text-sm text-[var(--fg-muted)]">
-          이미 결제하셨나요?{" "}
+        <section className="rounded-2xl border border-[var(--border-muted)] bg-[var(--surface-1)] p-4 md:p-5">
           <a
-            href="mailto:ted.taeeun.kim@gmail.com"
-            className="font-medium text-[var(--color-brand-primary)] hover:underline"
+            href="https://cafe.naver.com/antacademy1/5150"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-11 items-center rounded-xl bg-[var(--color-brand-primary)] px-5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
           >
-            문의하기
+            수강 신청하기
           </a>
-        </p>
+          <p className="mt-3 text-sm text-[var(--fg-muted)]">
+            이미 결제하셨나요?{" "}
+            <a
+              href="mailto:ted.taeeun.kim@gmail.com"
+              className="font-medium text-[var(--color-brand-primary)] hover:underline"
+            >
+              문의하기
+            </a>
+          </p>
+        </section>
       )}
     </div>
   );
