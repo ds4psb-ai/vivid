@@ -422,8 +422,8 @@ function StudentsTab() {
               />
             </div>
 
-            <AlertBox type="warning">
-              수강생이 먼저 prompty.co.kr에서 Google 로그인해야 합니다.
+            <AlertBox type="success">
+              로그인 전이라도 사전 활성화 가능! 학생이 나중에 Google 로그인하면 자동 연결됩니다.
             </AlertBox>
 
             {linkError && <AlertBox type="error">{linkError}</AlertBox>}
@@ -852,7 +852,7 @@ function QuickActivateTab() {
             ? "여러 Gmail을 줄바꿈으로 구분해서 입력하세요 (최대 20개)"
             : "카톡방에서 받은 Gmail 주소를 입력하면 즉시 수강생으로 활성화됩니다."}
           <br />
-          <span className="text-amber-400">※ 수강생이 먼저 prompty.co.kr에서 Google 로그인해야 합니다.</span>
+          <span className="text-emerald-400">※ 로그인 전이라도 사전 활성화 가능 — 학생이 나중에 로그인하면 자동 연결됩니다.</span>
         </p>
 
         {/* Single mode UI */}
@@ -998,23 +998,23 @@ function QuickActivateTab() {
         <div className="space-y-3 text-sm text-gray-400">
           <div className="flex items-start gap-2">
             <span className="text-purple-400">1.</span>
-            <p>
-              수강생이 <span className="text-white">prompty.co.kr</span>에서 Google 로그인
-            </p>
+            <p>카톡방에서 수강생 Gmail 주소를 받음</p>
           </div>
           <div className="flex items-start gap-2">
             <span className="text-purple-400">2.</span>
-            <p>수강생의 Gmail 주소를 카톡에서 받음</p>
+            <p>
+              위 입력창에 Gmail 입력 후 <span className="text-purple-300">활성화</span> 버튼 클릭 (사전 활성화 완료)
+            </p>
           </div>
           <div className="flex items-start gap-2">
             <span className="text-purple-400">3.</span>
             <p>
-              위 입력창에 Gmail 입력 후 <span className="text-purple-300">활성화</span> 버튼 클릭
+              수강생이 <span className="text-white">prompty.co.kr</span>에서 Google 로그인하면 자동 연결
             </p>
           </div>
           <div className="flex items-start gap-2">
             <span className="text-purple-400">4.</span>
-            <p>수강생이 Academy 접근 가능!</p>
+            <p>Academy 접근 가능!</p>
           </div>
         </div>
       </div>
