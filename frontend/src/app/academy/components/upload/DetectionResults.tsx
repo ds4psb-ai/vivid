@@ -39,10 +39,9 @@ export function DetectionResults({
   const videoRef = useRef<HTMLVideoElement>(null);
   const rafRef = useRef<number | null>(null);
 
-  // 서버 트랜스코딩 preview URL (H.264, 모든 브라우저 호환)
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
+  // 서버 트랜스코딩 preview URL (same-origin rewrite proxy → CORS 회피)
   const serverVideoUrl = previewId
-    ? `${apiUrl}/api/v1/scene-detect/preview/${previewId}`
+    ? `/api/v1/scene-detect/preview/${previewId}`
     : null;
 
   // Blob URL fallback (서버 preview가 없을 때)
@@ -57,8 +56,14 @@ export function DetectionResults({
     return () => URL.revokeObjectURL(url);
   }, [uploadedFile]);
 
-  // 서버 preview 우선, blob fallback
-  const videoUrl = serverVideoUrl || blobUrl;
+  // 서버 preview 실패 시 blob fallback
+  const [serverFailed, setServerFailed] = useState(false);
+  const videoUrl = (serverVideoUrl && !serverFailed) ? serverVideoUrl : blobUrl;
+
+  // previewId 변경 시 실패 상태 리셋
+  useEffect(() => {
+    setServerFailed(false);
+  }, [previewId]);
 
   // Reset video error whenever the URL changes
   useEffect(() => {
@@ -223,7 +228,13 @@ export function DetectionResults({
                 className="w-full max-h-[400px] object-contain bg-black"
                 onTimeUpdate={handleTimeUpdate}
                 onLoadedMetadata={(e) => setLocalDuration(e.currentTarget.duration)}
-                onError={() => setVideoError(true)}
+                onError={() => {
+                  if (serverVideoUrl && !serverFailed) {
+                    setServerFailed(true); // blob으로 재시도
+                  } else {
+                    setVideoError(true); // 최종 실패
+                  }
+                }}
               />
             ) : (
               <div className="flex items-center justify-center py-8">
