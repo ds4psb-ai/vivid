@@ -2,7 +2,6 @@
 
 import type { LucideIcon } from "lucide-react";
 import {
-  ArrowRight,
   ArrowUpRight,
   Brain,
   ClipboardCheck,
@@ -63,9 +62,10 @@ export function HomeContent({ setActiveTab }: HomeContentProps) {
           </div>
         </a>
 
-        <button
-          type="button"
-          onClick={() => setActiveTab("vibe")}
+        <a
+          href={TOOL_LINKS.vibe}
+          target="_blank"
+          rel="noopener noreferrer"
           className="group relative overflow-hidden rounded-2xl border border-[var(--border-muted)] bg-[linear-gradient(145deg,rgba(255,0,60,0.09)_0%,rgba(255,255,255,0)_60%)] p-5 text-left"
         >
           <div className="flex min-h-[156px] flex-col justify-between">
@@ -78,11 +78,11 @@ export function HomeContent({ setActiveTab }: HomeContentProps) {
                 철학관
               </h3>
               <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border-muted)] bg-[var(--surface-1)] text-[var(--fg-0)] transition-transform group-hover:translate-x-0.5">
-                <ArrowRight className="h-4 w-4" />
+                <ArrowUpRight className="h-4 w-4" />
               </span>
             </div>
           </div>
-        </button>
+        </a>
       </div>
 
       <section className="rounded-2xl border border-[var(--border-muted)] bg-[var(--surface-1)] p-3 md:p-4">
