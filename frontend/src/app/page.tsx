@@ -3,14 +3,14 @@
 /**
  * Root Page (/)
  * - 비로그인: EnrollmentRequired (로그인 + 수강신청 안내)
- * - 로그인 + 접근권한: AppShell + 수평탭 Academy
+ * - 로그인 + 접근권한: AppShell + Academy (사이드바 탭 전환)
  * - 로그인 + 권한없음: EnrollmentRequired
  */
 
-import { useState, useEffect, Suspense, startTransition, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useEffect, Suspense, useCallback } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 
-import { NAV_SECTIONS, ADMIN_SECTION, type TabKey } from "./academy/constants";
+import { type TabKey } from "./academy/constants";
 import {
   HomeContent,
   SetupContent,
@@ -45,8 +45,8 @@ function LoadingScreen() {
 
 function RootContent() {
   const searchParams = useSearchParams();
-  const urlTab = searchParams.get("tab") as TabKey | null;
-  const [activeTab, setActiveTab] = useState<TabKey>(urlTab || "home");
+  const router = useRouter();
+  const activeTab: TabKey = (searchParams.get("tab") as TabKey) || "home";
 
   const [accessState, setAccessState] = useState<{
     loading: boolean;
@@ -92,15 +92,15 @@ function RootContent() {
   }, []);
 
   const handleTabChange = useCallback((tab: TabKey) => {
-    startTransition(() => setActiveTab(tab));
-  }, []);
+    router.push(tab === "home" ? "/" : `/?tab=${tab}`, { scroll: false });
+  }, [router]);
 
   // Guard: redirect non-admin users away from admin tab
   useEffect(() => {
     if (!accessState.loading && activeTab === "admin" && !accessState.accessInfo?.is_admin) {
-      setActiveTab("home");
+      router.push("/", { scroll: false });
     }
-  }, [accessState.loading, accessState.accessInfo?.is_admin, activeTab]);
+  }, [accessState.loading, accessState.accessInfo?.is_admin, activeTab, router]);
 
   if (accessState.loading) {
     return <LoadingScreen />;
@@ -111,62 +111,27 @@ function RootContent() {
     return <EnrollmentRequired isLoggedIn={accessState.isLoggedIn} />;
   }
 
-  // Has access → AppShell + Academy tabs
-  const allSections = accessState.accessInfo?.is_admin
-    ? [...NAV_SECTIONS, ADMIN_SECTION]
-    : NAV_SECTIONS;
-
+  // Has access → AppShell + Academy content (tab bar removed, sidebar handles navigation)
   return (
     <AppShell showChokki={false}>
       <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
-      <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
 
       <style jsx global>{`
-        .material-symbols-outlined {
-          font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
         .glow-text {
           text-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
         }
       `}</style>
 
       <div className="min-h-screen">
-        {/* Academy Header + Tab Navigation */}
-        <div className="sticky top-0 z-30 bg-[var(--bg-0)] border-b border-[var(--glass-border)]">
-          <div className="px-6 pt-5 pb-3">
-            <h1 className="text-lg font-bold text-[var(--fg-0)]">AI Academy</h1>
-            <p className="text-[10px] font-mono text-[var(--fg-muted)] uppercase tracking-widest mt-0.5">
-              Creative Automation Suite v2.0
-              {accessState.accessInfo?.cohort && (
-                <span className="ml-3 text-purple-400">{accessState.accessInfo.cohort}</span>
-              )}
-            </p>
-          </div>
-
-          {/* Horizontal Tab Bar */}
-          <div className="px-4 overflow-x-auto scrollbar-none">
-            <div className="flex gap-1 min-w-max pb-0">
-              {allSections.map((section) =>
-                section.items.map((item) => {
-                  const isActive = activeTab === item.key;
-                  return (
-                    <button
-                      key={item.key}
-                      onClick={() => handleTabChange(item.key)}
-                      className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-t-lg transition-all whitespace-nowrap border-b-2 ${
-                        isActive
-                          ? "border-purple-500 text-purple-400 bg-purple-500/5"
-                          : "border-transparent text-[var(--fg-muted)] hover:text-[var(--fg-0)] hover:bg-[var(--surface-1)]"
-                      }`}
-                    >
-                      <span className="material-symbols-outlined text-base">{item.icon}</span>
-                      {item.label}
-                    </button>
-                  );
-                })
-              )}
-            </div>
-          </div>
+        {/* Simple Header */}
+        <div className="px-6 pt-5 pb-3">
+          <h1 className="text-lg font-bold text-[var(--fg-0)]">AI Academy</h1>
+          <p className="text-[10px] font-mono text-[var(--fg-muted)] uppercase tracking-widest mt-0.5">
+            Creative Automation Suite v2.0
+            {accessState.accessInfo?.cohort && (
+              <span className="ml-3 text-purple-400">{accessState.accessInfo.cohort}</span>
+            )}
+          </p>
         </div>
 
         {/* Content */}

@@ -1,13 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   ChevronsLeft,
   ChevronsRight,
-  Gem,
-  Settings,
   LogOut,
 } from "lucide-react";
 import { SIDEBAR_NAV_ITEMS } from "@/config/sidebar-nav";
@@ -15,13 +13,20 @@ import { SidebarIcon } from "./SidebarIcon";
 import { FloatingTooltip } from "./FloatingTooltip";
 import { ModeToggle } from "@/components/mode-toggle";
 import { useSessionContext } from "@/contexts/SessionContext";
-import { useCreditBalance } from "@/hooks/useCreditBalance";
 import { isAdminModeEnabled } from "@/lib/admin";
 import { api } from "@/lib/api";
 
 const LS_KEY = "crebit-sidebar-collapsed";
 
 export function CrebitSidebar() {
+  return (
+    <Suspense fallback={null}>
+      <CrebitSidebarInner />
+    </Suspense>
+  );
+}
+
+function CrebitSidebarInner() {
   const [collapsed, setCollapsed] = useState(true);
   const [tooltip, setTooltip] = useState<{
     label: string;
@@ -30,8 +35,9 @@ export function CrebitSidebar() {
 
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const currentTab = searchParams.get("tab");
   const { session } = useSessionContext();
-  const { balance } = useCreditBalance();
   const isAdmin = isAdminModeEnabled(session?.user?.role);
 
   // Restore collapsed state from localStorage
@@ -86,8 +92,23 @@ export function CrebitSidebar() {
     if (!collapsed) setTooltip(null);
   }, [collapsed]);
 
-  const isActive = (href: string) =>
-    href === "/" ? pathname === "/" : pathname.startsWith(href);
+  const isActive = (href: string) => {
+    // Home: "/" with no tab param
+    if (href === "/") {
+      return pathname === "/" && (!currentTab || currentTab === "home");
+    }
+    // Non-root paths (fallback for future)
+    if (pathname !== "/") {
+      return pathname.startsWith(href);
+    }
+    // /?tab=xxx matching
+    try {
+      const url = new URL(href, "http://x");
+      return url.searchParams.get("tab") === currentTab;
+    } catch {
+      return false;
+    }
+  };
 
   const filteredItems = SIDEBAR_NAV_ITEMS.filter(
     (item) => !item.adminOnly || isAdmin
@@ -194,44 +215,6 @@ export function CrebitSidebar() {
 
         {/* ── Bottom Section ── */}
         <div className="shrink-0 border-t border-[var(--glass-border)] px-2 py-2 space-y-0.5">
-          {/* Credits */}
-          <Link
-            href="/credits"
-            onMouseEnter={(e) =>
-              showTooltip(`크레딧: ${balance.toLocaleString()}`, e)
-            }
-            onMouseLeave={hideTooltip}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl
-                       transition-all duration-200
-                       text-[var(--fg-muted)] hover:bg-black/5 dark:hover:bg-white/5
-                       hover:text-[var(--fg-0)] dark:hover:text-white
-                       ${collapsed ? "justify-center" : ""}`}
-          >
-            <Gem className="w-5 h-5 shrink-0 text-amber-500" />
-            {!collapsed && (
-              <span className="text-sm font-medium truncate">
-                {balance.toLocaleString()} 크레딧
-              </span>
-            )}
-          </Link>
-
-          {/* Settings */}
-          <Link
-            href="/settings"
-            onMouseEnter={(e) => showTooltip("설정", e)}
-            onMouseLeave={hideTooltip}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl
-                       transition-all duration-200
-                       text-[var(--fg-muted)] hover:bg-black/5 dark:hover:bg-white/5
-                       hover:text-[var(--fg-0)] dark:hover:text-white
-                       ${collapsed ? "justify-center" : ""}`}
-          >
-            <Settings className="w-5 h-5 shrink-0" />
-            {!collapsed && (
-              <span className="text-sm font-medium truncate">설정</span>
-            )}
-          </Link>
-
           {/* Logout */}
           <button
             onClick={handleLogout}
