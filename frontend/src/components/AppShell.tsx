@@ -3,19 +3,19 @@
 /**
  * AppShell - Global Layout Component
  *
- * 2026 Netflix-style layout:
- * - Top header navigation with mega menu (CrebitNavbar)
- * - No sidebar (removed in favor of header navigation)
+ * 2026 Sidebar layout:
+ * - Left collapsible sidebar (CrebitSidebar)
+ * - TopBar for Canvas/project controls
  * - Chokki AI assistant FAB
  *
- * Migration note: showSidebar prop is deprecated but kept for backward
- * compatibility. It now controls whether to show the header navbar.
+ * Mobile: sidebar hidden, CrebitNavbar used via hamburger.
  */
 
 import { ReactNode, useMemo, lazy, Suspense } from "react";
 import { usePathname } from "next/navigation";
 import { ChokkiFABSkeleton } from "./ChokkiFABSkeleton";
 import TopBar from "./TopBar";
+import { CrebitSidebar } from "./sidebar/CrebitSidebar";
 import { CrebitNavbar } from "./home/CrebitNavbar";
 import { useCreditBalance } from "@/hooks/useCreditBalance";
 import { useSessionContext } from "@/contexts/SessionContext";
@@ -32,10 +32,9 @@ interface AppShellProps {
   children: ReactNode;
   /**
    * @deprecated Use showNavbar instead. Kept for backward compatibility.
-   * Now controls whether to show the top navbar.
    */
   showSidebar?: boolean;
-  /** Show the header navbar (default: true) */
+  /** Show the sidebar/navbar (default: true) */
   showNavbar?: boolean;
   /** Show the TopBar (project controls) */
   showTopBar?: boolean;
@@ -93,7 +92,7 @@ const PAGE_CONTEXT_MESSAGES: Record<string, string> = {
 
 export default function AppShell({
   children,
-  showSidebar = true, // deprecated, maps to showNavbar
+  showSidebar = true,
   showNavbar,
   showTopBar = false,
   showChokki = true,
@@ -117,15 +116,13 @@ export default function AppShell({
   const pathname = usePathname();
 
   // Resolve navbar visibility: showNavbar takes precedence over showSidebar
-  const shouldShowNavbar = showNavbar ?? showSidebar;
+  const shouldShowNav = showNavbar ?? showSidebar;
 
   // Get context-aware initial message for Chokki
   const chokkiInitialMessage = useMemo(() => {
-    // Check for exact matches first
     if (PAGE_CONTEXT_MESSAGES[pathname]) {
       return PAGE_CONTEXT_MESSAGES[pathname];
     }
-    // Check for partial matches (e.g., /tools/xxx)
     for (const [path, message] of Object.entries(PAGE_CONTEXT_MESSAGES)) {
       if (path !== "default" && pathname.startsWith(path)) {
         return message;
@@ -137,8 +134,15 @@ export default function AppShell({
   return (
     <CreditProvider>
       <div className="min-h-screen bg-[var(--bg-0)]">
-        {/* Header Navbar - Netflix 2026 style */}
-        {shouldShowNavbar && <CrebitNavbar showSpacer={!showTopBar} />}
+        {/* Sidebar – desktop only */}
+        {shouldShowNav && <CrebitSidebar />}
+
+        {/* Mobile Navbar – md 이하에서만 표시 */}
+        {shouldShowNav && (
+          <div className="md:hidden">
+            <CrebitNavbar showSpacer={!showTopBar} />
+          </div>
+        )}
 
         {/* TopBar - for project controls (Canvas mode) */}
         {showTopBar && (
@@ -156,8 +160,14 @@ export default function AppShell({
           />
         )}
 
-        {/* Main Content */}
-        <main className={showTopBar ? "pt-14" : ""}>{children}</main>
+        {/* Main Content – offset by sidebar on desktop */}
+        <main
+          className={`transition-[margin] duration-300 ease-out
+            ${shouldShowNav ? "md:ml-[var(--sidebar-current,var(--sidebar-collapsed))]" : ""}
+            ${showTopBar ? "pt-14" : ""}`}
+        >
+          {children}
+        </main>
 
         {/* Global Chokki Agent - Lazy Loaded */}
         {showChokki && (
