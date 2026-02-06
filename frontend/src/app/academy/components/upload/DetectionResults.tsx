@@ -208,15 +208,12 @@ export function DetectionResults({
                 ref={videoRef}
                 controls
                 playsInline
-                className="w-full"
+                className="w-full max-h-[400px] object-contain bg-black"
                 onTimeUpdate={handleTimeUpdate}
                 onLoadedMetadata={(e) => setLocalDuration(e.currentTarget.duration)}
+                onError={() => setVideoError(true)}
               >
-                <source
-                  src={videoUrl}
-                  type={uploadedFile?.type || "video/mp4"}
-                  onError={() => setVideoError(true)}
-                />
+                <source src={videoUrl} type={uploadedFile?.type || "video/mp4"} />
               </video>
             ) : (
               <div className="flex items-center justify-center py-8">

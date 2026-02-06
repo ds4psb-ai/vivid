@@ -2811,3 +2811,8 @@ html.lenis body {
   border-color: rgba(var(--fg-muted-rgb), 0.35);
   border-color: color-mix(in srgb, var(--fg-muted) 35%, transparent);
 }
+
+/* Material Symbols Outlined – Academy icons */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
