@@ -1,6 +1,5 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  Home,
   Layers,
   PenTool,
   Users,
@@ -22,7 +21,6 @@ export interface SidebarNavItem {
 }
 
 export const SIDEBAR_NAV_ITEMS: SidebarNavItem[] = [
-  { id: "home", icon: Home, label: "홈", href: "/" },
   { id: "dimension", icon: Layers, label: "만들기", href: "/dimension" },
   { id: "studio", icon: PenTool, label: "스튜디오", href: "/studio" },
   { id: "characters", icon: Users, label: "캐릭터", href: "/characters" },
@@ -44,7 +42,7 @@ export const SIDEBAR_NAV_ITEMS: SidebarNavItem[] = [
     id: "academy",
     icon: GraduationCap,
     label: "아카데미",
-    href: "/academy",
+    href: "/",
     dividerBefore: true,
   },
   { id: "flow", icon: GitBranch, label: "워크플로우", href: "/flow" },
