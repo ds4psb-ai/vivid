@@ -1034,9 +1034,43 @@ async def activate_academy_student(
     user_account = user_result.scalar_one_or_none()
 
     if not user_account:
+        # Pre-Activation: 로그인 전이라도 미리 활성화 - 나중에 로그인 시 자동 매칭됨 (auth.py)
+        existing_unlinked = await db.execute(
+            select(CrebitApplication)
+            .where(CrebitApplication.email == email_lower)
+            .where(CrebitApplication.status == "paid")
+        )
+        if existing_unlinked.scalar_one_or_none():
+            return ActivateStudentResponse(
+                success=True,
+                message=f"이미 사전 활성화된 수강생입니다 (로그인 대기 중): {email_lower}",
+                already_exists=True,
+            )
+
+        new_app = CrebitApplication(
+            id=uuid.uuid4(),
+            name=request.name or email_lower.split("@")[0],
+            email=email_lower,
+            phone="",
+            track="A",
+            status="paid",
+            cohort=request.cohort,
+            owner_id=None,  # 로그인 시 자동 매칭
+            paid_at=datetime.utcnow(),
+            paid_amount=0,
+        )
+        db.add(new_app)
+        try:
+            await db.commit()
+        except Exception as e:
+            await db.rollback()
+            raise HTTPException(status_code=500, detail=f"사전 활성화 실패: {str(e)}")
+
         return ActivateStudentResponse(
-            success=False,
-            message=f"해당 Gmail로 로그인한 기록이 없습니다. 먼저 prompty.co.kr에서 Google 로그인하라고 안내해주세요: {email_lower}"
+            success=True,
+            application_id=str(new_app.id),
+            user_id=None,
+            message=f"사전 활성화 완료 (로그인 대기 중): {new_app.name}. 학생이 Google 로그인하면 자동 연결됩니다."
         )
 
     # 2. 이미 paid 수강신청 있는지 확인
@@ -1133,11 +1167,40 @@ async def bulk_activate_academy_students(
         user_account = user_result.scalar_one_or_none()
 
         if not user_account:
+            # Pre-Activation: 로그인 전이라도 미리 활성화
+            existing_unlinked = await db.execute(
+                select(CrebitApplication)
+                .where(CrebitApplication.email == email)
+                .where(CrebitApplication.status == "paid")
+            )
+            if existing_unlinked.scalar_one_or_none():
+                results.append(BulkActivateResult(
+                    email=email,
+                    success=True,
+                    message="이미 사전 활성화됨 (로그인 대기)"
+                ))
+                success_count += 1
+                continue
+
+            new_app = CrebitApplication(
+                id=uuid.uuid4(),
+                name=email.split("@")[0],
+                email=email,
+                phone="",
+                track="A",
+                status="paid",
+                cohort=request.cohort,
+                owner_id=None,  # 로그인 시 자동 매칭
+                paid_at=datetime.utcnow(),
+                paid_amount=0,
+            )
+            db.add(new_app)
             results.append(BulkActivateResult(
                 email=email,
-                success=False,
-                message="로그인 기록 없음"
+                success=True,
+                message="사전 활성화 완료 (로그인 대기)"
             ))
+            success_count += 1
             continue
 
         # 2. 이미 paid 수강신청 있는지 확인
