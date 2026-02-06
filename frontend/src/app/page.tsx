@@ -98,6 +98,13 @@ function AcademyContent() {
     startTransition(() => setActiveTab(tab));
   };
 
+  // Guard: redirect non-admin users away from admin tab
+  useEffect(() => {
+    if (!accessState.loading && activeTab === "admin" && !accessState.accessInfo?.is_admin) {
+      setActiveTab("home");
+    }
+  }, [accessState.loading, accessState.accessInfo?.is_admin, activeTab]);
+
   // Show loading while checking access
   if (accessState.loading) {
     return <LoadingScreen />;

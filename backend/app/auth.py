@@ -87,6 +87,12 @@ async def get_is_verified(
             return verified
         if isinstance(verified, str):
             return verified.strip().lower() in {"1", "true", "yes"}
+    # H2.1: X-User-Verified header bypass requires explicit feature flag
+    # Both conditions must be met: dev environment AND ENABLE_DEV_AUTH_BYPASS=true
+    if not settings.ENABLE_DEV_AUTH_BYPASS:
+        return False
+    if settings.ENVIRONMENT.lower() in {"production", "prod", "staging"}:
+        return False
     if x_user_verified is None:
         return False
     return str(x_user_verified).strip().lower() in {"1", "true", "yes"}

@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -243,6 +244,9 @@ async def admin_approve_request(
     if not request:
         raise HTTPException(status_code=404, detail="Request not found")
 
+    if request.status not in ("pending", "rejected"):
+        raise HTTPException(status_code=400, detail="Only pending or rejected requests can be approved")
+
     request.status = "approved"
     if body.notes:
         request.admin_notes = body.notes
@@ -269,7 +273,11 @@ async def admin_approve_request(
         db.add(new_app)
         application_created = True
 
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        application_created = False
 
     return JSONResponse({
         "success": True,
@@ -300,6 +308,9 @@ async def admin_reject_request(
 
     if not request:
         raise HTTPException(status_code=404, detail="Request not found")
+
+    if request.status not in ("pending",):
+        raise HTTPException(status_code=400, detail="Only pending requests can be rejected")
 
     request.status = "rejected"
     if body.notes:
@@ -342,9 +353,9 @@ async def admin_revoke_request(
     if request.status != "approved":
         raise HTTPException(status_code=400, detail="Only approved requests can be revoked")
 
-    # Revoke access request
-    request.status = "rejected"
-    request.admin_notes = (body.notes or "") + " [승인 취소됨]"
+    # Revoke access request - revert to pending (not rejected dead-end)
+    request.status = "pending"
+    request.admin_notes = (body.notes or "") + " [승인 취소 → 대기로 변경됨]"
 
     # Deactivate linked CrebitApplication
     application_deactivated = False
@@ -357,7 +368,7 @@ async def admin_revoke_request(
 
     if application:
         application.status = "cancelled"
-        application.owner_id = None
+        # owner_id preserved for audit trail
         application.notes = (application.notes or "") + " [승인 취소로 비활성화됨]"
         application_deactivated = True
 
