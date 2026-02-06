@@ -167,24 +167,53 @@ SECRET_KEY=your-secret-key-min-32-chars
 
 ## 배포 명령어
 
+### 방법 1: CLI (기본)
+
 ```bash
-# 프로젝트 루트에서 실행 (중요!)
-cd /Users/ted/vivid
+# ⚠️ 반드시 backend 폴더에서 실행 — Dockerfile이 여기 있음
+cd /Users/ted/vivid/backend
 
-# Railway 프로젝트 연결
-railway link --project prompty-backend
-
-# backend 폴더에서 배포
-cd backend && railway up --service vivid --detach
+railway up --service vivid --detach
 ```
 
-**주의**: Root Directory 설정이 있으면 해당 폴더에서 `railway up` 실행 시 경로 충돌!
+- **빌더**: Dockerfile (railway.json에 `"builder": "DOCKERFILE"` 설정됨)
+- **서비스명**: `vivid` (vivid-backend 아님)
+- `--detach`: 빌드 완료 대기 없이 즉시 반환, Build Logs URL 출력
+
+### 방법 2: GraphQL API
+
+CLI 없이 API로 재배포 (최신 커밋 기준 재빌드):
 
 ```bash
-# ❌ Root Directory = "backend" 설정 + backend 폴더에서 실행
-# → backend/backend 찾음 → 실패
+RAILWAY_TOKEN=$(cat ~/.railway/config.json | python3 -c "import json,sys; print(json.load(sys.stdin)['user']['token'])")
 
-# ✅ 프로젝트 루트에서 실행하거나 Root Directory 설정 제거
+curl -s -X POST "https://backboard.railway.app/graphql/v2" \
+  -H "Authorization: Bearer $RAILWAY_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "mutation { serviceInstanceRedeploy(environmentId: \"a9dac264-c078-4483-a5e6-6dc3acf30350\", serviceId: \"74b07bc1-f3f1-492e-af77-1e3e664572b9\") }"
+  }'
+# 응답: {"data":{"serviceInstanceRedeploy":true}}
+```
+
+| 파라미터 | 값 | 설명 |
+|----------|-----|------|
+| environmentId | `a9dac264-c078-4483-a5e6-6dc3acf30350` | production 환경 |
+| serviceId | `74b07bc1-f3f1-492e-af77-1e3e664572b9` | vivid 서비스 |
+
+> **차이점**: CLI(`railway up`)는 로컬 파일을 업로드하여 빌드. API(`serviceInstanceRedeploy`)는 이미 배포된 설정 기준으로 재빌드 (코드 변경 없이 재시작에 적합).
+
+### 주의사항
+
+```bash
+# ❌ 프로젝트 루트에서 실행 — Dockerfile 못 찾음
+cd /Users/ted/vivid && railway up --service vivid
+
+# ❌ GraphQL API만으로 새 코드 배포 — 로컬 변경분 반영 안 됨
+# → 새 코드 배포는 반드시 CLI 방식 사용
+
+# ✅ backend 폴더에서 CLI 실행
+cd /Users/ted/vivid/backend && railway up --service vivid --detach
 ```
 
 ---
