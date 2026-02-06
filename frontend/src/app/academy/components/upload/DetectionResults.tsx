@@ -70,17 +70,6 @@ export function DetectionResults({
     if (previewId) setFailedPreviewId(previewId);
   }, [previewId]);
 
-  useEffect(() => {
-    if (!serverVideoUrl || serverFailed) return;
-    fetch(serverVideoUrl, { method: "HEAD" })
-      .then((res) => {
-        if (!res.ok) markServerFailed();
-      })
-      .catch(() => {
-        markServerFailed();
-      });
-  }, [serverVideoUrl, serverFailed, markServerFailed]);
-
   const videoDuration = backendVideoDuration > 0 ? backendVideoDuration : localDuration;
 
   const handleTimeUpdate = useCallback(() => {

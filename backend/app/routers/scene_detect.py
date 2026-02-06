@@ -30,6 +30,11 @@ _preview_store: dict[str, tuple[str, float]] = {}  # id → (path, created_at)
 _PREVIEW_TTL = 1800  # 30분
 
 
+def _preview_file_path(preview_id: str) -> str:
+    """preview_id로 임시 파일 경로 구성"""
+    return os.path.join(tempfile.gettempdir(), f"preview_{preview_id}.mp4")
+
+
 def _cleanup_old_previews() -> None:
     """TTL 초과 preview 파일 정리"""
     now = time.time()
@@ -41,6 +46,37 @@ def _cleanup_old_previews() -> None:
             os.unlink(path)
         except OSError:
             pass
+
+
+def _resolve_preview_path(preview_id: str) -> str | None:
+    """
+    preview 파일 경로 조회.
+    - 1순위: 인메모리 store
+    - 2순위: deterministic temp path 복구 (멀티 워커 대비)
+    """
+    record = _preview_store.get(preview_id)
+    if record:
+        path, created_at = record
+    else:
+        path = _preview_file_path(preview_id)
+        if not os.path.exists(path):
+            return None
+        created_at = os.path.getmtime(path)
+        _preview_store[preview_id] = (path, created_at)
+
+    if not os.path.exists(path):
+        _preview_store.pop(preview_id, None)
+        return None
+
+    if time.time() - created_at > _PREVIEW_TTL:
+        _preview_store.pop(preview_id, None)
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
+        return None
+
+    return path
 
 
 class SceneDetectResult(BaseModel):
@@ -303,7 +339,7 @@ async def scene_detect_metadata(
         tmp_path = tmp.name
     
     preview_id = str(uuid.uuid4())
-    preview_path = os.path.join(tempfile.gettempdir(), f"preview_{preview_id}.mp4")
+    preview_path = _preview_file_path(preview_id)
 
     try:
         # Phase 1: 씬 감지 + 영상 길이 (병렬)
@@ -347,12 +383,10 @@ async def scene_detect_metadata(
 @router.get("/preview/{preview_id}")
 async def get_preview(preview_id: str, request: Request):
     """트랜스코딩된 H.264 영상 서빙 (브라우저 호환 + Range 지원)"""
-    if preview_id not in _preview_store:
+    _cleanup_old_previews()
+    path = _resolve_preview_path(preview_id)
+    if not path:
         raise HTTPException(status_code=404, detail="Preview not found or expired")
-    path, _ = _preview_store[preview_id]
-    if not os.path.exists(path):
-        _preview_store.pop(preview_id, None)
-        raise HTTPException(status_code=404, detail="Preview file not found")
 
     file_size = os.path.getsize(path)
     range_header = request.headers.get("range")

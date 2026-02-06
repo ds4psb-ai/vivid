@@ -3,6 +3,7 @@
 import os
 import tempfile
 import time
+import uuid
 
 import pytest
 from httpx import AsyncClient
@@ -49,3 +50,23 @@ async def test_preview_head_existing_returns_success(async_client: AsyncClient):
     response = await async_client.head(f"/api/v1/scene-detect/preview/{preview_id}")
     assert response.status_code == 200
     assert response.headers.get("accept-ranges") == "bytes"
+
+
+@pytest.mark.asyncio
+async def test_preview_head_resolves_temp_file_without_store(async_client: AsyncClient):
+    """Store miss 상황에서도 deterministic preview path가 있으면 응답 가능해야 한다."""
+    preview_id = str(uuid.uuid4())
+    preview_path = os.path.join(tempfile.gettempdir(), f"preview_{preview_id}.mp4")
+
+    with open(preview_path, "wb") as fp:
+        fp.write(b"\x00\x00\x00\x20ftypisom")
+
+    try:
+        response = await async_client.head(f"/api/v1/scene-detect/preview/{preview_id}")
+        assert response.status_code == 200
+        assert response.headers.get("accept-ranges") == "bytes"
+    finally:
+        try:
+            os.unlink(preview_path)
+        except OSError:
+            pass
