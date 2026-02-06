@@ -147,8 +147,7 @@ export function EnrollmentRequired({ isLoggedIn = false }: EnrollmentRequiredPro
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-0)] px-4 py-8 md:px-6">
-      <div className="mx-auto w-full max-w-5xl space-y-5">
+    <div className="mx-auto w-full max-w-[var(--academy-content-max)] space-y-5">
         {/* 1. Hero 섹션 */}
         <section className="space-y-4 px-1">
           <div className="stagger-reveal inline-flex items-center rounded-full border border-[var(--color-brand-primary)]/35 bg-[var(--color-brand-primary)]/10 px-3 py-1 text-[10px] font-semibold tracking-widest text-[var(--color-brand-primary)] uppercase">
@@ -310,7 +309,6 @@ export function EnrollmentRequired({ isLoggedIn = false }: EnrollmentRequiredPro
             </a>
           </section>
         )}
-      </div>
     </div>
   );
 }

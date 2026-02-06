@@ -2,9 +2,9 @@
 
 /**
  * Root Page (/)
- * - 비로그인: EnrollmentRequired
- * - 로그인 + 접근권한: AppShell + Academy
- * - 로그인 + 권한없음: EnrollmentRequired
+ * - 홈(HomeContent)은 모든 사용자에게 항상 표시
+ * - 제한 탭 클릭 + 미수강 → EnrollmentRequired 인라인
+ * - 제한 탭 클릭 + 수강생 → 실제 콘텐츠
  */
 
 import { useState, useEffect, Suspense, useCallback } from "react";
@@ -59,7 +59,9 @@ function LoadingScreen() {
 function RootContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const activeTab: TabKey = (searchParams.get("tab") as TabKey) || "home";
+  const VALID_TABS: Set<string> = new Set(Object.keys(TAB_TITLES));
+  const rawTab = searchParams.get("tab") || "home";
+  const activeTab: TabKey = VALID_TABS.has(rawTab) ? (rawTab as TabKey) : "home";
 
   const [accessState, setAccessState] = useState<{
     loading: boolean;
@@ -127,10 +129,6 @@ function RootContent() {
     return <LoadingScreen />;
   }
 
-  if (!accessState.hasAccess) {
-    return <EnrollmentRequired isLoggedIn={accessState.isLoggedIn} />;
-  }
-
   return (
     <AppShell
       showChokki={false}
@@ -151,16 +149,30 @@ function RootContent() {
             )}
           </div>
 
-          {activeTab === "home" && <HomeContent setActiveTab={handleTabChange} />}
-          {activeTab === "setup" && <SetupContent setActiveTab={handleTabChange} />}
-          {activeTab === "credit" && <CreditContent setActiveTab={handleTabChange} />}
-          {activeTab === "upload" && <UploadContent setActiveTab={handleTabChange} />}
-          {activeTab === "prompt" && <PromptContent setActiveTab={handleTabChange} />}
-          {activeTab === "parse" && <ParseContent setActiveTab={handleTabChange} />}
-          {activeTab === "tools" && <ToolsContent setActiveTab={handleTabChange} />}
-          {activeTab === "vibe" && <VibeContent />}
-          {activeTab === "homework" && <HomeworkContent />}
-          {activeTab === "admin" && accessState.accessInfo?.is_admin && <AdminContent />}
+          {/* 홈: 항상 표시 */}
+          {activeTab === "home" && (
+            <HomeContent setActiveTab={handleTabChange} hasAccess={accessState.hasAccess} />
+          )}
+
+          {/* 제한 탭 + 미수강 → EnrollmentRequired 인라인 */}
+          {activeTab !== "home" && !accessState.hasAccess && (
+            <EnrollmentRequired isLoggedIn={accessState.isLoggedIn} />
+          )}
+
+          {/* 제한 탭 + 수강생 → 실제 콘텐츠 */}
+          {activeTab !== "home" && accessState.hasAccess && (
+            <>
+              {activeTab === "setup" && <SetupContent setActiveTab={handleTabChange} />}
+              {activeTab === "credit" && <CreditContent setActiveTab={handleTabChange} />}
+              {activeTab === "upload" && <UploadContent setActiveTab={handleTabChange} />}
+              {activeTab === "prompt" && <PromptContent setActiveTab={handleTabChange} />}
+              {activeTab === "parse" && <ParseContent setActiveTab={handleTabChange} />}
+              {activeTab === "tools" && <ToolsContent setActiveTab={handleTabChange} />}
+              {activeTab === "vibe" && <VibeContent />}
+              {activeTab === "homework" && <HomeworkContent />}
+              {activeTab === "admin" && accessState.accessInfo?.is_admin && <AdminContent />}
+            </>
+          )}
         </div>
       </div>
     </AppShell>

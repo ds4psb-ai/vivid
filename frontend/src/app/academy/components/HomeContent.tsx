@@ -6,6 +6,7 @@ import {
   Brain,
   ClipboardCheck,
   ClipboardCopy,
+  Lock,
   Sparkles,
   Upload,
   Wrench,
@@ -14,6 +15,7 @@ import { TOOL_LINKS, type TabKey } from "../constants";
 
 interface HomeContentProps {
   setActiveTab: (tab: TabKey) => void;
+  hasAccess: boolean;
 }
 
 interface WorkflowStep {
@@ -23,7 +25,7 @@ interface WorkflowStep {
   icon: LucideIcon;
 }
 
-export function HomeContent({ setActiveTab }: HomeContentProps) {
+export function HomeContent({ setActiveTab, hasAccess }: HomeContentProps) {
   const workflowSteps: WorkflowStep[] = [
     { key: "upload", num: 1, label: "업로드", icon: Upload },
     { key: "prompt", num: 2, label: "프롬프터", icon: Sparkles },
@@ -35,54 +37,99 @@ export function HomeContent({ setActiveTab }: HomeContentProps) {
   return (
     <div className="mx-auto w-full max-w-[var(--academy-content-max)] space-y-5">
       <div className="grid gap-3 md:grid-cols-3">
-        <a
-          href={TOOL_LINKS.builder}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="group relative overflow-hidden rounded-2xl border border-[var(--border-muted)] bg-[linear-gradient(135deg,rgba(255,0,60,0.12)_0%,rgba(255,0,60,0.02)_45%,transparent_100%)] p-5 md:col-span-2"
-        >
-          <div className="flex min-h-[156px] flex-col justify-between">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--color-brand-primary)]/35 bg-[var(--surface-1)] text-[var(--color-brand-primary)]">
-              <Sparkles className="h-4 w-4" />
-            </span>
+        {hasAccess ? (
+          <a
+            href={TOOL_LINKS.builder}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group relative overflow-hidden rounded-2xl border border-[var(--border-muted)] bg-[linear-gradient(135deg,rgba(255,0,60,0.12)_0%,rgba(255,0,60,0.02)_45%,transparent_100%)] p-5 md:col-span-2"
+          >
+            <div className="flex min-h-[156px] flex-col justify-between">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--color-brand-primary)]/35 bg-[var(--surface-1)] text-[var(--color-brand-primary)]">
+                <Sparkles className="h-4 w-4" />
+              </span>
 
-            <div className="flex items-end justify-between gap-3">
-              <div>
-                <p className="text-[11px] font-semibold tracking-wide text-[var(--fg-muted)]">
-                  QUICK START
-                </p>
-                <h3 className="text-2xl font-semibold tracking-tight text-[var(--fg-0)]">
-                  프롬프터
-                </h3>
+              <div className="flex items-end justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-semibold tracking-wide text-[var(--fg-muted)]">
+                    QUICK START
+                  </p>
+                  <h3 className="text-2xl font-semibold tracking-tight text-[var(--fg-0)]">
+                    프롬프터
+                  </h3>
+                </div>
+                <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border-muted)] bg-[var(--surface-1)] text-[var(--fg-0)] transition-transform group-hover:translate-x-0.5">
+                  <ArrowUpRight className="h-4 w-4" />
+                </span>
               </div>
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border-muted)] bg-[var(--surface-1)] text-[var(--fg-0)] transition-transform group-hover:translate-x-0.5">
-                <ArrowUpRight className="h-4 w-4" />
+            </div>
+          </a>
+        ) : (
+          <div className="relative overflow-hidden rounded-2xl border border-[var(--border-muted)] bg-[linear-gradient(135deg,rgba(255,0,60,0.12)_0%,rgba(255,0,60,0.02)_45%,transparent_100%)] p-5 md:col-span-2">
+            <div className="flex min-h-[156px] flex-col justify-between">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--color-brand-primary)]/35 bg-[var(--surface-1)] text-[var(--color-brand-primary)]">
+                <Sparkles className="h-4 w-4" />
               </span>
+
+              <div className="flex items-end justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-semibold tracking-wide text-[var(--fg-muted)]">
+                    QUICK START
+                  </p>
+                  <h3 className="text-2xl font-semibold tracking-tight text-[var(--fg-0)]">
+                    프롬프터
+                  </h3>
+                </div>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border-muted)] bg-[var(--surface-1)] px-3 py-1.5 text-xs text-[var(--fg-muted)]">
+                  <Lock className="h-3 w-3" />
+                  수강 후 이용
+                </span>
+              </div>
             </div>
           </div>
-        </a>
+        )}
 
-        <a
-          href={TOOL_LINKS.vibe}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="group relative overflow-hidden rounded-2xl border border-[var(--border-muted)] bg-[linear-gradient(145deg,rgba(255,0,60,0.09)_0%,rgba(255,255,255,0)_60%)] p-5 text-left"
-        >
-          <div className="flex min-h-[156px] flex-col justify-between">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--color-brand-primary)]/35 bg-[var(--surface-1)] text-[var(--color-brand-primary)]">
-              <Brain className="h-4 w-4" />
-            </span>
-
-            <div className="flex items-end justify-between gap-3">
-              <h3 className="text-xl font-semibold tracking-tight text-[var(--fg-0)]">
-                철학관
-              </h3>
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border-muted)] bg-[var(--surface-1)] text-[var(--fg-0)] transition-transform group-hover:translate-x-0.5">
-                <ArrowUpRight className="h-4 w-4" />
+        {hasAccess ? (
+          <a
+            href={TOOL_LINKS.vibe}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group relative overflow-hidden rounded-2xl border border-[var(--border-muted)] bg-[linear-gradient(145deg,rgba(255,0,60,0.09)_0%,rgba(255,255,255,0)_60%)] p-5 text-left"
+          >
+            <div className="flex min-h-[156px] flex-col justify-between">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--color-brand-primary)]/35 bg-[var(--surface-1)] text-[var(--color-brand-primary)]">
+                <Brain className="h-4 w-4" />
               </span>
+
+              <div className="flex items-end justify-between gap-3">
+                <h3 className="text-xl font-semibold tracking-tight text-[var(--fg-0)]">
+                  철학관
+                </h3>
+                <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border-muted)] bg-[var(--surface-1)] text-[var(--fg-0)] transition-transform group-hover:translate-x-0.5">
+                  <ArrowUpRight className="h-4 w-4" />
+                </span>
+              </div>
+            </div>
+          </a>
+        ) : (
+          <div className="relative overflow-hidden rounded-2xl border border-[var(--border-muted)] bg-[linear-gradient(145deg,rgba(255,0,60,0.09)_0%,rgba(255,255,255,0)_60%)] p-5 text-left">
+            <div className="flex min-h-[156px] flex-col justify-between">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--color-brand-primary)]/35 bg-[var(--surface-1)] text-[var(--color-brand-primary)]">
+                <Brain className="h-4 w-4" />
+              </span>
+
+              <div className="flex items-end justify-between gap-3">
+                <h3 className="text-xl font-semibold tracking-tight text-[var(--fg-0)]">
+                  철학관
+                </h3>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border-muted)] bg-[var(--surface-1)] px-3 py-1.5 text-xs text-[var(--fg-muted)]">
+                  <Lock className="h-3 w-3" />
+                  수강 후 이용
+                </span>
+              </div>
             </div>
           </div>
-        </a>
+        )}
       </div>
 
       <section className="rounded-2xl border border-[var(--border-muted)] bg-[var(--surface-1)] p-3 md:p-4">
