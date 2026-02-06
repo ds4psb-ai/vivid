@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import type { ThresholdMode } from "../../api/sceneDetect";
 import { SceneTimeline } from "./SceneTimeline";
 
@@ -9,6 +9,7 @@ interface DetectionResultsProps {
   usedThresholdMode: ThresholdMode;
   uploadedFile: File | null;
   isDownloading: boolean;
+  backendVideoDuration: number;
   onTimestampsChange: (timestamps: string[]) => void;
   onReset: () => void;
   onReanalyze: (mode: ThresholdMode) => void;
@@ -20,6 +21,7 @@ export function DetectionResults({
   usedThresholdMode,
   uploadedFile,
   isDownloading,
+  backendVideoDuration,
   onTimestampsChange,
   onReset,
   onReanalyze,
@@ -27,21 +29,24 @@ export function DetectionResults({
 }: DetectionResultsProps) {
   const [copied, setCopied] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [videoDuration, setVideoDuration] = useState(0);
+  const [localDuration, setLocalDuration] = useState(0);
   const [videoError, setVideoError] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const rafRef = useRef<number | null>(null);
 
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  // useMemo is SSR-safe here: uploadedFile is always null on initial render
+  const videoUrl = useMemo(
+    () => (uploadedFile ? URL.createObjectURL(uploadedFile) : null),
+    [uploadedFile],
+  );
   useEffect(() => {
-    if (!uploadedFile) {
-      setVideoUrl(null);
-      return;
-    }
-    const url = URL.createObjectURL(uploadedFile);
-    setVideoUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [uploadedFile]);
+    return () => {
+      if (videoUrl) URL.revokeObjectURL(videoUrl);
+    };
+  }, [videoUrl]);
+
+  // Use backend duration if available, otherwise fall back to local <video> metadata
+  const videoDuration = backendVideoDuration > 0 ? backendVideoDuration : localDuration;
 
   // Throttled timeupdate via rAF
   const handleTimeUpdate = useCallback(() => {
@@ -148,7 +153,7 @@ export function DetectionResults({
                 playsInline
                 className="w-full"
                 onTimeUpdate={handleTimeUpdate}
-                onLoadedMetadata={(e) => setVideoDuration(e.currentTarget.duration)}
+                onLoadedMetadata={(e) => setLocalDuration(e.currentTarget.duration)}
                 onError={() => setVideoError(true)}
               />
             ) : (

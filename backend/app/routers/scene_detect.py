@@ -3,6 +3,7 @@ Scene Detection API
 영상 업로드 → FFmpeg로 씬 감지 + 프레임 추출 → ZIP 반환
 """
 import asyncio
+import base64
 import os
 import re
 import shutil
@@ -218,4 +219,77 @@ async def extract_frames_from_timestamps(
 
     finally:
         # 임시 파일 정리
+        shutil.rmtree(work_dir, ignore_errors=True)
+
+
+class ThumbnailItem(BaseModel):
+    timestamp: str
+    data_url: str
+
+
+class ThumbnailsResponse(BaseModel):
+    thumbnails: list[ThumbnailItem]
+
+
+@router.post("/thumbnails", response_model=ThumbnailsResponse)
+async def extract_thumbnails(
+    video: UploadFile = File(...),
+    timestamps: str = Form(""),
+):
+    """
+    타임스탬프 기준 썸네일 추출 (base64 data URL 반환)
+    - 320x180 JPEG, quality=5 로 경량화
+    - 프론트엔드 canvas 추출 대체용
+    """
+    import json
+
+    if not video.filename:
+        raise HTTPException(status_code=400, detail="No video file provided")
+
+    try:
+        ts_list = json.loads(timestamps) if timestamps else []
+        if not ts_list:
+            raise HTTPException(status_code=400, detail="No timestamps provided")
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid timestamps format")
+
+    suffix = Path(video.filename).suffix or ".mp4"
+    work_dir = tempfile.mkdtemp(prefix="thumbnails_")
+    video_path = os.path.join(work_dir, f"input{suffix}")
+
+    try:
+        with open(video_path, "wb") as f:
+            f.write(await video.read())
+
+        thumbnails: list[ThumbnailItem] = []
+
+        for ts in ts_list:
+            frame_path = os.path.join(work_dir, f"thumb_{ts.replace(':', '-')}.jpg")
+
+            # MM:SS.ms → seconds
+            parts = ts.split(":")
+            seconds = float(parts[0]) * 60 + float(parts[1])
+
+            cmd = [
+                "ffmpeg", "-y",
+                "-ss", str(seconds),
+                "-i", video_path,
+                "-vframes", "1",
+                "-vf", "scale=320:180:force_original_aspect_ratio=decrease,pad=320:180:(ow-iw)/2:(oh-ih)/2:black",
+                "-q:v", "5",
+                frame_path,
+            ]
+            await asyncio.to_thread(run_ffmpeg_command, cmd, 15)
+
+            if os.path.exists(frame_path):
+                with open(frame_path, "rb") as img:
+                    b64 = base64.b64encode(img.read()).decode("ascii")
+                thumbnails.append(ThumbnailItem(
+                    timestamp=ts,
+                    data_url=f"data:image/jpeg;base64,{b64}",
+                ))
+
+        return ThumbnailsResponse(thumbnails=thumbnails)
+
+    finally:
         shutil.rmtree(work_dir, ignore_errors=True)

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import { fetchThumbnails } from "../api/sceneDetect";
 
 export interface FrameData {
   timestamp: string;
@@ -11,6 +12,7 @@ export interface FrameData {
 interface UseFrameExtractorReturn {
   frames: FrameData[];
   isExtracting: boolean;
+  extractionError: string | null;
   extractAll: (file: File, timestamps: string[]) => Promise<void>;
   extractSingle: (file: File, seconds: number) => Promise<string>;
 }
@@ -39,6 +41,7 @@ const THUMB_H = 180;
 export function useFrameExtractor(): UseFrameExtractorReturn {
   const [frames, setFrames] = useState<FrameData[]>([]);
   const [isExtracting, setIsExtracting] = useState(false);
+  const [extractionError, setExtractionError] = useState<string | null>(null);
   const cacheRef = useRef<Map<string, string>>(new Map());
   const videoUrlRef = useRef<string | null>(null);
 
@@ -55,7 +58,7 @@ export function useFrameExtractor(): UseFrameExtractorReturn {
   const extractFrame = useCallback(
     (video: HTMLVideoElement, canvas: HTMLCanvasElement, seconds: number): Promise<string> => {
       return new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error("Frame extract timeout")), 5000);
+        const timeout = setTimeout(() => reject(new Error("Frame extract timeout")), 15000);
 
         const onSeeked = () => {
           video.removeEventListener("seeked", onSeeked);
@@ -119,7 +122,30 @@ export function useFrameExtractor(): UseFrameExtractorReturn {
   const extractAll = useCallback(
     async (file: File, timestamps: string[]) => {
       setIsExtracting(true);
+      setExtractionError(null);
 
+      // 1) Try backend FFmpeg extraction first
+      try {
+        const thumbnails = await fetchThumbnails(file, timestamps);
+        if (thumbnails.length > 0) {
+          const results: FrameData[] = thumbnails.map((t) => ({
+            timestamp: t.timestamp,
+            seconds: parseTimestampToSeconds(t.timestamp),
+            thumbnailUrl: t.data_url,
+          }));
+          // Update cache
+          for (const t of thumbnails) {
+            cacheRef.current.set(t.timestamp, t.data_url);
+          }
+          setFrames(results);
+          setIsExtracting(false);
+          return;
+        }
+      } catch (backendErr) {
+        console.warn("Backend thumbnail extraction failed, falling back to canvas:", backendErr);
+      }
+
+      // 2) Fallback: client-side canvas extraction
       try {
         const video = await createVideoElement(file);
         const canvas = document.createElement("canvas");
@@ -141,8 +167,11 @@ export function useFrameExtractor(): UseFrameExtractorReturn {
         }
 
         setFrames(results);
-      } catch {
-        // Silently fail — component will show skeleton
+      } catch (err) {
+        console.error("Frame extraction failed:", err);
+        setExtractionError(
+          err instanceof Error ? err.message : "썸네일을 불러올 수 없습니다",
+        );
       } finally {
         setIsExtracting(false);
       }
@@ -165,5 +194,5 @@ export function useFrameExtractor(): UseFrameExtractorReturn {
     [createVideoElement, extractFrame],
   );
 
-  return { frames, isExtracting, extractAll, extractSingle };
+  return { frames, isExtracting, extractionError, extractAll, extractSingle };
 }

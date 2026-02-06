@@ -16,6 +16,7 @@ interface UseVideoUploadReturn {
   detectedTimestamps: string[];
   errorMessage: string;
   uploadedFile: File | null;
+  videoDuration: number;
   thresholdMode: ThresholdMode;
   usedThresholdMode: ThresholdMode;
   isDragging: boolean;
@@ -37,6 +38,7 @@ export function useVideoUpload(): UseVideoUploadReturn {
   const [detectedTimestamps, setDetectedTimestamps] = useState<string[]>([]);
   const [errorMessage, setErrorMessage] = useState("");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [videoDuration, setVideoDuration] = useState(0);
   const [thresholdMode, setThresholdMode] = useState<ThresholdMode>("standard");
   const [usedThresholdMode, setUsedThresholdMode] = useState<ThresholdMode>("standard");
   const [isDownloading, setIsDownloading] = useState(false);
@@ -75,6 +77,7 @@ export function useVideoUpload(): UseVideoUploadReturn {
         setUploadStatus,
       );
       setDetectedTimestamps(result.timestamps);
+      setVideoDuration(result.video_duration || 0);
       setUploadStatus("done");
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "네트워크 오류가 발생했습니다.");
@@ -120,6 +123,7 @@ export function useVideoUpload(): UseVideoUploadReturn {
     setDetectedTimestamps([]);
     setErrorMessage("");
     setUploadedFile(null);
+    setVideoDuration(0);
   }, []);
 
   return {
@@ -128,6 +132,7 @@ export function useVideoUpload(): UseVideoUploadReturn {
     detectedTimestamps,
     errorMessage,
     uploadedFile,
+    videoDuration,
     thresholdMode,
     usedThresholdMode,
     isDragging,

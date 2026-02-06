@@ -24,7 +24,7 @@ function SceneTimelineInner({
   onTimestampsChange,
   onSeek,
 }: SceneTimelineProps) {
-  const { frames, isExtracting, extractAll } = useFrameExtractor();
+  const { frames, isExtracting, extractionError, extractAll } = useFrameExtractor();
   const scrollRef = useRef<HTMLDivElement>(null);
   const activeRef = useRef<HTMLDivElement>(null);
   const debounceTimers = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
@@ -135,13 +135,24 @@ function SceneTimelineInner({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-xs text-gray-400 font-medium">씬 타임라인</p>
-        <button
-          onClick={addScene}
-          className="px-3 py-1.5 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs font-medium hover:bg-purple-500/20 transition-all flex items-center gap-1"
-        >
-          <span className="material-symbols-outlined text-sm">add</span>
-          씬 추가
-        </button>
+        <div className="flex items-center gap-2">
+          {extractionError && (
+            <button
+              onClick={() => extractAll(file, timestamps)}
+              className="px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-medium hover:bg-amber-500/20 transition-all flex items-center gap-1"
+            >
+              <span className="material-symbols-outlined text-sm">refresh</span>
+              썸네일 재시도
+            </button>
+          )}
+          <button
+            onClick={addScene}
+            className="px-3 py-1.5 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs font-medium hover:bg-purple-500/20 transition-all flex items-center gap-1"
+          >
+            <span className="material-symbols-outlined text-sm">add</span>
+            씬 추가
+          </button>
+        </div>
       </div>
 
       <div
@@ -152,7 +163,8 @@ function SceneTimelineInner({
           const isActive = i === activeIndex;
           const frame = frames[i];
           const isPending = pendingExtracts.has(i);
-          const showSkeleton = isExtracting || isPending || !frame;
+          const showSkeleton = !extractionError && (isExtracting || isPending || !frame);
+          const showError = extractionError && !frame;
 
           return (
             <div
@@ -167,7 +179,12 @@ function SceneTimelineInner({
             >
               {/* Thumbnail */}
               <div className="relative w-full aspect-video bg-black/50">
-                {showSkeleton ? (
+                {showError ? (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800/50 gap-1">
+                    <span className="material-symbols-outlined text-gray-500 text-sm">broken_image</span>
+                    <span className="text-[9px] text-gray-500">로드 실패</span>
+                  </div>
+                ) : showSkeleton ? (
                   <div className="absolute inset-0 flex items-center justify-center bg-gray-800/50">
                     <div className="animate-spin rounded-full h-5 w-5 border-2 border-purple-400 border-t-transparent" />
                   </div>

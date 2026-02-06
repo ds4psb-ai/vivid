@@ -3,6 +3,12 @@ export type ThresholdMode = "precise" | "standard";
 
 export interface SceneDetectResult {
   timestamps: string[];
+  video_duration: number;
+}
+
+export interface ThumbnailItem {
+  timestamp: string;
+  data_url: string;
 }
 
 export function getThresholdValue(mode: ThresholdMode): number {
@@ -33,7 +39,10 @@ export function uploadVideoForSceneDetect(
     xhr.addEventListener("load", () => {
       if (xhr.status === 200) {
         const result = JSON.parse(xhr.responseText);
-        resolve({ timestamps: result.timestamps || [] });
+        resolve({
+          timestamps: result.timestamps || [],
+          video_duration: result.video_duration || 0,
+        });
       } else {
         try {
           const err = JSON.parse(xhr.responseText);
@@ -79,4 +88,28 @@ export async function downloadFramesAsZip(
   }
 
   return response.blob();
+}
+
+/**
+ * Fetch thumbnails from backend (FFmpeg-based, codec-agnostic)
+ */
+export async function fetchThumbnails(
+  file: File,
+  timestamps: string[],
+): Promise<ThumbnailItem[]> {
+  const formData = new FormData();
+  formData.append("video", file);
+  formData.append("timestamps", JSON.stringify(timestamps));
+
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL || ''}/api/v1/scene-detect/thumbnails`,
+    { method: "POST", body: formData },
+  );
+
+  if (!response.ok) {
+    throw new Error("썸네일 추출 실패");
+  }
+
+  const data = await response.json();
+  return data.thumbnails || [];
 }

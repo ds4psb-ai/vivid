@@ -23,6 +23,7 @@ export function UploadContent({ setActiveTab }: UploadContentProps) {
     detectedTimestamps,
     errorMessage,
     uploadedFile,
+    videoDuration,
     thresholdMode,
     usedThresholdMode,
     isDragging,
@@ -208,6 +209,7 @@ export function UploadContent({ setActiveTab }: UploadContentProps) {
             usedThresholdMode={usedThresholdMode}
             uploadedFile={uploadedFile}
             isDownloading={isDownloading}
+            backendVideoDuration={videoDuration}
             onTimestampsChange={setDetectedTimestamps}
             onReset={resetUpload}
             onReanalyze={handleReanalyze}
