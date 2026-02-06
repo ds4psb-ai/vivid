@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, Suspense } from "react";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { ChevronsLeft, ChevronsRight, LogOut } from "lucide-react";
 import { SIDEBAR_NAV_ITEMS } from "@/config/sidebar-nav";
 import { SidebarIcon } from "./SidebarIcon";
@@ -38,7 +38,6 @@ function CrebitSidebarInner() {
   } | null>(null);
 
   const pathname = usePathname();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const currentTab = searchParams.get("tab");
   const { session } = useSessionContext();
@@ -59,12 +58,11 @@ function CrebitSidebarInner() {
   const handleLogout = useCallback(async () => {
     try {
       await api.logout();
-      router.push("/");
-      router.refresh();
     } catch {
       // ignore
     }
-  }, [router]);
+    window.location.href = "/";
+  }, []);
 
   const showTooltip = useCallback(
     (label: string, e: React.MouseEvent<HTMLElement>) => {

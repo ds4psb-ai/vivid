@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   Bot,
   Boxes,
@@ -47,7 +47,6 @@ const STUDIO_NAV_ITEMS: StudioNavItem[] = [
 
 export function StudioSidebar() {
   const pathname = usePathname();
-  const router = useRouter();
   const { session } = useSessionContext();
   const isAdmin = isAdminModeEnabled(session?.user?.role);
   const [collapsed, setCollapsed] = useState(true);
@@ -85,12 +84,11 @@ export function StudioSidebar() {
   const handleLogout = useCallback(async () => {
     try {
       await api.logout();
-      router.push("/");
-      router.refresh();
     } catch {
       // ignore
     }
-  }, [router]);
+    window.location.href = "/";
+  }, []);
 
   const navItems = useMemo(
     () => STUDIO_NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin),
