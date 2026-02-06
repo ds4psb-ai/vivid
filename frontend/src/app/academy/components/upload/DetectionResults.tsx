@@ -59,11 +59,42 @@ export function DetectionResults({
   // 서버 preview 실패 시 blob fallback
   const [serverFailed, setServerFailed] = useState(false);
   const videoUrl = (serverVideoUrl && !serverFailed) ? serverVideoUrl : blobUrl;
+  const [debugInfo, setDebugInfo] = useState<string[]>([]);
+  const addDebug = useCallback((msg: string) => {
+    const ts = new Date().toISOString().slice(11, 23);
+    const line = `[${ts}] ${msg}`;
+    console.log(`[VideoDebug] ${msg}`);
+    setDebugInfo(prev => [...prev.slice(-19), line]);
+  }, []);
 
   // previewId 변경 시 실패 상태 리셋
   useEffect(() => {
     setServerFailed(false);
-  }, [previewId]);
+    addDebug(`previewId changed: ${previewId ?? "null"}`);
+  }, [previewId, addDebug]);
+
+  // Log URL resolution
+  useEffect(() => {
+    addDebug(`URL resolved → serverUrl=${serverVideoUrl ?? "null"}, blobUrl=${blobUrl ? "blob:..." : "null"}, serverFailed=${serverFailed}, using=${videoUrl?.slice(0, 60) ?? "null"}`);
+  }, [videoUrl, serverVideoUrl, blobUrl, serverFailed, addDebug]);
+
+  // Pre-flight check: fetch server URL to detect 404/errors early
+  useEffect(() => {
+    if (!serverVideoUrl || serverFailed) return;
+    addDebug(`Preflight HEAD ${serverVideoUrl}`);
+    fetch(serverVideoUrl, { method: "HEAD" })
+      .then(res => {
+        addDebug(`Preflight result: ${res.status} ${res.statusText}, content-type=${res.headers.get("content-type")}, content-length=${res.headers.get("content-length")}`);
+        if (!res.ok) {
+          addDebug(`Server preview not OK (${res.status}), falling back to blob`);
+          setServerFailed(true);
+        }
+      })
+      .catch(err => {
+        addDebug(`Preflight fetch error: ${err.message}`);
+        setServerFailed(true);
+      });
+  }, [serverVideoUrl, serverFailed, addDebug]);
 
   // Reset video error whenever the URL changes
   useEffect(() => {
@@ -227,12 +258,25 @@ export function DetectionResults({
                 playsInline
                 className="w-full max-h-[400px] object-contain bg-black"
                 onTimeUpdate={handleTimeUpdate}
-                onLoadedMetadata={(e) => setLocalDuration(e.currentTarget.duration)}
-                onError={() => {
+                onLoadStart={() => addDebug(`loadstart: ${videoUrl?.slice(0, 60)}`)}
+                onLoadedMetadata={(e) => {
+                  setLocalDuration(e.currentTarget.duration);
+                  addDebug(`loadedmetadata: duration=${e.currentTarget.duration}, videoW=${e.currentTarget.videoWidth}x${e.currentTarget.videoHeight}`);
+                }}
+                onCanPlay={() => addDebug("canplay: video ready to play")}
+                onError={(e) => {
+                  const vid = e.currentTarget;
+                  const err = vid.error;
+                  const errDetail = err
+                    ? `code=${err.code} (${["","ABORTED","NETWORK","DECODE","SRC_NOT_SUPPORTED"][err.code] ?? "?"}), msg=${err.message}`
+                    : "no error object";
+                  addDebug(`VIDEO onError: ${errDetail}, src=${vid.src?.slice(0, 80)}, networkState=${vid.networkState}, readyState=${vid.readyState}`);
                   if (serverVideoUrl && !serverFailed) {
-                    setServerFailed(true); // blob으로 재시도
+                    addDebug("→ Falling back to blob URL");
+                    setServerFailed(true);
                   } else {
-                    setVideoError(true); // 최종 실패
+                    addDebug("→ Final failure (both server & blob failed)");
+                    setVideoError(true);
                   }
                 }}
               />
@@ -309,6 +353,20 @@ export function DetectionResults({
           </div>
         </button>
       </div>
+
+      {/* Debug panel */}
+      {debugInfo.length > 0 && (
+        <details className="mt-2 rounded-lg bg-gray-900/80 border border-yellow-500/30 text-[10px] font-mono">
+          <summary className="px-3 py-1.5 text-yellow-400 cursor-pointer select-none">
+            Video Debug ({debugInfo.length} logs) | url={videoUrl?.slice(0, 50)} | serverFailed={String(serverFailed)}
+          </summary>
+          <div className="px-3 pb-2 max-h-48 overflow-y-auto space-y-0.5">
+            {debugInfo.map((line, i) => (
+              <div key={i} className="text-gray-400 whitespace-pre-wrap break-all">{line}</div>
+            ))}
+          </div>
+        </details>
+      )}
 
       {/* Download info */}
       <div className="mt-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
