@@ -239,6 +239,17 @@ def create_web_preview(input_path: str, output_path: str) -> tuple[bool, str]:
     return False, " | ".join(errors)
 
 
+def _sanitize_preview_error(raw: str) -> str:
+    """API 응답용 에러 메시지 — 내부 경로/stderr 제거, 코드화된 요약만 반환."""
+    import re as _re
+    # 내부 파일 경로 제거
+    sanitized = _re.sub(r"/[^\s]+/", "[path]/", raw)
+    # 500자 제한
+    if len(sanitized) > 500:
+        sanitized = sanitized[:500] + "..."
+    return sanitized
+
+
 def get_video_duration(video_path: str) -> float:
     """영상 길이 추출"""
     cmd = [
@@ -310,7 +321,8 @@ async def scene_detect_metadata(
         if transcode_ok:
             _preview_store[preview_id] = (preview_path, time.time())
         else:
-            preview_error = transcode_msg
+            # 내부 경로/stderr 제거 — 코드화된 에러만 API 응답에 노출
+            preview_error = _sanitize_preview_error(transcode_msg)
             preview_id = None
             try:
                 os.unlink(preview_path)

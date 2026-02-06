@@ -231,12 +231,14 @@ export function DetectionResults({
           <div className="flex items-start gap-2">
             <span className="material-symbols-outlined text-amber-400 text-lg mt-0.5">warning</span>
             <div className="min-w-0">
-              <p className="text-amber-300 text-xs font-bold">Chrome 재생 불가</p>
-              <p className="text-amber-300/70 text-[10px] mt-1">서버 H.264 변환 실패 — Safari에서는 재생 가능</p>
-              <details className="mt-1">
-                <summary className="text-amber-300/50 text-[10px] cursor-pointer">진단 상세</summary>
-                <pre className="text-amber-300/40 text-[9px] mt-1 whitespace-pre-wrap break-all font-mono">{previewError}</pre>
-              </details>
+              <p className="text-amber-300 text-xs font-bold">서버 영상 변환 실패</p>
+              <p className="text-amber-300/70 text-[10px] mt-1">일부 브라우저에서 재생이 안 될 수 있습니다</p>
+              {process.env.NODE_ENV !== "production" && (
+                <details className="mt-1">
+                  <summary className="text-amber-300/50 text-[10px] cursor-pointer">진단 상세</summary>
+                  <pre className="text-amber-300/40 text-[9px] mt-1 whitespace-pre-wrap break-all font-mono">{previewError}</pre>
+                </details>
+              )}
             </div>
           </div>
         </div>
