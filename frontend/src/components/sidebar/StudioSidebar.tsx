@@ -155,6 +155,7 @@ export function StudioSidebar() {
       <nav className="flex-1 overflow-y-auto px-2 py-2 space-y-0.5">
         {navItems.map((item) => {
           const active = isActive(item.href);
+          const Icon = item.icon;
           return (
             <div key={item.id}>
               {item.dividerBefore && (
