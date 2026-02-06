@@ -191,42 +191,43 @@ export function EnrollmentRequired({ isLoggedIn = false }: EnrollmentRequiredPro
             </div>
           </div>
 
-          {/* 우: 빌더 티저 카드 */}
-          <div className="stagger-reveal stagger-4 rounded-3xl border border-[var(--border-muted)] bg-[var(--surface-1)] p-5 md:p-6 flex flex-col">
+          {/* 우: 실제 프롬프터 출력 예시 */}
+          <div className="stagger-reveal stagger-4 relative overflow-hidden rounded-3xl border border-[var(--border-muted)] bg-[var(--surface-1)] p-5 md:p-6 flex flex-col">
             <div className="flex items-center gap-2 mb-4">
               <Sparkles className="h-5 w-5 text-[var(--color-brand-primary)]" />
-              <p className="text-sm font-semibold text-[var(--fg-0)]">프롬프터 미리보기</p>
+              <p className="text-sm font-semibold text-[var(--fg-0)]">Scene 03 — 프롬프트 예시</p>
             </div>
 
-            <div className="flex-1 space-y-3" aria-hidden>
-              {/* 가짜 텍스트 라인 (목업) */}
-              <div className="space-y-2">
-                <div className="h-2.5 w-full rounded-full bg-[var(--surface-3)]" />
-                <div className="h-2.5 w-4/5 rounded-full bg-[var(--surface-3)]" />
-                <div className="h-2.5 w-3/5 rounded-full bg-[var(--surface-3)]" />
+            <div className="flex-1 space-y-3 text-xs leading-relaxed text-[var(--fg-muted)]">
+              {/* MJ 프롬프트 예시 */}
+              <div className="rounded-xl border border-[var(--border-muted)] bg-[var(--surface-2)] p-3">
+                <p className="mb-1.5 text-[10px] font-bold tracking-wider text-[var(--color-brand-primary)] uppercase">Midjourney V7</p>
+                <p className="line-clamp-3">
+                  cinematic medium shot, male anchor standing in dimly lit alley, neon signs reflecting on wet pavement, volumetric fog, shallow depth of field --ar 9:16 --v 7 --style raw
+                </p>
               </div>
 
-              <div className="h-px w-full bg-[var(--border-muted)]" />
-
-              <div className="space-y-2">
-                <div className="h-2.5 w-full rounded-full bg-[var(--surface-3)]" />
-                <div className="h-2.5 w-2/3 rounded-full bg-[var(--surface-3)]" />
+              {/* Kling 프롬프트 예시 */}
+              <div className="rounded-xl border border-[var(--border-muted)] bg-[var(--surface-2)] p-3">
+                <p className="mb-1.5 text-[10px] font-bold tracking-wider text-emerald-400 uppercase">Kling 1.6</p>
+                <p className="line-clamp-2">
+                  카메라가 천천히 달리 인, 남성 앵커가 골목에서 고개를 돌리며 뒤를 바라본다. 네온 간판 빛이 얼굴 위로 번진다.
+                </p>
               </div>
 
-              <div className="h-px w-full bg-[var(--border-muted)]" />
-
-              <div className="space-y-2">
-                <div className="h-2.5 w-5/6 rounded-full bg-[var(--surface-3)]" />
-                <div className="h-2.5 w-3/4 rounded-full bg-[var(--surface-3)]" />
-                <div className="h-2.5 w-1/2 rounded-full bg-[var(--surface-3)]" />
+              {/* Veo 프롬프트 (블러 처리) */}
+              <div className="rounded-xl border border-[var(--border-muted)] bg-[var(--surface-2)] p-3 select-none">
+                <p className="mb-1.5 text-[10px] font-bold tracking-wider text-blue-400 uppercase">Veo 2</p>
+                <p className="blur-[6px]">
+                  Slow dolly-in through a rain-soaked alley at night. The male anchor turns to look behind, neon signs painting streaks of red and blue across his face.
+                </p>
               </div>
             </div>
 
-            {/* 그라데이션 오버레이 */}
-            <div className="relative mt-4">
-              <div className="absolute -top-12 left-0 right-0 h-12 bg-gradient-to-t from-[var(--surface-1)] to-transparent pointer-events-none" />
-              <p className="text-center text-xs font-medium text-[var(--fg-muted)]">
-                수강 후 바로 사용
+            {/* 하단 잠금 오버레이 */}
+            <div className="absolute inset-x-0 bottom-0 flex items-end justify-center bg-gradient-to-t from-[var(--surface-1)] via-[var(--surface-1)]/90 to-transparent px-4 pb-5 pt-16 pointer-events-none">
+              <p className="text-xs font-semibold text-[var(--fg-muted)]">
+                수강 후 전체 프롬프트 확인
               </p>
             </div>
           </div>
