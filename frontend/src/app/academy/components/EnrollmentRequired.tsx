@@ -164,71 +164,27 @@ export function EnrollmentRequired({ isLoggedIn = false }: EnrollmentRequiredPro
           </p>
         </section>
 
-        {/* 2. 워크플로우 프리뷰 (2:1 grid) */}
-        <div className="grid gap-4 md:grid-cols-3">
-          {/* 좌: 5단계 카드 리스트 */}
-          <div className="stagger-reveal stagger-3 md:col-span-2 rounded-3xl border border-[var(--border-muted)] bg-[var(--surface-1)] p-5 md:p-6">
-            <div className="stagger-children space-y-3">
-              {steps.map((step) => {
-                const Icon = step.icon;
-                return (
-                  <div
-                    key={step.num}
-                    className="flex items-center gap-4 rounded-2xl border border-[var(--border-muted)] bg-[var(--surface-2)] p-4"
-                  >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--color-brand-primary)]/15 text-sm font-bold text-[var(--color-brand-primary)]">
-                      {step.num}
-                    </div>
-                    <Icon className="h-5 w-5 shrink-0 text-[var(--fg-muted)]" />
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-[var(--fg-0)]">{step.label}</p>
-                      <p className="text-xs text-[var(--fg-muted)]">{step.desc}</p>
-                    </div>
+        {/* 2. 워크플로우 프리뷰 */}
+        <div className="stagger-reveal stagger-3 rounded-3xl border border-[var(--border-muted)] bg-[var(--surface-1)] p-5 md:p-6">
+          <div className="stagger-children space-y-3">
+            {steps.map((step) => {
+              const Icon = step.icon;
+              return (
+                <div
+                  key={step.num}
+                  className="flex items-center gap-4 rounded-2xl border border-[var(--border-muted)] bg-[var(--surface-2)] p-4"
+                >
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--color-brand-primary)]/15 text-sm font-bold text-[var(--color-brand-primary)]">
+                    {step.num}
                   </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* 우: 실제 프롬프터 출력 예시 */}
-          <div className="stagger-reveal stagger-4 relative overflow-hidden rounded-3xl border border-[var(--border-muted)] bg-[var(--surface-1)] p-5 md:p-6 flex flex-col">
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="h-5 w-5 text-[var(--color-brand-primary)]" />
-              <p className="text-sm font-semibold text-[var(--fg-0)]">Scene 03 — 프롬프트 예시</p>
-            </div>
-
-            <div className="flex-1 space-y-3 text-xs leading-relaxed text-[var(--fg-muted)]">
-              {/* MJ 프롬프트 예시 */}
-              <div className="rounded-xl border border-[var(--border-muted)] bg-[var(--surface-2)] p-3">
-                <p className="mb-1.5 text-[10px] font-bold tracking-wider text-[var(--color-brand-primary)] uppercase">Midjourney V7</p>
-                <p className="line-clamp-3">
-                  cinematic medium shot, male anchor standing in dimly lit alley, neon signs reflecting on wet pavement, volumetric fog, shallow depth of field --ar 9:16 --v 7 --style raw
-                </p>
-              </div>
-
-              {/* Kling 프롬프트 예시 */}
-              <div className="rounded-xl border border-[var(--border-muted)] bg-[var(--surface-2)] p-3">
-                <p className="mb-1.5 text-[10px] font-bold tracking-wider text-emerald-400 uppercase">Kling 1.6</p>
-                <p className="line-clamp-2">
-                  카메라가 천천히 달리 인, 남성 앵커가 골목에서 고개를 돌리며 뒤를 바라본다. 네온 간판 빛이 얼굴 위로 번진다.
-                </p>
-              </div>
-
-              {/* Veo 프롬프트 (블러 처리) */}
-              <div className="rounded-xl border border-[var(--border-muted)] bg-[var(--surface-2)] p-3 select-none">
-                <p className="mb-1.5 text-[10px] font-bold tracking-wider text-blue-400 uppercase">Veo 2</p>
-                <p className="blur-[6px]">
-                  Slow dolly-in through a rain-soaked alley at night. The male anchor turns to look behind, neon signs painting streaks of red and blue across his face.
-                </p>
-              </div>
-            </div>
-
-            {/* 하단 잠금 오버레이 */}
-            <div className="absolute inset-x-0 bottom-0 flex items-end justify-center bg-gradient-to-t from-[var(--surface-1)] via-[var(--surface-1)]/90 to-transparent px-4 pb-5 pt-16 pointer-events-none">
-              <p className="text-xs font-semibold text-[var(--fg-muted)]">
-                수강 후 전체 프롬프트 확인
-              </p>
-            </div>
+                  <Icon className="h-5 w-5 shrink-0 text-[var(--fg-muted)]" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-[var(--fg-0)]">{step.label}</p>
+                    <p className="text-xs text-[var(--fg-muted)]">{step.desc}</p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 
