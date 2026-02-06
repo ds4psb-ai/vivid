@@ -1,12 +1,14 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { LogOut } from "lucide-react";
 import type { TabKey } from "@/app/academy/constants";
 import { SIDEBAR_NAV_ITEMS } from "@/config/sidebar-nav";
 import { ModeToggle } from "@/components/mode-toggle";
 import { useSessionContext } from "@/contexts/SessionContext";
 import { isAdminModeEnabled } from "@/lib/admin";
+import { api } from "@/lib/api";
 import { extractAcademyTabFromHref, isAcademyTabActive } from "./nav-utils";
 
 interface AcademyMobileNavProps {
@@ -21,6 +23,15 @@ export function AcademyMobileNav({
   const router = useRouter();
   const { session } = useSessionContext();
   const isAdmin = isAdminModeEnabled(session?.user?.role);
+
+  const handleLogout = useCallback(async () => {
+    try {
+      await api.logout();
+    } catch {
+      // ignore
+    }
+    window.location.href = "/";
+  }, []);
 
   const items = useMemo(
     () => SIDEBAR_NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin),
@@ -64,6 +75,14 @@ export function AcademyMobileNav({
             })}
           </div>
         </div>
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[var(--fg-muted)] transition-colors hover:bg-red-500/10 hover:text-red-500"
+          aria-label="로그아웃"
+        >
+          <LogOut className="h-4 w-4" />
+        </button>
         <ModeToggle />
       </div>
     </div>

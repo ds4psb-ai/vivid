@@ -19,10 +19,11 @@ import React, { useState, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Menu, X, Search } from "lucide-react";
+import { ChevronDown, LogOut, Menu, X, Search } from "lucide-react";
 import { ModeToggle } from "@/components/mode-toggle";
 import { MegaMenu } from "./MegaMenu";
 import { NavLink } from "./NavLink";
+import { api } from "@/lib/api";
 
 // =============================================================================
 // MOBILE MENU
@@ -114,7 +115,17 @@ function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
             </nav>
 
             {/* Bottom Section */}
-            <div className="pt-4 border-t border-[var(--glass-border)]">
+            <div className="pt-4 border-t border-[var(--glass-border)] space-y-2">
+              <button
+                onClick={async () => {
+                  try { await api.logout(); } catch { /* ignore */ }
+                  window.location.href = "/";
+                }}
+                className="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-base font-medium text-[var(--fg-muted)] transition-all hover:bg-red-500/10 hover:text-red-500"
+              >
+                <LogOut className="w-5 h-5" />
+                로그아웃
+              </button>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-[var(--fg-muted)]">테마</span>
                 <ModeToggle />
