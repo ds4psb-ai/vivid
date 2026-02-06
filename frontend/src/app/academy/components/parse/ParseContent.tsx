@@ -23,6 +23,8 @@ export function ParseContent({ setActiveTab }: ParseContentProps) {
     activeScenes,
     totalPrompts,
     completedCount,
+    warnings,
+    getWarningsForScene,
     setMdInput,
     setActiveType,
     setIsDragging,
@@ -117,6 +119,18 @@ export function ParseContent({ setActiveTab }: ParseContentProps) {
             <AnchorGuidePanel anchors={parseResult.anchors} />
           )}
 
+          {/* Global warnings summary */}
+          {warnings.length > 0 && (
+            <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+              <p className="text-xs font-bold text-yellow-300 mb-1">
+                {warnings.length}개 경고 감지됨
+              </p>
+              <p className="text-xs text-yellow-200/70">
+                아래 씬 카드에서 개별 경고를 확인하세요.
+              </p>
+            </div>
+          )}
+
           {/* Scene Cards */}
           <div className="space-y-4">
             {activeScenes?.map((scene) => (
@@ -127,6 +141,7 @@ export function ParseContent({ setActiveTab }: ParseContentProps) {
                 completedPrompts={completedPrompts}
                 onCopy={handleCopy}
                 anchors={parseResult.anchors}
+                warnings={getWarningsForScene(scene.sceneNum)}
               />
             ))}
           </div>

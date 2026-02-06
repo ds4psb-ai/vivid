@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { parseBuilder2Output, type Builder2ParseResult } from "@/lib/builder2-md-parser";
+import { parseBuilder2Output, getSceneWarnings, type Builder2ParseResult, type ParseWarning } from "@/lib/builder2-md-parser";
 
 interface UseMDParseReturn {
   // State
@@ -16,6 +16,8 @@ interface UseMDParseReturn {
   activeScenes: Builder2ParseResult["ohmageScenes"] | undefined;
   totalPrompts: number;
   completedCount: number;
+  warnings: ParseWarning[];
+  getWarningsForScene: (sceneNum: number) => ParseWarning[];
 
   // Actions
   setMdInput: (input: string) => void;
@@ -105,6 +107,12 @@ export function useMDParse(): UseMDParseReturn {
     }
   }, []);
 
+  const warnings = parseResult?.warnings || [];
+
+  const getWarningsForScene = useCallback((sceneNum: number) => {
+    return getSceneWarnings(warnings, sceneNum);
+  }, [warnings]);
+
   return {
     mdInput,
     parseResult,
@@ -115,6 +123,8 @@ export function useMDParse(): UseMDParseReturn {
     activeScenes,
     totalPrompts,
     completedCount,
+    warnings,
+    getWarningsForScene,
     setMdInput,
     setActiveType,
     setIsDragging,

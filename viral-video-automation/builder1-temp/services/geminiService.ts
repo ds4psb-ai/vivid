@@ -31,20 +31,22 @@ export const startAnalysisChat = async (
   const ai = new GoogleGenAI({ apiKey });
   const base64Data = await fileToGenerativePart(file);
 
-  // Cache the file data
+  // Cache the file data and reset turn count
   currentFileBase64 = {
     mimeType: file.type,
     data: base64Data
   };
+  turnCount = 0;
 
   const finalSystemPrompt = SYSTEM_PROMPT_TEMPLATE;
 
   // Initialize Chat with ThinkingMode HIGH for better reasoning
+  // temperature 0.3: 간결 프롬프트 + 자연스러운 변형 밸런스
   currentChat = ai.chats.create({
     model: GEMINI_MODEL,
     config: {
       systemInstruction: finalSystemPrompt,
-      temperature: 0.2,
+      temperature: 0.3,
       maxOutputTokens: 32768,
       thinkingConfig: { thinkingLevel: ThinkingLevel.HIGH },
     },
@@ -92,15 +94,21 @@ STEP 1 결과 출력 후 반드시 멈추고 사용자 입력을 기다리세요
   }
 };
 
+// Track turn count to avoid re-sending video after first few turns
+let turnCount = 0;
+
 export const sendUserFeedback = async (
   message: string
 ): Promise<string> => {
   if (!currentChat) throw new Error("활성 채팅 세션이 없습니다.");
 
-  // Re-send the video with the user feedback
+  turnCount++;
+
+  // Re-send video only for first 2 turns (STEP 1 style input, STEP 2 start)
+  // After that, Gemini Chat history already has the video context
   const parts: any[] = [{ text: message }];
 
-  if (currentFileBase64) {
+  if (currentFileBase64 && turnCount <= 2) {
     parts.unshift({
       inlineData: currentFileBase64
     });

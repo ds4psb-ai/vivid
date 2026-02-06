@@ -212,7 +212,7 @@ const App: React.FC = () => {
                       </li>
                       <li className="flex gap-2">
                         <span className="text-green-500">✓</span>
-                        MJ V7 (--cref, --cw)
+                        MJ V7 (--oref, --ow)
                       </li>
                       <li className="flex gap-2">
                         <span className="text-green-500">✓</span>
