@@ -206,6 +206,7 @@ export function DetectionResults({
               <video
                 key={videoUrl}
                 ref={videoRef}
+                src={videoUrl || undefined}
                 controls
                 playsInline
                 className="w-full max-h-[400px] object-contain bg-black"
