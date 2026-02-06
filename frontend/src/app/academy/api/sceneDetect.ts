@@ -5,6 +5,7 @@ export interface SceneDetectResult {
   timestamps: string[];
   video_duration: number;
   preview_id: string | null;
+  preview_error: string | null;
 }
 
 export interface ThumbnailItem {
@@ -44,6 +45,7 @@ export function uploadVideoForSceneDetect(
           timestamps: result.timestamps || [],
           video_duration: result.video_duration || 0,
           preview_id: result.preview_id || null,
+          preview_error: result.preview_error || null,
         });
       } else {
         try {
