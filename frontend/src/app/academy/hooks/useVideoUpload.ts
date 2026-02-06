@@ -22,6 +22,7 @@ interface UseVideoUploadReturn {
   isDownloading: boolean;
 
   // Actions
+  setDetectedTimestamps: (ts: string[]) => void;
   setThresholdMode: (mode: ThresholdMode) => void;
   setIsDragging: (dragging: boolean) => void;
   processVideo: (file: File, modeOverride?: ThresholdMode) => Promise<void>;
@@ -131,6 +132,7 @@ export function useVideoUpload(): UseVideoUploadReturn {
     usedThresholdMode,
     isDragging,
     isDownloading,
+    setDetectedTimestamps,
     setThresholdMode,
     setIsDragging,
     processVideo,

@@ -27,6 +27,7 @@ export function UploadContent({ setActiveTab }: UploadContentProps) {
     usedThresholdMode,
     isDragging,
     isDownloading,
+    setDetectedTimestamps,
     setThresholdMode,
     setIsDragging,
     processVideo,
@@ -207,6 +208,7 @@ export function UploadContent({ setActiveTab }: UploadContentProps) {
             usedThresholdMode={usedThresholdMode}
             uploadedFile={uploadedFile}
             isDownloading={isDownloading}
+            onTimestampsChange={setDetectedTimestamps}
             onReset={resetUpload}
             onReanalyze={handleReanalyze}
             onDownloadFrames={downloadFrames}
