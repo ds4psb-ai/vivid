@@ -161,6 +161,18 @@ export function HomeContent({ setActiveTab, hasAccess }: HomeContentProps) {
           })}
         </div>
       </section>
+
+      {!hasAccess && (
+        <p className="text-sm text-[var(--fg-muted)]">
+          이미 결제하셨나요?{" "}
+          <a
+            href="mailto:ted.taeeun.kim@gmail.com"
+            className="font-medium text-[var(--color-brand-primary)] hover:underline"
+          >
+            문의하기
+          </a>
+        </p>
+      )}
     </div>
   );
 }
