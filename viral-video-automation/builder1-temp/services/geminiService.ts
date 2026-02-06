@@ -31,12 +31,11 @@ export const startAnalysisChat = async (
   const ai = new GoogleGenAI({ apiKey });
   const base64Data = await fileToGenerativePart(file);
 
-  // Cache the file data and reset turn count
+  // Cache the file data
   currentFileBase64 = {
     mimeType: file.type,
     data: base64Data
   };
-  turnCount = 0;
 
   const finalSystemPrompt = SYSTEM_PROMPT_TEMPLATE;
 
@@ -94,21 +93,15 @@ STEP 1 결과 출력 후 반드시 멈추고 사용자 입력을 기다리세요
   }
 };
 
-// Track turn count to avoid re-sending video after first few turns
-let turnCount = 0;
-
 export const sendUserFeedback = async (
   message: string
 ): Promise<string> => {
   if (!currentChat) throw new Error("활성 채팅 세션이 없습니다.");
 
-  turnCount++;
-
-  // Re-send video only for first 2 turns (STEP 1 style input, STEP 2 start)
-  // After that, Gemini Chat history already has the video context
+  // Re-send the video with the user feedback
   const parts: any[] = [{ text: message }];
 
-  if (currentFileBase64 && turnCount <= 2) {
+  if (currentFileBase64) {
     parts.unshift({
       inlineData: currentFileBase64
     });
