@@ -50,6 +50,7 @@ class SceneDetectResult(BaseModel):
     video_duration: float
     threshold: float
     preview_id: str | None = None
+    preview_error: str | None = None
 
 
 def run_ffmpeg_command(cmd: list[str], timeout: int = 120) -> subprocess.CompletedProcess:
@@ -136,16 +137,51 @@ def _get_pixel_format(video_path: str) -> str:
         return ""
 
 
-def create_web_preview(input_path: str, output_path: str) -> bool:
+def _run_ffmpeg_transcode(
+    cmd: list[str], output_path: str, attempt_name: str, codec: str, pix_fmt: str,
+) -> tuple[bool, str]:
+    """FFmpeg 트랜스코딩 시도 — 성공/실패 + 메시지 반환. print()로 Railway stdout 강제 출력."""
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        if result.returncode != 0:
+            stderr_tail = result.stderr[-500:] if result.stderr else "(empty)"
+            err = f"FFmpeg {attempt_name} FAIL code={result.returncode} codec={codec} pix_fmt={pix_fmt} stderr={stderr_tail}"
+            print(f"[PREVIEW] {err}", flush=True)
+            logger.error(err)
+            return False, err
+        if not os.path.exists(output_path):
+            err = f"FFmpeg {attempt_name} returned 0 but no output file: {output_path}"
+            print(f"[PREVIEW] {err}", flush=True)
+            logger.error(err)
+            return False, err
+        msg = f"OK ({attempt_name}) codec={codec} pix_fmt={pix_fmt}"
+        print(f"[PREVIEW] {msg}", flush=True)
+        logger.info("Preview %s", msg)
+        return True, msg
+    except subprocess.TimeoutExpired:
+        err = f"FFmpeg {attempt_name} timeout 300s"
+        print(f"[PREVIEW] {err}", flush=True)
+        logger.error(err)
+        return False, err
+    except Exception as e:
+        err = f"FFmpeg {attempt_name} exception: {e}"
+        print(f"[PREVIEW] {err}", flush=True)
+        logger.warning(err)
+        return False, err
+
+
+def create_web_preview(input_path: str, output_path: str) -> tuple[bool, str]:
     """
-    브라우저 호환 H.264/AAC MP4 생성.
-    H.264 + yuv420p면 remux만 (초고속), 아니면 풀 트랜스코딩.
-    - pix_fmt yuv420p 강제 (10-bit → 8-bit)
-    - profile main / level 4.0 (HW 디코더 호환)
-    - portrait/landscape 자동 대응 스케일 필터
+    브라우저 호환 H.264/AAC MP4 생성 (폴백 체인).
+    H.264 + yuv420p면 remux만 (초고속), 아니면 3단계 폴백:
+      1) full: libx264 + yuv420p + scale filter
+      2) no-scale: libx264 + yuv420p (스케일 없이)
+      3) copy: codec copy + faststart only (컨테이너 변환만)
+    반환: (성공여부, 메시지)
     """
     codec = get_video_codec(input_path)
     pix_fmt = _get_pixel_format(input_path)
+    print(f"[PREVIEW] start: codec={codec} pix_fmt={pix_fmt} input={input_path}", flush=True)
 
     if codec == "h264" and pix_fmt == "yuv420p":
         # remux only — 재인코딩 없이 컨테이너만 MP4로 변환
@@ -155,9 +191,11 @@ def create_web_preview(input_path: str, output_path: str) -> bool:
             "-movflags", "+faststart",
             output_path,
         ]
-    else:
-        # 풀 트랜스코딩 → H.264 (max longest-side 1280, 짝수 보정)
-        cmd = [
+        return _run_ffmpeg_transcode(cmd, output_path, "remux", codec, pix_fmt)
+
+    # 폴백 체인: 하나라도 성공하면 OK
+    attempts = [
+        ("full", [
             "ffmpeg", "-y", "-i", input_path,
             "-c:v", "libx264", "-profile:v", "main", "-level:v", "4.0",
             "-preset", "fast", "-crf", "23",
@@ -169,28 +207,36 @@ def create_web_preview(input_path: str, output_path: str) -> bool:
             ":'if(gte(iw,ih),-2,min(1280,ih))'"
             ",pad=ceil(iw/2)*2:ceil(ih/2)*2",
             output_path,
-        ]
+        ]),
+        ("no-scale", [
+            "ffmpeg", "-y", "-i", input_path,
+            "-c:v", "libx264", "-preset", "fast", "-crf", "23",
+            "-pix_fmt", "yuv420p",
+            "-c:a", "aac", "-b:a", "128k",
+            "-movflags", "+faststart",
+            output_path,
+        ]),
+        ("copy", [
+            "ffmpeg", "-y", "-i", input_path,
+            "-c:v", "copy", "-c:a", "aac", "-b:a", "128k",
+            "-movflags", "+faststart",
+            output_path,
+        ]),
+    ]
 
-    try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
-        if result.returncode != 0:
-            logger.error(
-                "FFmpeg transcode FAIL (code=%d) codec=%s pix_fmt=%s\nstderr: %s",
-                result.returncode, codec, pix_fmt,
-                result.stderr[-2000:] if result.stderr else "(empty)",
-            )
-            return False
-        if not os.path.exists(output_path):
-            logger.error("FFmpeg returned 0 but no output: %s", output_path)
-            return False
-        logger.info("Preview OK: %s/%s → h264/yuv420p", codec, pix_fmt)
-        return True
-    except subprocess.TimeoutExpired:
-        logger.error("FFmpeg transcode timeout 300s")
-        return False
-    except Exception as e:
-        logger.warning("preview transcode exception: %s", e)
-        return False
+    errors = []
+    for name, cmd in attempts:
+        # 이전 시도 실패 시 출력 파일 정리
+        try:
+            os.unlink(output_path)
+        except OSError:
+            pass
+        ok, msg = _run_ffmpeg_transcode(cmd, output_path, name, codec, pix_fmt)
+        if ok:
+            return True, msg
+        errors.append(f"[{name}] {msg}")
+
+    return False, " | ".join(errors)
 
 
 def get_video_duration(video_path: str) -> float:
@@ -249,16 +295,22 @@ async def scene_detect_metadata(
     preview_path = os.path.join(tempfile.gettempdir(), f"preview_{preview_id}.mp4")
 
     try:
-        # 씬 감지 + H.264 트랜스코딩 병렬 실행
-        timestamps, duration, transcode_ok = await asyncio.gather(
+        # Phase 1: 씬 감지 + 영상 길이 (병렬)
+        timestamps, duration = await asyncio.gather(
             asyncio.to_thread(detect_scenes, tmp_path, threshold),
             asyncio.to_thread(get_video_duration, tmp_path),
-            asyncio.to_thread(create_web_preview, tmp_path, preview_path),
         )
 
+        # Phase 2: H.264 트랜스코딩 (순차 — OOM/메모리 경합 방지)
+        transcode_ok, transcode_msg = await asyncio.to_thread(
+            create_web_preview, tmp_path, preview_path,
+        )
+
+        preview_error = None
         if transcode_ok:
             _preview_store[preview_id] = (preview_path, time.time())
         else:
+            preview_error = transcode_msg
             preview_id = None
             try:
                 os.unlink(preview_path)
@@ -273,6 +325,7 @@ async def scene_detect_metadata(
             video_duration=duration,
             threshold=threshold,
             preview_id=preview_id,
+            preview_error=preview_error,
         )
     finally:
         os.unlink(tmp_path)
@@ -469,3 +522,73 @@ async def extract_thumbnails(
 
     finally:
         shutil.rmtree(work_dir, ignore_errors=True)
+
+
+@router.get("/ffmpeg-info")
+async def ffmpeg_info():
+    """Railway FFmpeg 환경 진단 — 버전, libx264, /tmp 쓰기, 테스트 인코딩"""
+    info: dict = {}
+
+    # 1) FFmpeg version
+    try:
+        r = subprocess.run(["ffmpeg", "-version"], capture_output=True, text=True, timeout=10)
+        first_line = r.stdout.split("\n")[0] if r.stdout else "(no output)"
+        info["ffmpeg_version"] = first_line
+    except Exception as e:
+        info["ffmpeg_version"] = f"ERROR: {e}"
+
+    # 2) libx264 available?
+    try:
+        r = subprocess.run(
+            ["ffmpeg", "-encoders"], capture_output=True, text=True, timeout=10,
+        )
+        info["libx264_available"] = "libx264" in r.stdout
+    except Exception as e:
+        info["libx264_available"] = f"ERROR: {e}"
+
+    # 3) /tmp writable?
+    test_file = os.path.join(tempfile.gettempdir(), f"ffmpeg_test_{uuid.uuid4().hex[:8]}.txt")
+    try:
+        with open(test_file, "w") as f:
+            f.write("test")
+        os.unlink(test_file)
+        info["tmp_writable"] = True
+    except Exception as e:
+        info["tmp_writable"] = f"ERROR: {e}"
+
+    # 4) 1-second test encode
+    test_input = os.path.join(tempfile.gettempdir(), f"fftest_in_{uuid.uuid4().hex[:8]}.mp4")
+    test_output = os.path.join(tempfile.gettempdir(), f"fftest_out_{uuid.uuid4().hex[:8]}.mp4")
+    try:
+        # generate 1s black video with lavfi
+        gen_cmd = [
+            "ffmpeg", "-y", "-f", "lavfi", "-i",
+            "color=c=black:s=320x240:d=1:r=24",
+            "-c:v", "libx264", "-pix_fmt", "yuv420p",
+            "-movflags", "+faststart",
+            test_output,
+        ]
+        r = subprocess.run(gen_cmd, capture_output=True, text=True, timeout=30)
+        if r.returncode == 0 and os.path.exists(test_output):
+            size = os.path.getsize(test_output)
+            info["test_encode"] = f"OK (size={size} bytes)"
+        else:
+            info["test_encode"] = f"FAIL code={r.returncode} stderr={r.stderr[-300:]}"
+    except Exception as e:
+        info["test_encode"] = f"ERROR: {e}"
+    finally:
+        for p in (test_input, test_output):
+            try:
+                os.unlink(p)
+            except OSError:
+                pass
+
+    # 5) Disk space
+    try:
+        st = os.statvfs(tempfile.gettempdir())
+        free_mb = (st.f_bavail * st.f_frsize) / (1024 * 1024)
+        info["tmp_free_mb"] = round(free_mb, 1)
+    except Exception as e:
+        info["tmp_free_mb"] = f"ERROR: {e}"
+
+    return info
