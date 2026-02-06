@@ -38,7 +38,7 @@ export default function RootPage() {
 function LoadingScreen() {
   return (
     <div className="min-h-screen bg-[var(--bg-0)] flex items-center justify-center">
-      <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-purple-400 animate-pulse" />
+      <div className="w-8 h-8 rounded-full bg-[var(--color-brand-primary)] animate-pulse" />
     </div>
   );
 }
@@ -121,14 +121,13 @@ function RootContent() {
     >
       <div className="min-h-screen">
         {/* Simple Header */}
-        <div className="px-6 pt-5 pb-3">
-          <h1 className="text-lg font-bold text-[var(--fg-0)]">AI Academy</h1>
-          <p className="text-[10px] font-mono text-[var(--fg-muted)] uppercase tracking-widest mt-0.5">
-            Creative Automation Suite v2.0
-            {accessState.accessInfo?.cohort && (
-              <span className="ml-3 text-[var(--color-brand-primary)]">{accessState.accessInfo.cohort}</span>
-            )}
-          </p>
+        <div className="px-6 pt-5 pb-3 flex items-center justify-between">
+          <h1 className="text-lg font-bold text-[var(--fg-0)]">Academy</h1>
+          {accessState.accessInfo?.cohort && (
+            <span className="px-2 py-1 rounded-md text-[10px] font-mono border border-[var(--border-muted)] text-[var(--fg-muted)]">
+              {accessState.accessInfo.cohort}
+            </span>
+          )}
         </div>
 
         {/* Content */}

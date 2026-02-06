@@ -22,14 +22,14 @@ export interface SidebarNavItem {
 }
 
 export const SIDEBAR_NAV_ITEMS: SidebarNavItem[] = [
-  { id: "home", icon: LayoutDashboard, label: "홈 대시보드", href: "/" },
-  { id: "setup", icon: Settings, label: "환경 설정", href: "/?tab=setup" },
-  { id: "credit", icon: Gift, label: "$300 무료 크레딧", href: "/?tab=credit" },
+  { id: "home", icon: LayoutDashboard, label: "홈", href: "/" },
+  { id: "setup", icon: Settings, label: "설정", href: "/?tab=setup" },
+  { id: "credit", icon: Gift, label: "크레딧", href: "/?tab=credit" },
   { id: "upload", icon: Upload, label: "영상 업로드", href: "/?tab=upload", dividerBefore: true },
-  { id: "prompt", icon: Sparkles, label: "프롬프트 생성", href: "/?tab=prompt" },
+  { id: "prompt", icon: Sparkles, label: "프롬프트", href: "/?tab=prompt" },
   { id: "parse", icon: ClipboardCopy, label: "파싱 + 복사", href: "/?tab=parse" },
-  { id: "tools", icon: Wrench, label: "외부 툴", href: "/?tab=tools" },
-  { id: "vibe", icon: Brain, label: "바이브 철학관", href: "/?tab=vibe", dividerBefore: true },
+  { id: "tools", icon: Wrench, label: "툴", href: "/?tab=tools" },
+  { id: "vibe", icon: Brain, label: "바이브", href: "/?tab=vibe", dividerBefore: true },
   { id: "homework", icon: ClipboardCheck, label: "과제", href: "/?tab=homework" },
-  { id: "admin", icon: Shield, label: "수강생 관리", href: "/?tab=admin", dividerBefore: true, adminOnly: true },
+  { id: "admin", icon: Shield, label: "관리", href: "/?tab=admin", dividerBefore: true, adminOnly: true },
 ];

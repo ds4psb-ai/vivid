@@ -107,7 +107,7 @@ export function UploadContent({ setActiveTab }: UploadContentProps) {
 
   return (
     <div className="max-w-3xl mx-auto space-y-8">
-      <PageHeader title="영상 업로드 + 컷 나누기" sub="다운로드 → 업로드 → 분석" />
+      <PageHeader title="업로드" />
 
       <ContentCard>
         <div className="flex items-center gap-3 mb-4">

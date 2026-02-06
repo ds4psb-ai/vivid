@@ -10,7 +10,10 @@ export function HomeworkContent() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-8">
-      <PageHeader title="과제 안내" sub={`${selectedLecture} 예정: ${data.date}`} />
+      <PageHeader title="과제" />
+      <div className="text-xs text-[var(--fg-muted)]">
+        {selectedLecture} · {data.date}
+      </div>
 
       <div className="flex items-center gap-2 bg-[var(--surface-2)] rounded-xl p-1.5">
         {(Object.keys(HOMEWORK_DATA) as LectureKey[]).map((key) => (
@@ -55,7 +58,7 @@ export function HomeworkContent() {
       </ContentCard>
 
       <ContentCard>
-        <h3 className="text-lg font-bold text-[var(--fg-0)] mb-4">제출 방법</h3>
+        <h3 className="text-lg font-bold text-[var(--fg-0)] mb-4">제출</h3>
         <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
           <p className="text-emerald-700 dark:text-emerald-300 font-medium mb-2">{data.submission.channel}</p>
           {data.submission.items.length > 0 && (

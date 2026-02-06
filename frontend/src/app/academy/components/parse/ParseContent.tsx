@@ -59,7 +59,7 @@ export function ParseContent({ setActiveTab }: ParseContentProps) {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <PageHeader title="파싱 + 복사" sub="붙여넣기 → 복사" />
+      <PageHeader title="파싱" />
 
       {/* MD Input */}
       <MDInput

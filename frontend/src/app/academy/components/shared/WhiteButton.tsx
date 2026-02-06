@@ -10,7 +10,7 @@ interface WhiteButtonProps {
 export function WhiteButton({ href, onClick, children, large }: WhiteButtonProps) {
   const className = `w-full flex items-center justify-center gap-3 ${
     large ? "px-10 py-5 text-lg" : "px-6 py-4 text-sm"
-  } rounded-2xl bg-[var(--fg-0)] text-[var(--bg-0)] font-bold shadow-[0_10px_30px_-10px_rgba(2,6,23,0.25)] hover:opacity-90 transition-all duration-200`;
+  } rounded-2xl bg-[var(--fg-0)] text-[var(--bg-0)] font-bold hover:opacity-90 transition-all duration-200`;
 
   if (href) {
     return (
