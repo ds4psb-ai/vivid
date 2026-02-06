@@ -2,8 +2,8 @@
 
 /**
  * Root Page (/)
- * - 비로그인: EnrollmentRequired (로그인 + 수강신청 안내)
- * - 로그인 + 접근권한: AppShell + Academy (사이드바 탭 전환)
+ * - 비로그인: EnrollmentRequired
+ * - 로그인 + 접근권한: AppShell + Academy
  * - 로그인 + 권한없음: EnrollmentRequired
  */
 
@@ -27,6 +27,19 @@ import {
 import { api, type AcademyAccessResponse } from "@/lib/api";
 import AppShell from "@/components/AppShell";
 
+const TAB_TITLES: Record<TabKey, string> = {
+  home: "홈",
+  setup: "시작",
+  credit: "크레딧",
+  upload: "업로드",
+  prompt: "빌더",
+  parse: "파싱",
+  tools: "툴",
+  vibe: "바이브",
+  homework: "과제",
+  admin: "관리",
+};
+
 export default function RootPage() {
   return (
     <Suspense fallback={<LoadingScreen />}>
@@ -37,8 +50,8 @@ export default function RootPage() {
 
 function LoadingScreen() {
   return (
-    <div className="min-h-screen bg-[var(--bg-0)] flex items-center justify-center">
-      <div className="w-8 h-8 rounded-full bg-[var(--color-brand-primary)] animate-pulse" />
+    <div className="flex min-h-screen items-center justify-center bg-[var(--bg-0)]">
+      <div className="h-8 w-8 rounded-full bg-[var(--color-brand-primary)] animate-pulse" />
     </div>
   );
 }
@@ -88,16 +101,24 @@ function RootContent() {
     }
 
     checkAccess();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const handleTabChange = useCallback((tab: TabKey) => {
-    router.push(tab === "home" ? "/" : `/?tab=${tab}`, { scroll: false });
-  }, [router]);
+  const handleTabChange = useCallback(
+    (tab: TabKey) => {
+      router.push(tab === "home" ? "/" : `/?tab=${tab}`, { scroll: false });
+    },
+    [router]
+  );
 
-  // Guard: redirect non-admin users away from admin tab
   useEffect(() => {
-    if (!accessState.loading && activeTab === "admin" && !accessState.accessInfo?.is_admin) {
+    if (
+      !accessState.loading &&
+      activeTab === "admin" &&
+      !accessState.accessInfo?.is_admin
+    ) {
       router.push("/", { scroll: false });
     }
   }, [accessState.loading, accessState.accessInfo?.is_admin, activeTab, router]);
@@ -106,12 +127,10 @@ function RootContent() {
     return <LoadingScreen />;
   }
 
-  // No access → EnrollmentRequired (handles both logged-out and enrolled-but-no-access)
   if (!accessState.hasAccess) {
     return <EnrollmentRequired isLoggedIn={accessState.isLoggedIn} />;
   }
 
-  // Has access → AppShell + Academy content (tab bar removed, sidebar handles navigation)
   return (
     <AppShell
       showChokki={false}
@@ -120,18 +139,18 @@ function RootContent() {
       onAcademyTabChange={handleTabChange}
     >
       <div className="min-h-screen">
-        {/* Simple Header */}
-        <div className="px-6 pt-5 pb-3 flex items-center justify-between">
-          <h1 className="text-lg font-bold text-[var(--fg-0)]">Academy</h1>
-          {accessState.accessInfo?.cohort && (
-            <span className="px-2 py-1 rounded-md text-[10px] font-mono border border-[var(--border-muted)] text-[var(--fg-muted)]">
-              {accessState.accessInfo.cohort}
-            </span>
-          )}
-        </div>
+        <div className="mx-auto w-full max-w-[1200px] px-4 pb-6 pt-5 md:px-6">
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <h1 className="font-korean text-xl font-semibold text-[var(--fg-0)] md:text-2xl">
+              {TAB_TITLES[activeTab]}
+            </h1>
+            {accessState.accessInfo?.cohort && (
+              <span className="rounded-full border border-[var(--border-muted)] px-2.5 py-1 text-[11px] text-[var(--fg-muted)]">
+                {accessState.accessInfo.cohort}
+              </span>
+            )}
+          </div>
 
-        {/* Content */}
-        <div className="p-6">
           {activeTab === "home" && <HomeContent setActiveTab={handleTabChange} />}
           {activeTab === "setup" && <SetupContent setActiveTab={handleTabChange} />}
           {activeTab === "credit" && <CreditContent setActiveTab={handleTabChange} />}

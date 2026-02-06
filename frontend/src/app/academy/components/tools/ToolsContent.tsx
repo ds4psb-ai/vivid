@@ -10,58 +10,69 @@ interface ToolsContentProps {
 
 export function ToolsContent({ setActiveTab }: ToolsContentProps) {
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      <PageHeader title="툴" />
+    <div className="mx-auto w-full max-w-[var(--academy-content-max)] space-y-4">
+      <PageHeader title="툴" sub="바로 열기" />
 
       <ContentCard>
-        <h3 className="text-lg font-bold text-[var(--fg-0)] mb-4">이미지</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <h3 className="mb-3 text-base font-semibold text-[var(--fg-0)]">이미지</h3>
+        <div className="grid gap-2 sm:grid-cols-2">
           {IMAGE_TOOLS.map((tool) => (
             <a
               key={tool.id}
               href={tool.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-xl border border-[var(--border-muted)] bg-[var(--surface-2)] p-4"
+              className="inline-flex min-h-11 items-center justify-between rounded-xl border border-[var(--border-muted)] bg-[var(--surface-2)] px-4 text-sm font-medium text-[var(--fg-0)] transition-colors hover:bg-[var(--surface-3)]"
             >
-              <div className="flex items-center justify-between gap-2">
-                <p className="font-semibold text-[var(--fg-0)]">{tool.title}</p>
-                <span className="text-xs text-[var(--fg-muted)]">{tool.badge}</span>
-              </div>
+              <span className="inline-flex items-center gap-2">
+                <span className="material-symbols-outlined text-[18px] text-[var(--color-brand-primary)]" aria-hidden>
+                  add
+                </span>
+                {tool.title}
+              </span>
+              <span className="material-symbols-outlined text-[18px] text-[var(--fg-muted)]" aria-hidden>
+                north_east
+              </span>
             </a>
           ))}
         </div>
       </ContentCard>
 
       <ContentCard>
-        <h3 className="text-lg font-bold text-[var(--fg-0)] mb-4">영상</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <h3 className="mb-3 text-base font-semibold text-[var(--fg-0)]">영상</h3>
+        <div className="grid gap-2 sm:grid-cols-2">
           {VIDEO_TOOLS.map((tool) => (
             <a
               key={tool.id}
               href={tool.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-xl border border-[var(--border-muted)] bg-[var(--surface-2)] p-4"
+              className="inline-flex min-h-11 items-center justify-between rounded-xl border border-[var(--border-muted)] bg-[var(--surface-2)] px-4 text-sm font-medium text-[var(--fg-0)] transition-colors hover:bg-[var(--surface-3)]"
             >
-              <div className="flex items-center justify-between gap-2">
-                <p className="font-semibold text-[var(--fg-0)]">{tool.title}</p>
-                <span className="text-xs text-[var(--fg-muted)]">{tool.badge}</span>
-              </div>
+              <span className="inline-flex items-center gap-2">
+                <span className="material-symbols-outlined text-[18px] text-[var(--color-brand-primary)]" aria-hidden>
+                  add
+                </span>
+                {tool.title}
+              </span>
+              <span className="material-symbols-outlined text-[18px] text-[var(--fg-muted)]" aria-hidden>
+                north_east
+              </span>
             </a>
           ))}
         </div>
       </ContentCard>
 
-      <div className="text-center py-4">
-        <button
-          onClick={() => setActiveTab("homework")}
-          className="px-6 py-3 rounded-xl bg-[var(--fg-0)] text-[var(--bg-0)] font-bold hover:opacity-90 transition-all inline-flex items-center gap-2"
-        >
-          <span className="material-symbols-outlined">assignment</span>
-          과제 확인하기
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={() => setActiveTab("homework")}
+        className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[var(--fg-0)] px-4 text-sm font-semibold text-[var(--bg-0)] transition-opacity hover:opacity-90"
+      >
+        <span className="material-symbols-outlined text-[18px]" aria-hidden>
+          arrow_forward
+        </span>
+        과제로 이동
+      </button>
     </div>
   );
 }

@@ -172,10 +172,10 @@
      Korean font: Noto Sans KR fallback for CJK characters
      ───────────────────────────────────────────────────────────────────────── */
 
-  --font-heading: 'Space Grotesk', 'Noto Sans KR', system-ui, sans-serif;
-  --font-body: 'Inter', 'Noto Sans KR', system-ui, sans-serif;
+  --font-heading: 'Pretendard Variable', 'Pretendard', 'LINE Seed KR', 'Noto Sans KR', system-ui, sans-serif;
+  --font-body: 'Pretendard Variable', 'Pretendard', 'LINE Seed KR', 'Noto Sans KR', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
-  --font-korean: 'Noto Sans KR', 'Inter', system-ui, sans-serif;
+  --font-korean: 'Pretendard Variable', 'Pretendard', 'LINE Seed KR', 'Noto Sans KR', system-ui, sans-serif;
 
   /* ─────────────────────────────────────────────────────────────────────────
      BORDER RADIUS TOKENS
@@ -251,8 +251,8 @@
   /* ─────────────────────────────────────────────────────────────────────────
      SIDEBAR LAYOUT TOKENS
      ───────────────────────────────────────────────────────────────────────── */
-  --sidebar-collapsed: 5rem;   /* 80px */
-  --sidebar-expanded: 16rem;   /* 256px */
+  --sidebar-collapsed: 4.5rem;   /* 72px */
+  --sidebar-expanded: 15rem;     /* 240px */
 
   /* ─────────────────────────────────────────────────────────────────────────
      GLASS MORPHISM TOKENS
@@ -272,17 +272,17 @@
 
   /* Font Display - Space Grotesk for headings (Stitch AI design) */
   .font-display {
-    font-family: 'Space Grotesk', 'Noto Sans KR', system-ui, sans-serif;
+    font-family: 'Pretendard Variable', 'Pretendard', 'LINE Seed KR', 'Noto Sans KR', system-ui, sans-serif;
   }
 
   /* Font Sans - Inter for body text (Stitch AI design) */
   .font-sans {
-    font-family: 'Inter', 'Noto Sans KR', system-ui, sans-serif;
+    font-family: 'Pretendard Variable', 'Pretendard', 'LINE Seed KR', 'Noto Sans KR', system-ui, sans-serif;
   }
 
   /* Font Korean - Noto Sans KR primary for Korean-heavy content */
   .font-korean {
-    font-family: 'Noto Sans KR', 'Inter', system-ui, sans-serif;
+    font-family: 'Pretendard Variable', 'Pretendard', 'LINE Seed KR', 'Noto Sans KR', system-ui, sans-serif;
   }
 
   /* Lusion-style Glass Card (Standardized) */
@@ -337,6 +337,7 @@
   --surface-1: rgba(255, 255, 255, 0.8);
   --surface-2: rgba(244, 244, 245, 0.8);
   --surface-3: rgba(236, 236, 241, 0.95);
+  --surface-0: var(--surface-1);
   --glass-border: rgba(0, 0, 0, 0.08);
   --glass-highlight: rgba(0, 0, 0, 0.03);
   --overlay-backdrop: rgba(2, 6, 23, 0.55);
@@ -378,6 +379,12 @@
   --role-tertiary-bg: transparent;
   --role-tertiary-fg: var(--fg-muted);
   --role-tertiary-border: transparent;
+
+  /* Academy UI tokens */
+  --academy-content-max: 68rem;
+  --academy-card-padding: 1.25rem;
+  --academy-radius: 1rem;
+  --academy-touch-min: 44px;
 
   /* Crebit Philosophy Tokens (Section 3.5) */
   --evidence-badge-bg: rgba(14, 165, 233, 0.12);
@@ -508,6 +515,7 @@
   --surface-1: rgba(22, 22, 24, 0.6);
   --surface-2: rgba(30, 30, 35, 0.6);
   --surface-3: rgba(42, 42, 50, 0.7);
+  --surface-0: var(--surface-1);
   --glass-border: rgba(255, 255, 255, 0.08);
   /* Subtle border for glass */
   --glass-highlight: rgba(255, 255, 255, 0.03);

@@ -9,21 +9,19 @@ export function HomeworkContent() {
   const data = HOMEWORK_DATA[selectedLecture];
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8">
-      <PageHeader title="과제" />
-      <div className="text-xs text-[var(--fg-muted)]">
-        {selectedLecture} · {data.date}
-      </div>
+    <div className="mx-auto w-full max-w-[var(--academy-content-max)] space-y-4">
+      <PageHeader title="과제" sub={`${selectedLecture} · ${data.date}`} />
 
-      <div className="flex items-center gap-2 bg-[var(--surface-2)] rounded-xl p-1.5">
+      <div className="grid grid-cols-3 gap-2 rounded-[var(--academy-radius)] border border-[var(--border-muted)] bg-[var(--surface-1)] p-2">
         {(Object.keys(HOMEWORK_DATA) as LectureKey[]).map((key) => (
           <button
             key={key}
+            type="button"
             onClick={() => setSelectedLecture(key)}
-            className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+            className={`min-h-11 rounded-xl border px-3 text-sm font-medium transition-colors ${
               selectedLecture === key
-                ? "bg-[var(--color-brand-primary)] text-white"
-                : "text-[var(--fg-muted)] hover:text-[var(--fg-0)] hover:bg-[var(--surface-1)]"
+                ? "border-[var(--color-brand-primary)]/40 bg-[var(--color-brand-primary)]/10 text-[var(--color-brand-primary)]"
+                : "border-[var(--border-muted)] bg-[var(--surface-2)] text-[var(--fg-muted)] hover:text-[var(--fg-0)]"
             }`}
           >
             {key}
@@ -32,23 +30,16 @@ export function HomeworkContent() {
       </div>
 
       <ContentCard>
-        <h3 className="text-lg font-bold text-[var(--fg-0)] mb-4">필수 과제</h3>
-        <div className="space-y-4">
+        <h3 className="mb-3 text-base font-semibold text-[var(--fg-0)]">필수</h3>
+        <div className="space-y-3">
           {data.tasks.map((task, i) => (
-            <div key={i} className="p-4 rounded-xl border border-[var(--border-muted)] bg-[var(--surface-2)]">
-              <p className="font-bold mb-2">{task.title}</p>
-              <ul className="text-[var(--fg-muted)] text-sm space-y-1">
+            <div key={i} className="rounded-xl border border-[var(--border-muted)] bg-[var(--surface-2)] p-3">
+              <p className="mb-2 text-sm font-semibold text-[var(--fg-0)]">{task.title}</p>
+              <ul className="space-y-1 text-sm text-[var(--fg-muted)]">
                 {task.items.map((item, j) => (
-                  <li key={j}>
-                    {"highlight" in task && task.highlight && item.includes(task.highlight) ? (
-                      <>
-                        {item.split(task.highlight)[0]}
-                        <span className="font-bold text-purple-600">{task.highlight}</span>
-                        {item.split(task.highlight)[1]}
-                      </>
-                    ) : (
-                      item
-                    )}
+                  <li key={j} className="flex items-start gap-2">
+                    <span aria-hidden>•</span>
+                    <span>{item}</span>
                   </li>
                 ))}
               </ul>
@@ -58,20 +49,23 @@ export function HomeworkContent() {
       </ContentCard>
 
       <ContentCard>
-        <h3 className="text-lg font-bold text-[var(--fg-0)] mb-4">제출</h3>
-        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-          <p className="text-emerald-700 dark:text-emerald-300 font-medium mb-2">{data.submission.channel}</p>
+        <h3 className="mb-3 text-base font-semibold text-[var(--fg-0)]">제출</h3>
+        <div className="rounded-xl border border-[var(--border-muted)] bg-[var(--surface-2)] p-3">
+          <p className="text-sm font-medium text-[var(--fg-0)]">{data.submission.channel}</p>
           {data.submission.items.length > 0 && (
-            <ul className="text-emerald-700/80 dark:text-emerald-200/80 text-sm space-y-1">
+            <ul className="mt-2 space-y-1 text-sm text-[var(--fg-muted)]">
               {data.submission.items.map((item, i) => (
-                <li key={i}>{item}</li>
+                <li key={i} className="flex items-start gap-2">
+                  <span aria-hidden>•</span>
+                  <span>{item}</span>
+                </li>
               ))}
             </ul>
           )}
+          {"note" in data.submission && data.submission.note && (
+            <p className="mt-2 text-xs text-[var(--fg-muted)]">{data.submission.note}</p>
+          )}
         </div>
-        {"note" in data.submission && data.submission.note && (
-          <p className="text-[var(--fg-muted)] text-xs mt-3">{data.submission.note}</p>
-        )}
       </ContentCard>
     </div>
   );

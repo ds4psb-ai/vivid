@@ -7,10 +7,7 @@ import { SIDEBAR_NAV_ITEMS } from "@/config/sidebar-nav";
 import { ModeToggle } from "@/components/mode-toggle";
 import { useSessionContext } from "@/contexts/SessionContext";
 import { isAdminModeEnabled } from "@/lib/admin";
-import {
-  extractAcademyTabFromHref,
-  isAcademyTabActive,
-} from "./nav-utils";
+import { extractAcademyTabFromHref, isAcademyTabActive } from "./nav-utils";
 
 interface AcademyMobileNavProps {
   currentTab: TabKey;
@@ -40,13 +37,12 @@ export function AcademyMobileNav({
   };
 
   return (
-    <div className="border-b border-[var(--glass-border)] bg-[var(--surface-1)]/90 backdrop-blur-xl">
-      <div className="flex items-center gap-2 px-3 py-2">
+    <div className="border-b border-[var(--border-muted)] bg-[var(--bg-0)]">
+      <div className="flex items-start gap-2 px-3 py-2">
         <div className="flex-1 overflow-x-auto">
-          <div className="flex items-center gap-1 min-w-max pr-2">
+          <div className="flex min-w-max items-center gap-2 pr-2">
             {items.map((item) => {
               const Icon = item.icon;
-              const tab = extractAcademyTabFromHref(item.href);
               const active = isAcademyTabActive(currentTab, item.href);
 
               return (
@@ -54,15 +50,14 @@ export function AcademyMobileNav({
                   key={item.id}
                   type="button"
                   onClick={() => navigateToTab(item.href)}
-                  className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors
-                    ${
-                      active
-                        ? "bg-[var(--color-brand-primary)]/12 text-[var(--color-brand-primary)]"
-                        : "text-[var(--fg-muted)] hover:bg-black/5 hover:text-[var(--fg-0)]"
-                    }`}
+                  className={`inline-flex min-h-11 items-center gap-2 rounded-xl border px-3 text-sm font-medium transition-colors ${
+                    active
+                      ? "border-[var(--color-brand-primary)]/50 bg-[var(--color-brand-primary)]/10 text-[var(--color-brand-primary)]"
+                      : "border-[var(--border-muted)] bg-[var(--surface-1)] text-[var(--fg-muted)]"
+                  }`}
                   aria-current={active ? "page" : undefined}
                 >
-                  <Icon className="h-3.5 w-3.5" />
+                  <Icon className="h-4 w-4" />
                   <span className="whitespace-nowrap">{item.label}</span>
                 </button>
               );

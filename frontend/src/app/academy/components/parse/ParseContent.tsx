@@ -32,7 +32,6 @@ export function ParseContent({ setActiveTab }: ParseContentProps) {
     handleFileDrop,
   } = useMDParse();
 
-  // 파일 드래그앤드롭 핸들러
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(true);
@@ -58,10 +57,9 @@ export function ParseContent({ setActiveTab }: ParseContentProps) {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <PageHeader title="파싱" />
+    <div className="mx-auto w-full max-w-[var(--academy-content-max)] space-y-4">
+      <PageHeader title="파싱" sub="붙여넣고 복사" />
 
-      {/* MD Input */}
       <MDInput
         mdInput={mdInput}
         setMdInput={setMdInput}
@@ -76,54 +74,50 @@ export function ParseContent({ setActiveTab }: ParseContentProps) {
         onClearProgress={clearProgress}
       />
 
-      {/* Type Tabs */}
       {parseResult && (parseResult.hasOhmage || parseResult.hasVariation) && (
         <>
-          <div className="flex items-center gap-4">
-            {/* Type Tabs */}
-            <div className="flex gap-2">
-              <button
-                onClick={() => setActiveType("ohmage")}
-                disabled={!parseResult.hasOhmage}
-                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeType === "ohmage"
+          <div className="grid grid-cols-2 gap-2 rounded-xl border border-[var(--border-muted)] bg-[var(--surface-1)] p-1">
+            <button
+              type="button"
+              onClick={() => setActiveType("ohmage")}
+              disabled={!parseResult.hasOhmage}
+              className={`min-h-11 rounded-lg px-3 text-sm font-medium transition-colors ${
+                activeType === "ohmage"
                   ? "bg-[var(--color-brand-primary)] text-white"
                   : parseResult.hasOhmage
-                    ? "bg-[var(--surface-2)] border border-[var(--border-muted)] text-[var(--fg-muted)] hover:bg-[var(--surface-3)] hover:text-[var(--fg-0)]"
-                    : "bg-[var(--surface-2)] border border-[var(--border-muted)] text-[var(--fg-muted)]/50 cursor-not-allowed"
-                  }`}
-              >
-                🎭 오마주 ({parseResult.ohmageScenes.length})
-              </button>
-              <button
-                onClick={() => setActiveType("variation")}
-                disabled={!parseResult.hasVariation}
-                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeType === "variation"
-                  ? "bg-cyan-500 text-white"
+                    ? "text-[var(--fg-muted)] hover:text-[var(--fg-0)]"
+                    : "text-[var(--fg-muted)]/50"
+              }`}
+            >
+              오마주 ({parseResult.ohmageScenes.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveType("variation")}
+              disabled={!parseResult.hasVariation}
+              className={`min-h-11 rounded-lg px-3 text-sm font-medium transition-colors ${
+                activeType === "variation"
+                  ? "bg-[var(--color-brand-primary)] text-white"
                   : parseResult.hasVariation
-                    ? "bg-[var(--surface-2)] border border-[var(--border-muted)] text-[var(--fg-muted)] hover:bg-[var(--surface-3)] hover:text-[var(--fg-0)]"
-                    : "bg-[var(--surface-2)] border border-[var(--border-muted)] text-[var(--fg-muted)]/50 cursor-not-allowed"
-                  }`}
-              >
-                ✨ 변주 ({parseResult.variationScenes.length})
-              </button>
-            </div>
-
+                    ? "text-[var(--fg-muted)] hover:text-[var(--fg-0)]"
+                    : "text-[var(--fg-muted)]/50"
+              }`}
+            >
+              변주 ({parseResult.variationScenes.length})
+            </button>
           </div>
 
-          {/* Anchor Guide Panel */}
           {parseResult.anchors.length > 0 && (
             <AnchorGuidePanel anchors={parseResult.anchors} />
           )}
 
-          {/* Global warnings summary */}
           {warnings.length > 0 && (
-            <div className="px-3 py-2 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-xs font-semibold text-yellow-700 dark:text-yellow-300">
-              warning {warnings.length}
+            <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/10 px-3 py-2 text-xs font-medium text-yellow-700 dark:text-yellow-200">
+              경고 {warnings.length}개
             </div>
           )}
 
-          {/* Scene Cards */}
-          <div className="space-y-4">
+          <div className="space-y-3">
             {activeScenes?.map((scene) => (
               <SceneCard
                 key={`${activeType}-${scene.sceneNum}`}
@@ -139,17 +133,13 @@ export function ParseContent({ setActiveTab }: ParseContentProps) {
         </>
       )}
 
-      {/* Empty State */}
       {!parseResult && (
         <ContentCard>
-          <div className="text-center py-8">
-            <span className="material-symbols-outlined text-4xl text-[var(--fg-muted)] mb-4 block">content_paste</span>
-            <p className="text-[var(--fg-muted)]">MD 붙여넣기</p>
-          </div>
+          <div className="py-8 text-center text-sm text-[var(--fg-muted)]">MD 붙여넣기</div>
         </ContentCard>
       )}
 
-      <NextStepButton onClick={() => setActiveTab("tools")} label="툴 이동" />
+      <NextStepButton onClick={() => setActiveTab("tools")} label="다음: 툴" />
     </div>
   );
 }

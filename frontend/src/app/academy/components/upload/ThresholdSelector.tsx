@@ -7,55 +7,34 @@ interface ThresholdSelectorProps {
   onModeChange: (mode: ThresholdMode) => void;
 }
 
-export function ThresholdSelector({ thresholdMode, onModeChange }: ThresholdSelectorProps) {
+export function ThresholdSelector({
+  thresholdMode,
+  onModeChange,
+}: ThresholdSelectorProps) {
   return (
-    <div className="mb-6">
-      <div className="flex items-center gap-2 mb-3">
-        <span className="material-symbols-outlined text-[var(--color-brand-primary)] text-sm">tune</span>
-        <span className="text-[var(--fg-muted)] text-sm font-medium">모드</span>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
+    <div className="mb-4">
+      <div className="grid grid-cols-2 gap-2 rounded-xl border border-[var(--border-muted)] bg-[var(--surface-2)] p-1">
         <button
+          type="button"
           onClick={() => onModeChange("standard")}
-          className={`relative p-4 rounded-xl border-2 transition-all text-left group ${
+          className={`min-h-11 rounded-lg px-3 text-sm font-medium transition-colors ${
             thresholdMode === "standard"
-              ? "border-emerald-500 bg-emerald-500/10"
-              : "border-[var(--border-muted)] bg-[var(--surface-2)] hover:border-emerald-500/30"
+              ? "bg-[var(--color-brand-primary)] text-white"
+              : "text-[var(--fg-muted)] hover:text-[var(--fg-0)]"
           }`}
         >
-          {thresholdMode === "standard" && (
-            <div className="absolute top-2 right-2">
-              <span className="material-symbols-outlined text-emerald-400 text-lg">check_circle</span>
-            </div>
-          )}
-          <div className="flex items-center gap-2">
-            <span className="text-xl">🎯</span>
-            <span className={`font-bold ${thresholdMode === "standard" ? "text-emerald-600 dark:text-emerald-400" : "text-[var(--fg-0)]"}`}>
-              표준
-            </span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-medium">기본</span>
-          </div>
+          표준
         </button>
-
         <button
+          type="button"
           onClick={() => onModeChange("precise")}
-          className={`relative p-4 rounded-xl border-2 transition-all text-left group ${
+          className={`min-h-11 rounded-lg px-3 text-sm font-medium transition-colors ${
             thresholdMode === "precise"
-              ? "border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/10"
-              : "border-[var(--border-muted)] bg-[var(--surface-2)] hover:border-[var(--color-brand-primary)]/30"
+              ? "bg-[var(--color-brand-primary)] text-white"
+              : "text-[var(--fg-muted)] hover:text-[var(--fg-0)]"
           }`}
         >
-          {thresholdMode === "precise" && (
-            <div className="absolute top-2 right-2">
-              <span className="material-symbols-outlined text-[var(--color-brand-primary)] text-lg">check_circle</span>
-            </div>
-          )}
-          <div className="flex items-center gap-2">
-            <span className="text-xl">⚡</span>
-            <span className={`font-bold ${thresholdMode === "precise" ? "text-[var(--color-brand-primary)]" : "text-[var(--fg-0)]"}`}>
-              정밀
-            </span>
-          </div>
+          정밀
         </button>
       </div>
     </div>

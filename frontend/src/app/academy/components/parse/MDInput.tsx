@@ -32,8 +32,8 @@ export function MDInput({
 }: MDInputProps) {
   return (
     <ContentCard highlight>
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-bold text-[var(--fg-0)]">MD</h3>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h3 className="text-base font-semibold text-[var(--fg-0)]">MD</h3>
         <label className="cursor-pointer">
           <input
             type="file"
@@ -41,57 +41,49 @@ export function MDInput({
             onChange={onFileSelect}
             className="hidden"
           />
-          <span className="px-3 py-1.5 rounded-lg border border-[var(--border-muted)] bg-[var(--surface-2)] text-[var(--fg-muted)] text-xs font-medium hover:bg-[var(--surface-3)] hover:text-[var(--fg-0)] transition-colors flex items-center gap-2">
-            <span className="material-symbols-outlined text-sm">upload_file</span>
-            파일 선택
+          <span className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-[var(--border-muted)] bg-[var(--surface-2)] px-3 text-xs font-medium text-[var(--fg-0)] transition-colors hover:bg-[var(--surface-3)]">
+            <span className="material-symbols-outlined text-[16px]" aria-hidden>
+              add
+            </span>
+            파일
           </span>
         </label>
       </div>
+
       <div
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}
         onDrop={onDrop}
-        className={`relative rounded-xl transition-all ${isDragging ? 'ring-2 ring-[var(--color-brand-primary)]' : ''}`}
+        className={`relative rounded-xl ${isDragging ? "ring-2 ring-[var(--color-brand-primary)]/40" : ""}`}
       >
         {isDragging && (
-          <div className="absolute inset-0 bg-[var(--color-brand-primary)]/15 rounded-xl flex items-center justify-center z-10 pointer-events-none">
-            <span className="text-[var(--color-brand-primary)] font-bold">MD 파일을 여기에 놓으세요</span>
+          <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-[var(--color-brand-primary)]/10 text-sm font-medium text-[var(--color-brand-primary)]">
+            여기에 드롭
           </div>
         )}
         <textarea
           value={mdInput}
           onChange={(e) => setMdInput(e.target.value)}
           placeholder="MD 붙여넣기"
-          className="w-full h-40 p-4 rounded-xl bg-[var(--surface-2)] border border-[var(--border-muted)] text-[var(--fg-0)] text-sm placeholder:text-[var(--fg-muted)] focus:border-[var(--color-brand-primary)]/40 focus:outline-none focus:ring-1 focus:ring-[var(--color-brand-primary)]/20 resize-none font-mono"
+          className="h-44 w-full resize-none rounded-xl border border-[var(--border-muted)] bg-[var(--surface-2)] p-3 font-mono text-sm text-[var(--fg-0)] placeholder:text-[var(--fg-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]/25"
         />
       </div>
+
       {parseResult && (parseResult.hasOhmage || parseResult.hasVariation) && (
-        <div className="mt-3 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <span className="text-emerald-600 dark:text-emerald-400 text-sm flex items-center gap-2">
-              <span className="material-symbols-outlined text-sm">check_circle</span>
-              완료
-            </span>
-            <span className="text-[var(--fg-muted)] text-xs">
-              O {parseResult.ohmageScenes.length} / V {parseResult.variationScenes.length}
-            </span>
-          </div>
-          {/* 진행도 표시 */}
+        <div className="mt-3 flex items-center justify-between gap-3 text-sm">
+          <p className="text-[var(--fg-muted)]">
+            O {parseResult.ohmageScenes.length} / V {parseResult.variationScenes.length}
+          </p>
           {totalPrompts > 0 && (
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <div className="w-24 h-2 bg-[var(--surface-3)] rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-emerald-600 dark:bg-emerald-500 transition-all duration-300"
-                    style={{ width: `${(completedCount / totalPrompts) * 100}%` }}
-                  />
-                </div>
-                <span className="text-xs text-[var(--fg-muted)]">{completedCount}/{totalPrompts}</span>
-              </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[var(--fg-muted)]">
+                {completedCount}/{totalPrompts}
+              </span>
               {completedCount > 0 && (
                 <button
+                  type="button"
                   onClick={onClearProgress}
-                  className="text-xs text-[var(--fg-muted)] hover:text-[var(--fg-0)] transition-colors"
+                  className="text-xs text-[var(--fg-muted)] underline-offset-2 hover:underline"
                 >
                   초기화
                 </button>

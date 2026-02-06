@@ -8,9 +8,9 @@ interface ContentCardProps {
 export function ContentCard({ children, highlight }: ContentCardProps) {
   return (
     <div
-      className={`p-6 rounded-2xl border ${
+      className={`rounded-[var(--academy-radius)] border p-[var(--academy-card-padding)] ${
         highlight
-          ? "border-[var(--color-brand-primary)]/30 bg-[var(--surface-2)]"
+          ? "border-[var(--color-brand-primary)]/35 bg-[var(--surface-2)]"
           : "border-[var(--border-muted)] bg-[var(--surface-1)]"
       }`}
     >

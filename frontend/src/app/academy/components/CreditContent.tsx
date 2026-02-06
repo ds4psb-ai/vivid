@@ -9,50 +9,55 @@ interface CreditContentProps {
 
 export function CreditContent({ setActiveTab }: CreditContentProps) {
   return (
-    <div className="max-w-3xl mx-auto space-y-8">
-      <PageHeader title="크레딧" />
+    <div className="mx-auto w-full max-w-[var(--academy-content-max)] space-y-4">
+      <PageHeader title="크레딧" sub="3단계" />
 
       <ContentCard highlight>
-        <div className="flex items-center gap-3 mb-4">
-          <span className="w-7 h-7 rounded-full bg-emerald-500/20 text-emerald-600 text-sm font-bold flex items-center justify-center">1</span>
-          <p className="text-[var(--fg-0)] font-bold">무료 크레딧</p>
-        </div>
+        <h3 className="mb-3 text-base font-semibold text-[var(--fg-0)]">1. 무료 크레딧</h3>
         <a
           href={FREE_TRIAL_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="block w-full py-4 bg-[var(--fg-0)] text-[var(--bg-0)] font-bold text-center rounded-xl hover:opacity-90 transition-all"
+          className="inline-flex min-h-11 w-full items-center justify-between rounded-xl bg-[var(--fg-0)] px-4 text-sm font-semibold text-[var(--bg-0)] transition-opacity hover:opacity-90"
         >
-          $300 무료 크레딧 받기
+          <span className="inline-flex items-center gap-2">
+            <span className="material-symbols-outlined text-[18px]" aria-hidden>
+              add
+            </span>
+            $300 받기
+          </span>
+          <span className="material-symbols-outlined text-[18px] opacity-80" aria-hidden>
+            north_east
+          </span>
         </a>
       </ContentCard>
 
       <ContentCard>
-        <div className="flex items-center gap-3 mb-4">
-          <span className="w-7 h-7 rounded-full bg-[var(--color-brand-primary)]/20 text-[var(--color-brand-primary)] text-sm font-bold flex items-center justify-center">2</span>
-          <p className="text-[var(--fg-0)] font-bold">API Key 만들기</p>
-        </div>
+        <h3 className="mb-3 text-base font-semibold text-[var(--fg-0)]">2. API Key</h3>
         <a
           href="https://aistudio.google.com/app/apikey"
           target="_blank"
           rel="noopener noreferrer"
-          className="block w-full py-3 bg-[var(--fg-0)] text-[var(--bg-0)] font-bold text-center rounded-xl hover:opacity-90 transition-all"
+          className="inline-flex min-h-11 w-full items-center justify-between rounded-xl border border-[var(--border-muted)] bg-[var(--surface-2)] px-4 text-sm font-semibold text-[var(--fg-0)] transition-colors hover:bg-[var(--surface-3)]"
         >
-          Google AI Studio 열기
+          <span className="inline-flex items-center gap-2">
+            <span className="material-symbols-outlined text-[18px] text-[var(--color-brand-primary)]" aria-hidden>
+              add
+            </span>
+            AI Studio 열기
+          </span>
+          <span className="material-symbols-outlined text-[18px] text-[var(--fg-muted)]" aria-hidden>
+            north_east
+          </span>
         </a>
       </ContentCard>
 
       <ContentCard>
-        <div className="flex items-center gap-3 mb-4">
-          <span className="w-7 h-7 rounded-full bg-pink-500/20 text-pink-600 text-sm font-bold flex items-center justify-center">3</span>
-          <p className="text-[var(--fg-0)] font-bold">앱에 키 입력</p>
-        </div>
-        <div className="space-y-2 text-sm text-[var(--fg-muted)]">
-          <p>`API Key` 버튼에 붙여넣기</p>
-        </div>
+        <h3 className="mb-2 text-base font-semibold text-[var(--fg-0)]">3. 앱 입력</h3>
+        <p className="text-sm text-[var(--fg-muted)]">`API Key` 버튼에 붙여넣기</p>
       </ContentCard>
 
-      <NextStepButton onClick={() => setActiveTab("upload")} label="영상 업로드" />
+      <NextStepButton onClick={() => setActiveTab("upload")} label="다음: 업로드" />
     </div>
   );
 }

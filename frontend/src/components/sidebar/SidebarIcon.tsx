@@ -15,12 +15,10 @@ export function SidebarIcon({
 }: SidebarIconProps) {
   return (
     <Icon
-      className={`w-5 h-5 transition-all duration-200 ${
-        active
-          ? "opacity-100 text-[var(--color-brand-primary)] drop-shadow-[0_0_6px_oklch(0.62_0.28_20_/_0.5)]"
-          : "opacity-70 text-[var(--fg-muted)]"
+      className={`h-5 w-5 transition-colors ${
+        active ? "text-[var(--color-brand-primary)]" : "text-[var(--fg-muted)]"
       } ${className}`}
-      strokeWidth={active ? 2 : 1.5}
+      strokeWidth={active ? 2 : 1.75}
     />
   );
 }

@@ -30,7 +30,6 @@ export function UploadContent({ setActiveTab }: UploadContentProps) {
     isDragging,
     isDownloading,
     previewId,
-    previewError,
     setDetectedTimestamps,
     setThresholdMode,
     setIsDragging,
@@ -39,19 +38,18 @@ export function UploadContent({ setActiveTab }: UploadContentProps) {
     resetUpload,
   } = useVideoUpload();
 
-  // Parse timestamps from Antigravity output (formats: "00:01.67" or "0:00.00")
   const parseTimestamps = (input: string): string[] => {
     const pattern = /\d{1,2}:\d{2}\.\d{2}/g;
     return input.match(pattern) || [];
   };
 
   const parsedTimestamps = parseTimestamps(timestampInput);
-  const allTimestamps = detectedTimestamps.length > 0 ? detectedTimestamps : parsedTimestamps;
+  const allTimestamps =
+    detectedTimestamps.length > 0 ? detectedTimestamps : parsedTimestamps;
 
-  // Format for Builder1 input - 타임스탬프만
   const formatForBuilder1 = (): string => {
     if (allTimestamps.length === 0) return "";
-    return allTimestamps.join('\n');
+    return allTimestamps.join("\n");
   };
 
   const handleCopy = async () => {
@@ -63,7 +61,6 @@ export function UploadContent({ setActiveTab }: UploadContentProps) {
     }
   };
 
-  // Handle drag events
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -107,63 +104,10 @@ export function UploadContent({ setActiveTab }: UploadContentProps) {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8">
-      <PageHeader title="업로드" />
-
-      <ContentCard>
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl bg-[var(--surface-2)] border border-[var(--border-muted)] flex items-center justify-center">
-            <span className="material-symbols-outlined text-[var(--color-brand-primary)]">download</span>
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-[var(--fg-0)]">STEP 0. 레퍼런스 영상 다운로드</h3>
-          </div>
-        </div>
-
-        <details className="rounded-xl border border-[var(--border-muted)] bg-[var(--surface-2)] p-4">
-          <summary className="cursor-pointer text-sm font-semibold text-[var(--fg-0)]">
-            다운로드 링크
-          </summary>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
-            {VIDEO_DOWNLOAD_SOURCES.map((source) => (
-              <div
-                key={source.platform}
-                className={`p-4 rounded-xl bg-gradient-to-br border ${source.colorClass}`}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="material-symbols-outlined text-lg" aria-hidden>{source.icon}</span>
-                  <span className="font-bold text-sm">{source.platform}</span>
-                </div>
-                <div className="space-y-1.5">
-                  {source.links.map((link) => (
-                    <a
-                      key={link.href}
-                      href={link.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block text-xs text-[var(--fg-muted)] hover:text-[var(--fg-0)] transition-colors"
-                    >
-                      {link.label}
-                    </a>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </details>
-      </ContentCard>
+    <div className="mx-auto w-full max-w-[var(--academy-content-max)] space-y-4">
+      <PageHeader title="업로드" sub="영상 1개 넣고 씬 추출" />
 
       <ContentCard highlight>
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-[var(--color-brand-primary)] text-white flex items-center justify-center">
-            <span className="material-symbols-outlined text-white">movie_filter</span>
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-[var(--fg-0)]">STEP 1. 자동 씬 감지</h3>
-          </div>
-        </div>
-
-        {/* Threshold Mode Selector - Segmented Control */}
         {uploadStatus === "idle" && (
           <ThresholdSelector
             thresholdMode={thresholdMode}
@@ -201,21 +145,18 @@ export function UploadContent({ setActiveTab }: UploadContentProps) {
             onReanalyze={handleReanalyze}
             onDownloadFrames={downloadFrames}
             previewId={previewId}
-            previewError={previewError}
           />
         )}
 
         {uploadStatus === "error" && (
-          <div className="p-6 rounded-xl bg-red-500/10 border border-red-500/30">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
-                <span className="material-symbols-outlined text-red-400">error</span>
-              </div>
-              <p className="text-red-700 dark:text-red-400 font-bold">{errorMessage}</p>
-            </div>
+          <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4">
+            <p className="text-sm font-medium text-red-700 dark:text-red-300">
+              {errorMessage}
+            </p>
             <button
+              type="button"
               onClick={resetUpload}
-              className="w-full py-3 rounded-xl bg-[var(--fg-0)] text-[var(--bg-0)] text-sm font-bold hover:opacity-90 transition-colors"
+              className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-[var(--fg-0)] px-4 text-sm font-semibold text-[var(--bg-0)] transition-opacity hover:opacity-90"
             >
               다시 시도
             </button>
@@ -224,48 +165,76 @@ export function UploadContent({ setActiveTab }: UploadContentProps) {
       </ContentCard>
 
       <ContentCard>
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-8 h-8 rounded-lg bg-[var(--surface-2)] border border-[var(--border-muted)] flex items-center justify-center">
-            <span className="material-symbols-outlined text-[var(--fg-muted)] text-sm">keyboard</span>
+        <details>
+          <summary className="cursor-pointer text-sm font-medium text-[var(--fg-0)]">
+            다운로드 링크 (옵션)
+          </summary>
+          <div className="mt-3 grid gap-2 sm:grid-cols-3">
+            {VIDEO_DOWNLOAD_SOURCES.map((source) => (
+              <div
+                key={source.platform}
+                className="rounded-xl border border-[var(--border-muted)] bg-[var(--surface-2)] p-3"
+              >
+                <p className="mb-2 text-sm font-semibold text-[var(--fg-0)]">
+                  {source.platform}
+                </p>
+                <div className="space-y-1">
+                  {source.links.map((link) => (
+                    <a
+                      key={link.href}
+                      href={link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block text-sm text-[var(--fg-muted)] transition-colors hover:text-[var(--fg-0)]"
+                    >
+                      {link.label}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
-          <div>
-            <h3 className="text-[var(--fg-0)] font-bold">타임스탬프 수동 입력</h3>
-          </div>
-        </div>
+        </details>
+      </ContentCard>
+
+      <ContentCard>
+        <h3 className="mb-3 text-base font-semibold text-[var(--fg-0)]">
+          수동 타임스탬프
+        </h3>
 
         <textarea
           value={timestampInput}
           onChange={(e) => setTimestampInput(e.target.value)}
-          placeholder="00:00.00, 00:01.67 ..."
-          className="w-full h-20 p-4 rounded-xl bg-[var(--surface-2)] border border-[var(--border-muted)] text-[var(--fg-0)] text-sm placeholder:text-[var(--fg-muted)] focus:border-[var(--color-brand-primary)]/50 focus:outline-none focus:ring-1 focus:ring-[var(--color-brand-primary)]/20 resize-none font-mono"
+          placeholder="00:00.00"
+          className="h-24 w-full resize-none rounded-xl border border-[var(--border-muted)] bg-[var(--surface-2)] p-3 font-mono text-sm text-[var(--fg-0)] placeholder:text-[var(--fg-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]/25"
         />
 
         {parsedTimestamps.length > 0 && detectedTimestamps.length === 0 && (
-          <div className="mt-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <p className="text-emerald-700 dark:text-emerald-400 text-sm font-medium flex items-center gap-2">
-                <span className="material-symbols-outlined text-sm">check_circle</span>
-                {parsedTimestamps.length}개 씬 감지됨
+          <div className="mt-3 space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm text-[var(--fg-muted)]">
+                {parsedTimestamps.length}개 감지
               </p>
               <button
+                type="button"
                 onClick={handleCopy}
-                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${copied ? 'bg-emerald-500 text-white' : 'bg-[var(--fg-0)] text-[var(--bg-0)] hover:opacity-90'
-                  }`}
+                className={`inline-flex min-h-11 items-center justify-center rounded-xl px-4 text-sm font-semibold transition-colors ${
+                  copied
+                    ? "bg-emerald-500 text-white"
+                    : "bg-[var(--fg-0)] text-[var(--bg-0)]"
+                }`}
               >
-                <span className="material-symbols-outlined text-sm">{copied ? 'check' : 'content_copy'}</span>
-                {copied ? '복사됨!' : '복사'}
+                {copied ? "복사됨" : "복사"}
               </button>
             </div>
-            <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-              <pre className="text-emerald-700 dark:text-emerald-200 text-xs whitespace-pre-wrap font-mono">
-                {formatForBuilder1()}
-              </pre>
-            </div>
+            <pre className="rounded-xl border border-[var(--border-muted)] bg-[var(--surface-2)] p-3 text-xs text-[var(--fg-muted)]">
+              {formatForBuilder1()}
+            </pre>
           </div>
         )}
       </ContentCard>
 
-      <NextStepButton onClick={() => setActiveTab("prompt")} label="프롬프트 생성" />
+      <NextStepButton onClick={() => setActiveTab("prompt")} label="다음: 빌더" />
     </div>
   );
 }

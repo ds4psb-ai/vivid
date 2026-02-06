@@ -23,14 +23,13 @@ export function VideoDropzone({
       onDragLeave={onDragOut}
       onDragOver={onDrag}
       onDrop={onDrop}
-      className={`relative border-2 border-dashed rounded-2xl p-10 text-center transition-all cursor-pointer group ${isDragging
-        ? "border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/10"
-        : "border-[var(--border-muted)] hover:border-[var(--color-brand-primary)]/50 hover:bg-[var(--color-brand-primary)]/5"
-        }`}
+      className={`relative cursor-pointer rounded-[var(--academy-radius)] border-2 border-dashed px-6 py-10 text-center transition-colors ${
+        isDragging
+          ? "border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/10"
+          : "border-[var(--border-muted)] bg-[var(--surface-2)] hover:border-[var(--color-brand-primary)]/40"
+      }`}
       onClick={() => document.getElementById("videoFileInput")?.click()}
     >
-      <div className="absolute inset-0 rounded-2xl bg-[var(--color-brand-primary)]/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-
       <input
         id="videoFileInput"
         type="file"
@@ -38,14 +37,13 @@ export function VideoDropzone({
         onChange={onFileSelect}
         className="hidden"
       />
-      <div className="relative z-10">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-[var(--surface-2)] border border-[var(--border-muted)] flex items-center justify-center group-hover:scale-110 transition-transform">
-          <span className="material-symbols-outlined text-4xl text-[var(--color-brand-primary)]">
-            cloud_upload
-          </span>
-        </div>
-        <p className="text-[var(--fg-0)] font-bold text-lg">파일 업로드</p>
+
+      <div className="mx-auto mb-3 inline-flex h-14 w-14 items-center justify-center rounded-full border border-[var(--border-muted)] bg-[var(--surface-1)]">
+        <span className="material-symbols-outlined text-[26px] text-[var(--color-brand-primary)]" aria-hidden>
+          add
+        </span>
       </div>
+      <p className="text-base font-semibold text-[var(--fg-0)]">영상 추가</p>
     </div>
   );
 }
