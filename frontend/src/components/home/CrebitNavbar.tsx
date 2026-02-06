@@ -19,10 +19,11 @@ import React, { useState, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, LogOut, Menu, X, Search } from "lucide-react";
+import { ChevronDown, LogIn, LogOut, Menu, X, Search } from "lucide-react";
 import { ModeToggle } from "@/components/mode-toggle";
 import { MegaMenu } from "./MegaMenu";
 import { NavLink } from "./NavLink";
+import { useSessionContext } from "@/contexts/SessionContext";
 import { api } from "@/lib/api";
 
 // =============================================================================
@@ -36,6 +37,7 @@ interface MobileMenuProps {
 
 function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
   const pathname = usePathname();
+  const { isAuthenticated } = useSessionContext();
 
   const navItems = [
     { href: "/", label: "홈" },
@@ -116,16 +118,27 @@ function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
 
             {/* Bottom Section */}
             <div className="pt-4 border-t border-[var(--glass-border)] space-y-2">
-              <button
-                onClick={async () => {
-                  try { await api.logout(); } catch { /* ignore */ }
-                  window.location.href = "/";
-                }}
-                className="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-base font-medium text-[var(--fg-muted)] transition-all hover:bg-red-500/10 hover:text-red-500"
-              >
-                <LogOut className="w-5 h-5" />
-                로그아웃
-              </button>
+              {isAuthenticated ? (
+                <button
+                  onClick={async () => {
+                    try { await api.logout(); } catch { /* ignore */ }
+                    window.location.href = "/";
+                  }}
+                  className="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-base font-medium text-[var(--fg-muted)] transition-all hover:bg-red-500/10 hover:text-red-500"
+                >
+                  <LogOut className="w-5 h-5" />
+                  로그아웃
+                </button>
+              ) : (
+                <a
+                  href="/api/v1/auth/google/start"
+                  onClick={onClose}
+                  className="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-base font-medium text-[var(--fg-muted)] transition-all hover:bg-[var(--color-brand-primary)]/10 hover:text-[var(--color-brand-primary)]"
+                >
+                  <LogIn className="w-5 h-5" />
+                  로그인
+                </a>
+              )}
               <div className="flex items-center justify-between">
                 <span className="text-sm text-[var(--fg-muted)]">테마</span>
                 <ModeToggle />

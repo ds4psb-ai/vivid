@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut } from "lucide-react";
+import { LogIn, LogOut } from "lucide-react";
 import type { TabKey } from "@/app/academy/constants";
 import { SIDEBAR_NAV_ITEMS } from "@/config/sidebar-nav";
 import { ModeToggle } from "@/components/mode-toggle";
@@ -21,7 +21,7 @@ export function AcademyMobileNav({
   onTabChange,
 }: AcademyMobileNavProps) {
   const router = useRouter();
-  const { session } = useSessionContext();
+  const { session, isAuthenticated } = useSessionContext();
   const isAdmin = isAdminModeEnabled(session?.user?.role);
 
   const handleLogout = useCallback(async () => {
@@ -75,14 +75,24 @@ export function AcademyMobileNav({
             })}
           </div>
         </div>
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[var(--fg-muted)] transition-colors hover:bg-red-500/10 hover:text-red-500"
-          aria-label="로그아웃"
-        >
-          <LogOut className="h-4 w-4" />
-        </button>
+        {isAuthenticated ? (
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[var(--fg-muted)] transition-colors hover:bg-red-500/10 hover:text-red-500"
+            aria-label="로그아웃"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
+        ) : (
+          <a
+            href="/api/v1/auth/google/start"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[var(--fg-muted)] transition-colors hover:bg-[var(--color-brand-primary)]/10 hover:text-[var(--color-brand-primary)]"
+            aria-label="로그인"
+          >
+            <LogIn className="h-4 w-4" />
+          </a>
+        )}
         <ModeToggle />
       </div>
     </div>

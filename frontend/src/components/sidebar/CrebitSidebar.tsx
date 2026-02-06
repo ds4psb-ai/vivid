@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, Suspense } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { ChevronsLeft, ChevronsRight, LogOut } from "lucide-react";
+import { ChevronsLeft, ChevronsRight, LogIn, LogOut } from "lucide-react";
 import { SIDEBAR_NAV_ITEMS } from "@/config/sidebar-nav";
 import { SidebarIcon } from "./SidebarIcon";
 import { FloatingTooltip } from "./FloatingTooltip";
@@ -40,7 +40,7 @@ function CrebitSidebarInner() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentTab = searchParams.get("tab");
-  const { session } = useSessionContext();
+  const { session, isAuthenticated } = useSessionContext();
   const isAdmin = isAdminModeEnabled(session?.user?.role);
 
   const toggle = useCallback(() => {
@@ -170,16 +170,28 @@ function CrebitSidebarInner() {
         </nav>
 
         <div className="space-y-1 border-t border-[var(--border-muted)] px-2 py-2">
-          <button
-            type="button"
-            onClick={handleLogout}
-            onMouseEnter={(e) => showTooltip("로그아웃", e)}
-            onMouseLeave={hideTooltip}
-            className={`flex min-h-11 w-full items-center gap-3 rounded-xl border border-transparent px-3 text-sm font-medium text-[var(--fg-muted)] transition-colors hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-500 ${collapsed ? "justify-center" : ""}`}
-          >
-            <LogOut className="h-5 w-5 shrink-0" />
-            {!collapsed && <span className="truncate">로그아웃</span>}
-          </button>
+          {isAuthenticated ? (
+            <button
+              type="button"
+              onClick={handleLogout}
+              onMouseEnter={(e) => showTooltip("로그아웃", e)}
+              onMouseLeave={hideTooltip}
+              className={`flex min-h-11 w-full items-center gap-3 rounded-xl border border-transparent px-3 text-sm font-medium text-[var(--fg-muted)] transition-colors hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-500 ${collapsed ? "justify-center" : ""}`}
+            >
+              <LogOut className="h-5 w-5 shrink-0" />
+              {!collapsed && <span className="truncate">로그아웃</span>}
+            </button>
+          ) : (
+            <a
+              href="/api/v1/auth/google/start"
+              onMouseEnter={(e) => showTooltip("로그인", e)}
+              onMouseLeave={hideTooltip}
+              className={`flex min-h-11 w-full items-center gap-3 rounded-xl border border-transparent px-3 text-sm font-medium text-[var(--fg-muted)] transition-colors hover:border-[var(--color-brand-primary)]/30 hover:bg-[var(--color-brand-primary)]/10 hover:text-[var(--color-brand-primary)] ${collapsed ? "justify-center" : ""}`}
+            >
+              <LogIn className="h-5 w-5 shrink-0" />
+              {!collapsed && <span className="truncate">로그인</span>}
+            </a>
+          )}
 
           <div
             className={`flex min-h-11 items-center ${collapsed ? "justify-center" : "gap-3 px-1"}`}

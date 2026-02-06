@@ -11,6 +11,7 @@ import {
   Clapperboard,
   Compass,
   CreditCard,
+  LogIn,
   LogOut,
   Settings,
   Shield,
@@ -47,7 +48,7 @@ const STUDIO_NAV_ITEMS: StudioNavItem[] = [
 
 export function StudioSidebar() {
   const pathname = usePathname();
-  const { session } = useSessionContext();
+  const { session, isAuthenticated } = useSessionContext();
   const isAdmin = isAdminModeEnabled(session?.user?.role);
   const [collapsed, setCollapsed] = useState(true);
 
@@ -188,18 +189,33 @@ export function StudioSidebar() {
       </nav>
 
       <div className="shrink-0 border-t border-[var(--glass-border)] px-2 py-2 space-y-0.5">
-        <button
-          onClick={handleLogout}
-          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl w-full
-                     transition-all duration-200
-                     text-[var(--fg-muted)] hover:bg-red-500/10 hover:text-red-500
-                     ${collapsed ? "justify-center" : ""}`}
-        >
-          <LogOut className="w-5 h-5 shrink-0" />
-          {!collapsed && (
-            <span className="text-sm font-medium truncate">로그아웃</span>
-          )}
-        </button>
+        {isAuthenticated ? (
+          <button
+            onClick={handleLogout}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl w-full
+                       transition-all duration-200
+                       text-[var(--fg-muted)] hover:bg-red-500/10 hover:text-red-500
+                       ${collapsed ? "justify-center" : ""}`}
+          >
+            <LogOut className="w-5 h-5 shrink-0" />
+            {!collapsed && (
+              <span className="text-sm font-medium truncate">로그아웃</span>
+            )}
+          </button>
+        ) : (
+          <a
+            href="/api/v1/auth/google/start"
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl w-full
+                       transition-all duration-200
+                       text-[var(--fg-muted)] hover:bg-[var(--color-brand-primary)]/10 hover:text-[var(--color-brand-primary)]
+                       ${collapsed ? "justify-center" : ""}`}
+          >
+            <LogIn className="w-5 h-5 shrink-0" />
+            {!collapsed && (
+              <span className="text-sm font-medium truncate">로그인</span>
+            )}
+          </a>
+        )}
 
         <div
           className={`flex items-center px-3 py-2 ${
