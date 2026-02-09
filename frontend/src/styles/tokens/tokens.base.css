@@ -59,17 +59,17 @@
   --cyan-800: oklch(40% 0.14 200);
   --cyan-900: oklch(32% 0.12 200);
 
-  /* Red - Primary brand (Neon Red #FF003C) */
-  --red-50: oklch(97% 0.02 20);
-  --red-100: oklch(92% 0.06 20);
-  --red-200: oklch(85% 0.12 20);
-  --red-300: oklch(75% 0.18 20);
-  --red-400: oklch(68% 0.24 20);      /* Dark mode hover */
-  --red-500: oklch(62% 0.28 20);      /* #FF003C - PRIMARY */
-  --red-600: oklch(55% 0.26 20);
-  --red-700: oklch(48% 0.24 20);
-  --red-800: oklch(40% 0.20 20);
-  --red-900: oklch(32% 0.16 20);
+  /* Warm amber brand scale (legacy token names retained) */
+  --red-50: oklch(97% 0.03 75);
+  --red-100: oklch(92% 0.06 72);
+  --red-200: oklch(85% 0.10 70);
+  --red-300: oklch(76% 0.14 68);
+  --red-400: oklch(68% 0.16 66);
+  --red-500: oklch(62% 0.18 65);
+  --red-600: oklch(55% 0.16 62);
+  --red-700: oklch(48% 0.14 60);
+  --red-800: oklch(40% 0.12 58);
+  --red-900: oklch(32% 0.10 56);
 }
 
 /* =============================================================================

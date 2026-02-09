@@ -52,7 +52,7 @@ export function DNALabStepNav({ className, showCompletionHint = true }: DNALabSt
   return (
     <div
       className={cn(
-        "flex items-center justify-between px-4 py-3 border-t border-white/10 bg-black/50 backdrop-blur-sm",
+        "flex items-center justify-between px-4 py-3 border-t border-white/10 bg-stitch-surface backdrop-blur-sm",
         className
       )}
     >

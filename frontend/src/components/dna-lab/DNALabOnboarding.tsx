@@ -58,7 +58,7 @@ export function DNALabOnboarding({
   };
 
   return (
-    <div className="min-h-screen bg-black flex flex-col">
+    <div className="min-h-screen bg-stitch-dark flex flex-col">
       {/* Aurora Background - Neon Red + Violet 점진적 전환 */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-[var(--stitch-primary)]/20 rounded-full blur-[128px] animate-pulse" />
@@ -150,7 +150,7 @@ export function DNALabOnboarding({
                   value={urlInput}
                   onChange={(e) => setUrlInput(e.target.value)}
                   placeholder="https://youtube.com/watch?v=..."
-                  className="flex-1 px-4 py-3 bg-black/40 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-cyan-500/50 transition-colors"
+                  className="flex-1 px-4 py-3 bg-white/10 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-cyan-500/50 transition-colors"
                   onKeyDown={(e) => e.key === "Enter" && handleURLSubmit()}
                   autoFocus
                 />
@@ -198,7 +198,7 @@ export function DNALabOnboarding({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="거장 검색..."
-                  className="w-full pl-10 pr-10 py-2.5 bg-black/40 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50 transition-colors text-sm"
+                  className="w-full pl-10 pr-10 py-2.5 bg-white/10 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50 transition-colors text-sm"
                 />
                 {searchQuery && (
                   <button
@@ -216,7 +216,7 @@ export function DNALabOnboarding({
                   <button
                     key={master.key}
                     onClick={() => onQuickStart(master.key)}
-                    className="flex items-center gap-3 p-3 bg-black/30 hover:bg-white/10 border border-white/10 hover:border-amber-500/30 rounded-xl transition-all group text-left"
+                    className="flex items-center gap-3 p-3 bg-white/10 hover:bg-white/20 border border-white/10 hover:border-amber-500/30 rounded-xl transition-all group text-left"
                   >
                     {/* Thumbnail */}
                     <div className="w-10 h-10 rounded-lg bg-white/5 overflow-hidden flex-shrink-0">
@@ -279,7 +279,7 @@ function OnboardingCard({
   return (
     <button
       onClick={onClick}
-      className="group relative flex flex-col items-center p-6 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-2xl transition-all duration-300 text-center overflow-hidden hover:shadow-[0_0_30px_rgba(255,0,60,0.15)]"
+      className="group relative flex flex-col items-center p-6 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-2xl transition-all duration-300 text-center overflow-hidden hover:shadow-[0_0_30px_rgba(199,135,58,0.18)]"
       style={{
         ["--card-hue" as string]: hue,
       }}

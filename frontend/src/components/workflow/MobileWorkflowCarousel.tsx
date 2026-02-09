@@ -140,8 +140,8 @@ function NavArrow({
       className={cn(
         "absolute top-1/2 -translate-y-1/2 z-10",
         "w-10 h-10 rounded-full flex items-center justify-center",
-        "bg-black/50 backdrop-blur-sm border border-white/10",
-        "text-white/70 hover:text-white hover:bg-black/70",
+        "bg-stitch-surface backdrop-blur-sm border border-white/10",
+        "text-white/70 hover:text-white hover:bg-[var(--stitch-card-dark)]",
         "transition-all duration-200",
         "disabled:opacity-30 disabled:cursor-not-allowed",
         direction === "prev" ? "left-2" : "right-2",
@@ -170,7 +170,7 @@ function StepCounter({
       className={cn(
         "absolute top-3 right-3 z-10",
         "px-2.5 py-1 rounded-full",
-        "bg-black/50 backdrop-blur-sm text-white/70 text-xs font-medium",
+        "bg-stitch-surface backdrop-blur-sm text-white/70 text-xs font-medium",
         className
       )}
     >

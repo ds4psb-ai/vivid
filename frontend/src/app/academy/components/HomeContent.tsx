@@ -42,7 +42,7 @@ export function HomeContent({ setActiveTab, hasAccess }: HomeContentProps) {
             href={TOOL_LINKS.builder}
             target="_blank"
             rel="noopener noreferrer"
-            className="group relative overflow-hidden rounded-2xl border border-[var(--border-muted)] bg-[linear-gradient(135deg,rgba(255,0,60,0.12)_0%,rgba(255,0,60,0.02)_45%,transparent_100%)] p-5 md:col-span-2"
+            className="group relative overflow-hidden rounded-2xl border border-[var(--border-muted)] bg-[linear-gradient(135deg,rgba(199,135,58,0.14)_0%,rgba(199,135,58,0.03)_45%,transparent_100%)] p-5 md:col-span-2"
           >
             <div className="flex min-h-[156px] flex-col justify-between">
               <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--color-brand-primary)]/35 bg-[var(--surface-1)] text-[var(--color-brand-primary)]">
@@ -65,7 +65,7 @@ export function HomeContent({ setActiveTab, hasAccess }: HomeContentProps) {
             </div>
           </a>
         ) : (
-          <div className="relative overflow-hidden rounded-2xl border border-[var(--border-muted)] bg-[linear-gradient(135deg,rgba(255,0,60,0.12)_0%,rgba(255,0,60,0.02)_45%,transparent_100%)] p-5 md:col-span-2">
+          <div className="relative overflow-hidden rounded-2xl border border-[var(--border-muted)] bg-[linear-gradient(135deg,rgba(199,135,58,0.14)_0%,rgba(199,135,58,0.03)_45%,transparent_100%)] p-5 md:col-span-2">
             <div className="flex min-h-[156px] flex-col justify-between">
               <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--color-brand-primary)]/35 bg-[var(--surface-1)] text-[var(--color-brand-primary)]">
                 <Sparkles className="h-4 w-4" />
@@ -94,7 +94,7 @@ export function HomeContent({ setActiveTab, hasAccess }: HomeContentProps) {
             href={TOOL_LINKS.vibe}
             target="_blank"
             rel="noopener noreferrer"
-            className="group relative overflow-hidden rounded-2xl border border-[var(--border-muted)] bg-[linear-gradient(145deg,rgba(255,0,60,0.09)_0%,rgba(255,255,255,0)_60%)] p-5 text-left"
+            className="group relative overflow-hidden rounded-2xl border border-[var(--border-muted)] bg-[linear-gradient(145deg,rgba(199,135,58,0.11)_0%,rgba(255,255,255,0)_60%)] p-5 text-left"
           >
             <div className="flex min-h-[156px] flex-col justify-between">
               <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--color-brand-primary)]/35 bg-[var(--surface-1)] text-[var(--color-brand-primary)]">
@@ -112,7 +112,7 @@ export function HomeContent({ setActiveTab, hasAccess }: HomeContentProps) {
             </div>
           </a>
         ) : (
-          <div className="relative overflow-hidden rounded-2xl border border-[var(--border-muted)] bg-[linear-gradient(145deg,rgba(255,0,60,0.09)_0%,rgba(255,255,255,0)_60%)] p-5 text-left">
+          <div className="relative overflow-hidden rounded-2xl border border-[var(--border-muted)] bg-[linear-gradient(145deg,rgba(199,135,58,0.11)_0%,rgba(255,255,255,0)_60%)] p-5 text-left">
             <div className="flex min-h-[156px] flex-col justify-between">
               <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--color-brand-primary)]/35 bg-[var(--surface-1)] text-[var(--color-brand-primary)]">
                 <Brain className="h-4 w-4" />

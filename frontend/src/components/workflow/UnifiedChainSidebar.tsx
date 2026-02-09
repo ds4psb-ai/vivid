@@ -107,7 +107,7 @@ export function UnifiedChainSidebar({
   return (
     <div
       className={cn(
-        "h-full flex flex-col bg-black/95 border-l border-white/10 backdrop-blur-xl",
+        "h-full flex flex-col bg-stitch-surface border-l border-white/10 backdrop-blur-xl",
         className
       )}
     >
@@ -133,7 +133,7 @@ export function UnifiedChainSidebar({
       {/* Steps list based on mode - with overscroll-contain to prevent scroll chaining */}
       <div className="flex-1 overflow-y-auto overscroll-contain">
         {/* Current app steps - sticky section header */}
-        <div className="sticky top-0 z-10 px-4 pt-3 pb-1 bg-black/95 backdrop-blur-sm">
+        <div className="sticky top-0 z-10 px-4 pt-3 pb-1 bg-stitch-surface backdrop-blur-sm">
           <span className="text-[10px] uppercase tracking-wider text-white/30">
             {config.title}
           </span>
@@ -158,7 +158,7 @@ export function UnifiedChainSidebar({
         {/* Required chain data from previous apps (if any) - sticky section header */}
         {config.requiredChainData && config.requiredChainData.length > 0 && (
           <>
-            <div className="sticky top-0 z-10 px-4 pt-4 pb-1 bg-black/95 backdrop-blur-sm">
+            <div className="sticky top-0 z-10 px-4 pt-4 pb-1 bg-stitch-surface backdrop-blur-sm">
               <span className="text-[10px] uppercase tracking-wider text-white/30">
                 이전 단계 데이터
               </span>

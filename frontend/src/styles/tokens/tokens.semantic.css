@@ -28,13 +28,13 @@
   --bg-interactive-hover: var(--neutral-200);
   --bg-interactive-active: var(--neutral-300);
 
-  /* Brand backgrounds - RED PRIMARY */
-  --bg-primary: var(--red-500);          /* #FF003C Neon Red */
+  /* Brand backgrounds - warm amber primary */
+  --bg-primary: var(--red-500);
   --bg-primary-hover: var(--red-600);
   --bg-primary-active: var(--red-700);
   --bg-primary-subtle: var(--red-50);
 
-  --bg-secondary: var(--red-600);        /* Darker red for secondary */
+  --bg-secondary: var(--red-600);
   --bg-secondary-hover: var(--red-700);
   --bg-secondary-active: var(--red-800);
   --bg-secondary-subtle: var(--red-100);
@@ -60,7 +60,7 @@
   --fg-on-primary: var(--neutral-0);
   --fg-on-secondary: var(--neutral-0);
 
-  /* Brand foregrounds - RED PRIMARY */
+  /* Brand foregrounds */
   --fg-primary: var(--red-600);
   --fg-primary-hover: var(--red-700);
   --fg-secondary: var(--red-700);
@@ -80,11 +80,11 @@
   --border-strong: var(--neutral-400);
   --border-inverse: var(--neutral-700);
 
-  /* Interactive borders - RED PRIMARY */
+  /* Interactive borders */
   --border-focus: var(--red-500);
-  --border-focus-ring: oklch(62% 0.28 20 / 0.3);
+  --border-focus-ring: oklch(62% 0.18 65 / 0.3);
 
-  /* Brand borders - RED PRIMARY */
+  /* Brand borders */
   --border-primary: var(--red-500);
   --border-secondary: var(--red-600);
 
@@ -105,7 +105,7 @@
   --glass-shadow: 0 8px 32px oklch(0% 0 0 / 0.1);
 
   /* -------------------------------------------------------------------------
-     GRADIENT TOKENS - RED PRIMARY
+     GRADIENT TOKENS - warm amber primary
      ------------------------------------------------------------------------- */
   --gradient-primary: linear-gradient(90deg, var(--red-500), var(--red-700));
   --gradient-primary-soft: linear-gradient(135deg, var(--red-100), var(--red-200));
@@ -115,9 +115,9 @@
   /* -------------------------------------------------------------------------
      GLOW TOKENS (Light Mode - Subtle)
      ------------------------------------------------------------------------- */
-  --glow-primary: 0 0 20px oklch(62% 0.28 20 / 0.15);
-  --glow-primary-strong: 0 0 40px oklch(62% 0.28 20 / 0.25);
-  --glow-primary-subtle: 0 0 12px oklch(62% 0.28 20 / 0.1);
+  --glow-primary: 0 0 20px oklch(62% 0.18 65 / 0.15);
+  --glow-primary-strong: 0 0 40px oklch(62% 0.18 65 / 0.25);
+  --glow-primary-subtle: 0 0 12px oklch(62% 0.18 65 / 0.1);
 
   /* -------------------------------------------------------------------------
      SHADOW TOKENS (Light Mode - Soft)
@@ -146,16 +146,16 @@
   --bg-interactive-hover: var(--neutral-cinematic-700);
   --bg-interactive-active: var(--neutral-cinematic-600);
 
-  /* Brand backgrounds - RED PRIMARY with neon effect */
+  /* Brand backgrounds with warm amber emphasis */
   --bg-primary: var(--red-500);
   --bg-primary-hover: var(--red-400);         /* Brighter on hover */
   --bg-primary-active: var(--red-300);
-  --bg-primary-subtle: oklch(62% 0.28 20 / 0.15);
+  --bg-primary-subtle: oklch(62% 0.18 65 / 0.15);
 
   --bg-secondary: var(--red-600);
   --bg-secondary-hover: var(--red-500);
   --bg-secondary-active: var(--red-400);
-  --bg-secondary-subtle: oklch(55% 0.26 20 / 0.15);
+  --bg-secondary-subtle: oklch(55% 0.16 62 / 0.15);
 
   /* State backgrounds */
   --bg-success-subtle: oklch(65% 0.18 145 / 0.15);
@@ -173,7 +173,7 @@
   --fg-inverse: var(--neutral-900);
   --fg-placeholder: var(--fg-cinematic-placeholder);
 
-  /* Brand foregrounds - RED PRIMARY */
+  /* Brand foregrounds */
   --fg-primary: var(--red-400);
   --fg-primary-hover: var(--red-300);
   --fg-secondary: var(--red-500);
@@ -203,16 +203,16 @@
   --glass-shadow: 0 8px 32px oklch(0% 0 0 / 0.3);
 
   /* -------------------------------------------------------------------------
-     GRADIENT TOKENS - RED PRIMARY
+     GRADIENT TOKENS - warm amber primary
      ------------------------------------------------------------------------- */
-  --gradient-primary-soft: linear-gradient(135deg, oklch(62% 0.28 20 / 0.2), oklch(55% 0.26 20 / 0.2));
+  --gradient-primary-soft: linear-gradient(135deg, oklch(62% 0.18 65 / 0.2), oklch(55% 0.16 62 / 0.2));
 
   /* -------------------------------------------------------------------------
-     GLOW TOKENS (Dark Mode - Neon Effect)
+     GLOW TOKENS (Dark Mode - warm cinematic effect)
      ------------------------------------------------------------------------- */
-  --glow-primary: 0 0 20px oklch(62% 0.28 20 / 0.5);
-  --glow-primary-strong: 0 0 40px oklch(62% 0.28 20 / 0.6);
-  --glow-primary-subtle: 0 0 12px oklch(62% 0.28 20 / 0.4);
+  --glow-primary: 0 0 20px oklch(62% 0.18 65 / 0.5);
+  --glow-primary-strong: 0 0 40px oklch(62% 0.18 65 / 0.6);
+  --glow-primary-subtle: 0 0 12px oklch(62% 0.18 65 / 0.4);
 
   /* -------------------------------------------------------------------------
      SHADOW TOKENS (Dark Mode - Cinematic)
@@ -305,7 +305,7 @@
     --fg-default: var(--neutral-1000);
     --fg-muted: var(--neutral-800);
     --border-default: var(--neutral-600);
-    --border-focus-ring: oklch(62% 0.28 20 / 0.6);  /* Red focus ring */
+    --border-focus-ring: oklch(62% 0.18 65 / 0.6);
   }
 
   .dark {

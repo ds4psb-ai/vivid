@@ -115,7 +115,7 @@ export function DNALabOverview({
                 "transition-all duration-200",
                 "hover:border-[var(--stitch-primary)]/30",
                 "hover:bg-white/[0.06]",
-                "hover:shadow-[0_0_25px_rgba(255,0,60,0.1)]"
+                "hover:shadow-[0_0_25px_rgba(199,135,58,0.18)]"
               )}
             >
               {/* Icon */}

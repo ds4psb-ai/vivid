@@ -5,30 +5,30 @@ import type { MegaAppId, MegaAppTheme, WorkflowStep } from "./types";
  * Oklch hue values for consistent theming
  */
 /**
- * V7 Design System: Unified Neon Red Theme
+ * V7 Design System: Unified Warm Amber Theme
  *
- * All mega-apps use the same Neon Red (#FF003C) theme for visual consistency.
- * - hue: 0 (red)
- * - oklch glow: 0.62 0.28 20 for vibrant neon effect
+ * All mega-apps use the same warm amber theme for visual consistency.
+ * - hue: 65 (amber)
+ * - oklch glow: 0.62 0.18 65 for soft cinematic emphasis
  */
 export const MEGA_APP_THEMES: Record<MegaAppId, MegaAppTheme> = {
   "dna-lab": {
     id: "dna-lab",
-    hue: 0,
+    hue: 65,
     cssVar: "--color-mega-app-dna-lab",
-    glowColor: "oklch(0.62 0.28 20 / 0.3)",
+    glowColor: "oklch(0.62 0.18 65 / 0.3)",
   },
   "story-engine": {
     id: "story-engine",
-    hue: 0,
+    hue: 65,
     cssVar: "--color-mega-app-story-engine",
-    glowColor: "oklch(0.62 0.28 20 / 0.3)",
+    glowColor: "oklch(0.62 0.18 65 / 0.3)",
   },
   production: {
     id: "production",
-    hue: 0,
+    hue: 65,
     cssVar: "--color-mega-app-production",
-    glowColor: "oklch(0.62 0.28 20 / 0.3)",
+    glowColor: "oklch(0.62 0.18 65 / 0.3)",
   },
 };
 

@@ -73,7 +73,7 @@ export function DNALabChainSummary({ onClose, className }: DNALabChainSummaryPro
   return (
     <div
       className={cn(
-        "h-full flex flex-col bg-black/95 border-l border-white/10 backdrop-blur-xl",
+        "h-full flex flex-col bg-stitch-surface border-l border-white/10 backdrop-blur-xl",
         className
       )}
     >

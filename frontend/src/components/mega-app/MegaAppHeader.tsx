@@ -21,7 +21,7 @@ export function MegaAppHeader({
   const theme = getTheme(appId);
 
   return (
-    <div className="flex-shrink-0 border-b bg-black/40 backdrop-blur-xl border-white/5">
+    <div className="flex-shrink-0 border-b bg-stitch-surface backdrop-blur-xl border-white/5">
       <div className="container py-4">
         <div className="flex items-center gap-3">
           {/* Icon with theme glow */}
