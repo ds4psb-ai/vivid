@@ -1,7 +1,7 @@
 "use client";
 
 import type { TabKey } from "../../constants";
-import { PageHeader, ContentCard, NextStepButton } from "../shared";
+import { PageHeader, NextStepButton } from "../shared";
 import { useMDParse } from "../../hooks/useMDParse";
 import { MDInput } from "./MDInput";
 import { AnchorGuidePanel } from "./AnchorGuidePanel";
@@ -58,7 +58,7 @@ export function ParseContent({ setActiveTab }: ParseContentProps) {
 
   return (
     <div className="mx-auto w-full max-w-[var(--academy-content-max)] space-y-4">
-      <PageHeader title="파싱" sub="붙여넣고 복사" />
+      <PageHeader title="파싱" sub="파싱 결과 복사" />
 
       <MDInput
         mdInput={mdInput}
@@ -131,12 +131,6 @@ export function ParseContent({ setActiveTab }: ParseContentProps) {
             ))}
           </div>
         </>
-      )}
-
-      {!parseResult && (
-        <ContentCard>
-          <div className="py-8 text-center text-sm text-[var(--fg-muted)]">MD 붙여넣기</div>
-        </ContentCard>
       )}
 
       <NextStepButton onClick={() => setActiveTab("tools")} label="다음: 툴" />

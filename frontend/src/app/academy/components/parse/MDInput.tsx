@@ -64,7 +64,7 @@ export function MDInput({
         <textarea
           value={mdInput}
           onChange={(e) => setMdInput(e.target.value)}
-          placeholder="MD 붙여넣기"
+          placeholder="MD 붙여넣기 또는 드래그 앤 드롭"
           className="h-44 w-full resize-none rounded-xl border border-[var(--border-muted)] bg-[var(--surface-2)] p-3 font-mono text-sm text-[var(--fg-0)] placeholder:text-[var(--fg-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]/25"
         />
       </div>
