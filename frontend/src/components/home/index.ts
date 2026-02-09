@@ -16,3 +16,5 @@ export { MegaAppShowcase } from "./MegaAppShowcase";
 export { MegaMenu } from "./MegaMenu";
 export { NavLink } from "./NavLink";
 export { CrebitNavbar } from "./CrebitNavbar";
+export { StudioQuickStart } from "./StudioQuickStart";
+export { StudioIntentInput } from "./StudioIntentInput";

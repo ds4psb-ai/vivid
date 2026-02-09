@@ -16,6 +16,7 @@
  */
 
 import React, { useState, useCallback } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -82,11 +83,13 @@ function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
 
             {/* Logo */}
             <Link href="/" className="flex items-center gap-3 mb-8" onClick={onClose}>
-              <div className="w-10 h-10 bg-white dark:bg-slate-900 flex items-center justify-center rounded-lg p-1.5 border border-[var(--glass-border)]">
-                <img
+              <div className="relative w-10 h-10 bg-white dark:bg-slate-900 flex items-center justify-center rounded-lg p-1.5 border border-[var(--glass-border)]">
+                <Image
                   src="/assets/characters/crebit-logo.png"
                   alt="Crebit"
-                  className="w-full h-full object-contain dark:invert"
+                  fill
+                  sizes="40px"
+                  className="object-contain p-1.5 dark:invert"
                 />
               </div>
               <span className="font-display font-bold text-xl text-[var(--fg-0)] dark:text-white">
@@ -198,11 +201,14 @@ export function CrebitNavbar({
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           {/* Left: Logo */}
           <Link href="/" className="flex items-center gap-3 shrink-0">
-            <div className="w-9 h-9 bg-white dark:bg-slate-900 flex items-center justify-center rounded-lg p-1.5 border border-[var(--glass-border)] shadow-sm">
-              <img
+            <div className="relative w-9 h-9 bg-white dark:bg-slate-900 flex items-center justify-center rounded-lg p-1.5 border border-[var(--glass-border)] shadow-sm">
+              <Image
                 src="/assets/characters/crebit-logo.png"
                 alt="Crebit"
-                className="w-full h-full object-contain dark:invert"
+                fill
+                priority
+                sizes="36px"
+                className="object-contain p-1.5 dark:invert"
               />
             </div>
             <span className="font-display font-bold text-lg tracking-tight text-[var(--fg-0)] dark:text-white hidden sm:block">
@@ -271,10 +277,11 @@ export function CrebitNavbar({
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMobileMenuOpen(true)}
-              className="md:hidden p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+              className="md:hidden inline-flex items-center gap-1.5 px-2.5 py-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
               aria-label="메뉴 열기"
             >
               <Menu className="w-5 h-5 text-[var(--fg-0)] dark:text-white" />
+              <span className="text-sm font-medium text-[var(--fg-0)] dark:text-white">메뉴</span>
             </button>
           </div>
         </div>

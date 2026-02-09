@@ -63,6 +63,20 @@ function LoginContent() {
         : "Checking authentication status...",
     terms: language === "ko" ? "서비스 이용약관" : "Terms of Service",
     privacy: language === "ko" ? "개인정보 처리방침" : "Privacy Policy",
+    guidanceTitle:
+      language === "ko" ? "로그인 후 바로 할 수 있는 작업" : "What you can do right away",
+    guidanceItems:
+      language === "ko"
+        ? [
+            "워크플로우 시작",
+            "크레딧/상태 확인",
+            "프로젝트 이어서 작업",
+          ]
+        : [
+            "Start workflows",
+            "Check credits and status",
+            "Resume your projects",
+          ],
   };
 
   return (
@@ -75,6 +89,18 @@ function LoginContent() {
         >
           <h1 className="text-2xl font-semibold text-[var(--fg-0)]">{labels.title}</h1>
           <p className="mt-2 text-sm text-[var(--fg-muted)]">{labels.subtitle}</p>
+
+          <div className="mt-4 rounded-lg border border-[var(--border-muted)] bg-[var(--bg-1)]/70 px-4 py-3">
+            <p className="text-xs font-semibold text-[var(--fg-subtle)]">{labels.guidanceTitle}</p>
+            <ul className="mt-2 space-y-1 text-sm text-[var(--fg-muted)]">
+              {labels.guidanceItems.map((item) => (
+                <li key={item} className="flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)]" aria-hidden="true" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
 
           {isExpired && (
             <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">

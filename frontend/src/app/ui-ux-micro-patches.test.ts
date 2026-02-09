@@ -24,6 +24,11 @@ const pipelineNode = readFileSync(path.join(appDir, "crebit/_components/Pipeline
 const statItem = readFileSync(path.join(appDir, "crebit/_components/StatItem.tsx"), "utf8");
 const unifiedStepNav = readFileSync(path.join(componentsDir, "workflow/UnifiedStepNav.tsx"), "utf8");
 const dnaLabStepNav = readFileSync(path.join(componentsDir, "dna-lab/DNALabStepNav.tsx"), "utf8");
+const crebitNavbar = readFileSync(path.join(componentsDir, "home/CrebitNavbar.tsx"), "utf8");
+const loginPage = readFileSync(path.join(appDir, "login/page.tsx"), "utf8");
+const studioPage = readFileSync(path.join(appDir, "studio/page.tsx"), "utf8");
+const studioIntentInput = readFileSync(path.join(componentsDir, "home/StudioIntentInput.tsx"), "utf8");
+const studioQuickStart = readFileSync(path.join(componentsDir, "home/StudioQuickStart.tsx"), "utf8");
 
 
 describe("ui ux micro patches", () => {
@@ -66,5 +71,56 @@ describe("ui ux micro patches", () => {
   it("increases compact workflow nav touch targets to 44px", () => {
     expect(unifiedStepNav).toContain('"h-11 w-11 rounded-lg transition-colors"');
     expect(dnaLabStepNav).toContain('"h-11 w-11 rounded-lg transition-colors"');
+  });
+
+  it("adds visible mobile menu labels and stronger touch target affordance", () => {
+    expect(crebitNavbar).toContain("aria-label=\"메뉴 열기\"");
+    expect(crebitNavbar).toContain("inline-flex items-center gap-1.5");
+    expect(crebitNavbar).toContain(">메뉴<");
+  });
+
+  it("adds login-context guidance for first-time users", () => {
+    expect(loginPage).toContain("로그인 후 바로 할 수 있는 작업");
+    expect(loginPage).toContain("워크플로우 시작");
+    expect(loginPage).toContain("크레딧/상태 확인");
+  });
+
+  it("adds explicit quick-start block to studio entry", () => {
+    expect(studioPage).toContain("StudioQuickStart");
+  });
+
+  it("adds intent input bar to studio entry with explicit CTA", () => {
+    expect(studioPage).toContain("StudioIntentInput");
+    expect(studioIntentInput).toContain("무엇을 만들고 싶나요?");
+    expect(studioIntentInput).toContain("DNA Lab에서 시작");
+    expect(studioIntentInput).toContain("Enter로 실행");
+    expect(studioIntentInput).toContain("Shift + Enter");
+    expect(studioIntentInput).toContain("Story Engine");
+  });
+
+  it("adds animated border-beam style frame to studio intent input", () => {
+    expect(studioIntentInput).toContain("animate-gradient-x");
+    expect(studioIntentInput).toContain("bg-gradient-to-r");
+    expect(studioIntentInput).toContain("rounded-[20px]");
+    expect(studioIntentInput).toContain("isSubmitting");
+    expect(studioIntentInput).toContain("이동 중...");
+  });
+
+  it("switches studio intent CTA copy based on target destination", () => {
+    expect(studioIntentInput).toContain("Flow에서 시작");
+    expect(studioIntentInput).toContain("Story Engine에서 시작");
+    expect(studioIntentInput).toContain("buttonLabel");
+  });
+
+  it("uses Mobbin-style primary and secondary CTA hierarchy in quick-start", () => {
+    expect(studioQuickStart).toContain("지금 바로 시작");
+    expect(studioQuickStart).toContain("워크플로우 둘러보기");
+    expect(studioQuickStart).toContain("Primary CTA");
+    expect(studioQuickStart).toContain("Secondary CTA");
+  });
+
+  it("migrates navbar logos to next/image for better LCP handling", () => {
+    expect(crebitNavbar).toContain("import Image from \"next/image\"");
+    expect(crebitNavbar).not.toContain("<img");
   });
 });

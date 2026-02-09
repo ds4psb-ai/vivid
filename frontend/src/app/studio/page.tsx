@@ -12,7 +12,13 @@
 import { motion } from "framer-motion";
 import AppShell from "@/components/AppShell";
 import { AuroraBackground } from "@/components/AuroraBackground";
-import { TemplateRail, DimensionGrid, WorkflowCTA } from "@/components/home";
+import {
+    TemplateRail,
+    DimensionGrid,
+    WorkflowCTA,
+    StudioQuickStart,
+    StudioIntentInput,
+} from "@/components/home";
 
 export default function StudioPage() {
     return (
@@ -27,6 +33,22 @@ export default function StudioPage() {
                 {/* Main Content */}
                 <div className="px-6 pb-20 space-y-10">
                     <div className="mx-auto max-w-7xl space-y-10">
+                        <motion.section
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.12 }}
+                        >
+                            <StudioIntentInput />
+                        </motion.section>
+
+                        <motion.section
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                        >
+                            <StudioQuickStart />
+                        </motion.section>
+
                         {/* Template Rail */}
                         <motion.section
                             initial={{ opacity: 0, y: 20 }}
