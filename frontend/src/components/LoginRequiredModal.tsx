@@ -33,17 +33,19 @@ export default function LoginRequiredModal({ isOpen, onClose, returnTo }: LoginR
                         initial={{ opacity: 0, scale: 0.95, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                        className="fixed left-1/2 top-1/2 z-[101] w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-xl border border-white/10 bg-[#1a1a1c] p-6 shadow-2xl"
+                        className="fixed left-1/2 top-1/2 z-[101] w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-xl border border-white/10 bg-stitch-surface p-6 shadow-2xl"
                     >
                         <button
+                            type="button"
                             onClick={onClose}
                             className="absolute right-4 top-4 text-slate-400 hover:text-white"
+                            aria-label={t("close") || "Close"}
                         >
                             <X className="h-5 w-5" />
                         </button>
 
                         <div className="mb-6 flex justify-center">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#4200FF]/20 text-[#4200FF]">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-brand-primary)]/20 text-[var(--color-brand-primary)]">
                                 <LogIn className="h-6 w-6" />
                             </div>
                         </div>
@@ -58,7 +60,7 @@ export default function LoginRequiredModal({ isOpen, onClose, returnTo }: LoginR
                         <div className="space-y-3">
                             <Link
                                 href={authUrl}
-                                className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#4200FF] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#3300CC] transition-colors"
+                                className="flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--color-brand-primary)] px-4 py-2.5 text-sm font-bold text-white hover:bg-[var(--color-brand-secondary)] transition-colors"
                             >
                                 <LogIn className="h-4 w-4" />
                                 {t("signIn") || "Sign In"}

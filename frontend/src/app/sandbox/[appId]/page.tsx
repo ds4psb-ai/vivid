@@ -52,7 +52,8 @@ function SandboxContent({ app }: { app: AppDetail }) {
                 </div>
                 <div className="flex items-center gap-2">
                     <button
-                        onClick={() => window.location.reload()}
+                        type="button"
+                        onClick={() => router.refresh()}
                         className="p-2 rounded-lg hover:bg-white/10 transition-colors"
                         title="새로고침"
                     >

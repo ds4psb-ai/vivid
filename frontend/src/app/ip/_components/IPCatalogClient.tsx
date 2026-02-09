@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, Grid, List, ChevronDown } from "lucide-react";
 import AppShell from "@/components/AppShell";
@@ -130,39 +130,39 @@ export default function IPCatalogClient({
     fetchGenres();
   }, [initialGenres]);
 
+  const fetchCatalog = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const params = new URLSearchParams();
+      params.set("page", page.toString());
+      params.set("page_size", "20");
+      params.set("sort_by", sortBy);
+      if (searchQuery) params.set("search", searchQuery);
+      if (selectedGenre) params.set("genre", selectedGenre);
+
+      const response = await fetch("/api/v1/ip/catalog?" + params.toString());
+      if (!response.ok) {
+        throw new Error("Failed to fetch catalog");
+      }
+
+      const data = await response.json();
+      setItems(data.items || []);
+      setTotal(data.total || 0);
+      setHasMore(data.has_more || false);
+    } catch (err) {
+      setError("Failed to load IP catalog");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, searchQuery, selectedGenre, sortBy]);
+
   // Fetch IP catalog
   useEffect(() => {
-    async function fetchCatalog() {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const params = new URLSearchParams();
-        params.set("page", page.toString());
-        params.set("page_size", "20");
-        params.set("sort_by", sortBy);
-        if (searchQuery) params.set("search", searchQuery);
-        if (selectedGenre) params.set("genre", selectedGenre);
-
-        const response = await fetch("/api/v1/ip/catalog?" + params.toString());
-        if (!response.ok) {
-          throw new Error("Failed to fetch catalog");
-        }
-
-        const data = await response.json();
-        setItems(data.items || []);
-        setTotal(data.total || 0);
-        setHasMore(data.has_more || false);
-      } catch (err) {
-        setError("Failed to load IP catalog");
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
     fetchCatalog();
-  }, [page, sortBy, searchQuery, selectedGenre]);
+  }, [fetchCatalog]);
 
   const handleItemClick = (item: { slug: string }) => {
     router.push("/ip/" + item.slug);
@@ -334,7 +334,8 @@ export default function IPCatalogClient({
                 <div className="text-center py-12">
                   <p className="text-red-500">{error}</p>
                   <button
-                    onClick={() => window.location.reload()}
+                    type="button"
+                    onClick={fetchCatalog}
                     className="mt-4 px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700"
                   >
                     {language === "ko" ? "다시 시도" : "Try Again"}

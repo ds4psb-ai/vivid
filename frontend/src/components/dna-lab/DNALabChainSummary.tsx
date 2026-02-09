@@ -87,8 +87,10 @@ export function DNALabChainSummary({ onClose, className }: DNALabChainSummaryPro
         </div>
         {onClose && (
           <button
+            type="button"
             onClick={onClose}
             className="p-1.5 text-white/40 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+            aria-label="체인 데이터 닫기"
           >
             <X className="w-4 h-4" />
           </button>

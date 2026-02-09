@@ -64,7 +64,12 @@ export function VersionsModal({
                         <div className="text-xs uppercase tracking-widest text-slate-400">{t("templateVersions")}</div>
                         <div className="text-lg font-semibold text-white">{template.title}</div>
                     </div>
-                    <button onClick={onClose} className="text-slate-400 hover:text-white">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="text-slate-400 hover:text-white"
+                        aria-label="버전 히스토리 닫기"
+                    >
                         <X className="h-4 w-4" />
                     </button>
                 </div>

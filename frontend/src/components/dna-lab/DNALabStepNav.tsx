@@ -141,7 +141,8 @@ export function DNALabStepNavCompact({ className }: { className?: string }) {
         onClick={goToPrevious}
         disabled={!canGoPrevious}
         className={cn(
-          "p-1.5 rounded-lg transition-colors",
+          "h-11 w-11 rounded-lg transition-colors",
+          "inline-flex items-center justify-center",
           canGoPrevious
             ? "text-white/60 hover:text-white hover:bg-white/10"
             : "text-white/20 cursor-not-allowed"
@@ -153,7 +154,8 @@ export function DNALabStepNavCompact({ className }: { className?: string }) {
         onClick={goToNext}
         disabled={!canGoNext}
         className={cn(
-          "p-1.5 rounded-lg transition-colors",
+          "h-11 w-11 rounded-lg transition-colors",
+          "inline-flex items-center justify-center",
           canGoNext
             ? "text-white/60 hover:text-white hover:bg-white/10"
             : "text-white/20 cursor-not-allowed"

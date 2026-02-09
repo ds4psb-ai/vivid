@@ -14,7 +14,7 @@ interface SectionHeaderProps {
     color?: string;
 }
 
-export function SectionHeader({ title, subtitle, desc, color = 'text-[#4200FF]' }: SectionHeaderProps) {
+export function SectionHeader({ title, subtitle, desc, color = "text-[var(--color-brand-primary)]" }: SectionHeaderProps) {
     return (
         <div className="text-center space-y-4">
             <motion.span
@@ -40,7 +40,7 @@ export function SectionHeader({ title, subtitle, desc, color = 'text-[#4200FF]' 
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: 0.2 }}
-                    className="text-[#9CA3AF] text-lg max-w-2xl mx-auto"
+                    className="text-[var(--fg-muted)] text-lg max-w-2xl mx-auto"
                 >
                     {desc}
                 </motion.p>

@@ -8,7 +8,7 @@ import { ArrowLeft, FileText, Shield } from "lucide-react";
 
 export default function CrebitTermsPage() {
     return (
-        <Suspense fallback={<div className="min-h-screen bg-[#0F0F1A] flex items-center justify-center text-white">Loading...</div>}>
+        <Suspense fallback={<div className="min-h-screen bg-stitch-dark flex items-center justify-center text-white">Loading...</div>}>
             <CrebitTermsContent />
         </Suspense>
     );
@@ -23,9 +23,9 @@ function CrebitTermsContent() {
     const activeTab = manualTab ?? resolvedTab ?? "terms";
 
     return (
-        <div className="min-h-screen bg-[#0F0F1A] text-white">
+        <div className="min-h-screen bg-stitch-dark text-white">
             {/* Header */}
-            <header className="border-b border-white/5 bg-[#0F0F1A]/80 backdrop-blur-xl sticky top-0 z-50">
+            <header className="border-b border-white/5 bg-stitch-dark/80 backdrop-blur-xl sticky top-0 z-50">
                 <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
                     <Link href="/crebit" className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
                         <ArrowLeft className="w-4 h-4" />
@@ -63,7 +63,7 @@ function CrebitTermsContent() {
                     </button>
                     <button
                         onClick={() => setManualTab("refund")}
-                        className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all ${activeTab === "refund" ? "bg-[#FF0045] text-white" : "text-slate-400 hover:text-white"
+                        className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all ${activeTab === "refund" ? "bg-[var(--color-brand-primary)] text-white" : "text-slate-400 hover:text-white"
                             }`}
                     >
                         환불정책

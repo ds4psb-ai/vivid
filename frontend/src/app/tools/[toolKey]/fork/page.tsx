@@ -160,7 +160,11 @@ export default function ForkEditorPage() {
             const message = result.sybil_flagged
                 ? "Fork created but flagged for low originality."
                 : "Fork created successfully! Pending review.";
-            alert(message);
+            if (result.sybil_flagged) {
+                toast.warning(message);
+            } else {
+                toast.success(message);
+            }
             router.push(`/tools/${result.tool_key}`);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Fork creation failed");
@@ -233,7 +237,14 @@ export default function ForkEditorPage() {
                     <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 flex items-center gap-3">
                         <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0" />
                         <p className="text-red-300">{error}</p>
-                        <button onClick={() => setError(null)} className="ml-auto text-red-400 hover:text-red-300">×</button>
+                        <button
+                            type="button"
+                            onClick={() => setError(null)}
+                            className="ml-auto text-red-400 hover:text-red-300"
+                            aria-label="에러 배너 닫기"
+                        >
+                            ×
+                        </button>
                     </div>
                 </div>
             )}

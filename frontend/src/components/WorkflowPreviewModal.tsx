@@ -199,8 +199,10 @@ export function WorkflowPreviewModal({
                   </div>
                 </div>
                 <button
+                  type="button"
                   onClick={onClose}
                   className="p-2 rounded-lg hover:bg-[var(--bg-interactive-hover)] transition-[var(--transition-interactive)]"
+                  aria-label={ko ? "추천 워크플로우 닫기" : "Close recommended workflow"}
                 >
                   <X className="w-5 h-5 text-[var(--fg-muted)]" />
                 </button>

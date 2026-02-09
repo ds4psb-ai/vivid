@@ -107,7 +107,7 @@ export function SheetTrigger({
   }
 
   return (
-    <button onClick={handleClick} {...props}>
+    <button type="button" onClick={handleClick} {...props}>
       {children}
     </button>
   );
@@ -300,13 +300,18 @@ export function SheetFooter({
 // =============================================================================
 
 export function SheetClose({
+  onClick,
   children,
   ...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   const { onOpenChange } = useSheet();
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    onClick?.(e);
+    onOpenChange(false);
+  };
 
   return (
-    <button onClick={() => onOpenChange(false)} {...props}>
+    <button type="button" onClick={handleClick} {...props}>
       {children}
     </button>
   );

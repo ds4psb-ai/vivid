@@ -273,8 +273,10 @@ function SidebarHeader({
       </div>
       {onClose && (
         <button
+          type="button"
           onClick={onClose}
           className="p-1.5 text-white/40 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+          aria-label="체인 데이터 닫기"
         >
           <X className="w-4 h-4" />
         </button>
@@ -491,9 +493,11 @@ function ChainDataItem({
           </div>
           {!isExternal && onNavigate && (
             <button
+              type="button"
               onClick={onNavigate}
               className="p-1.5 text-white/40 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
               title="편집"
+              aria-label="단계 편집"
             >
               <Edit className="w-3 h-3" />
             </button>

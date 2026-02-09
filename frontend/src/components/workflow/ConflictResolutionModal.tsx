@@ -116,8 +116,10 @@ export function ConflictResolutionModal({
 
         {/* Close button */}
         <button
+          type="button"
           onClick={onClose}
           className="absolute top-4 right-4 p-1 text-zinc-500 hover:text-zinc-300 transition-colors"
+          aria-label="충돌 해결 모달 닫기"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path

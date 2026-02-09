@@ -440,6 +440,7 @@ export default function ToolDetailPage() {
         tests: language === "ko" ? "테스트" : "Tests",
         usage: language === "ko" ? "사용량" : "Usage",
         quality: language === "ko" ? "품질" : "Quality",
+        copyToolKey: language === "ko" ? "툴 키 복사" : "Copy tool key",
         // Run labels
         recentRuns: language === "ko" ? "최근 실행" : "Recent Runs",
         noRunsYet: language === "ko" ? "아직 실행 기록이 없습니다" : "No runs yet",
@@ -576,7 +577,12 @@ export default function ToolDetailPage() {
                             </div>
                             <div className="flex items-center gap-2 text-gray-400">
                                 <code className="text-sm bg-gray-800 px-2 py-0.5 rounded">{tool.tool_key}</code>
-                                <button onClick={copyToolKey} className="p-1 hover:text-white">
+                                <button
+                                    type="button"
+                                    onClick={copyToolKey}
+                                    className="p-1 hover:text-white"
+                                    aria-label={labels.copyToolKey}
+                                >
                                     <Copy className="w-4 h-4" />
                                 </button>
                             </div>

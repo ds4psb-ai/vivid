@@ -15,16 +15,16 @@ interface PipelineNodeProps {
 
 export function PipelineNode({ step, type, label, desc, tags, active }: PipelineNodeProps) {
     return (
-        <div className={`relative z-10 card-premium rounded-xl p-6 flex flex-col items-start gap-4 transition-all duration-300 group hover:-translate-y-2 ${active ? 'border-[#4200FF] shadow-[0_0_30px_rgba(66,0,255,0.2)] bg-[#4200FF]/5' : 'border-white/10 hover:border-white/30'}`}>
+        <div className={`relative z-10 card-premium rounded-xl p-6 flex flex-col items-start gap-4 transition-all duration-300 group hover:-translate-y-2 ${active ? "border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/5 shadow-xl" : "border-white/10 hover:border-white/30"}`}>
             {/* Top Dot for Horizontal Flow Connection */}
-            <div className={`hidden md:block absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full border border-white/20 z-20 transition-colors ${active ? 'bg-[#4200FF]' : 'bg-[#1a1a1c] group-hover:bg-[#4200FF]'}`} />
+            <div className={`hidden md:block absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full border border-white/20 z-20 transition-colors ${active ? "bg-[var(--color-brand-primary)]" : "bg-[#1a1a1c] group-hover:bg-[var(--color-brand-primary)]"}`} />
 
             {/* Mobile Vertical Dot */}
             <div className="md:hidden absolute -left-1.5 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-[#1a1a1c] border border-white/20" />
 
             <div className="flex justify-between items-center w-full border-b border-white/5 pb-3">
                 <span className="text-[10px] font-mono text-slate-500 bg-white/5 px-2 py-0.5 rounded">{type}</span>
-                <span className="text-[10px] font-mono text-[#4200FF] font-bold">NODE_{step}</span>
+                <span className="text-[10px] font-mono text-[var(--color-brand-primary)] font-bold">NODE_{step}</span>
             </div>
 
             <div>

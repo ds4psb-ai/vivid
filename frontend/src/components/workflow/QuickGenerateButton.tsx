@@ -211,8 +211,10 @@ export function QuickGenerateButton({
                 </div>
               </div>
               <button
+                type="button"
                 onClick={handleClose}
                 className="p-1 rounded-lg text-white/40 hover:text-white/80 hover:bg-white/10 transition-colors"
+                aria-label="퀵 생성 모달 닫기"
               >
                 <X className="w-5 h-5" />
               </button>
