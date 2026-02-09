@@ -9,6 +9,8 @@ import {
   downloadFramesAsZip,
 } from "../api/sceneDetect";
 
+const MAX_UPLOAD_SIZE_BYTES = 1024 * 1024 * 1024; // 1GB
+
 interface UseVideoUploadReturn {
   // State
   uploadStatus: UploadStatus;
@@ -55,9 +57,9 @@ export function useVideoUpload(): UseVideoUploadReturn {
       return;
     }
 
-    // Check file size (max 100MB)
-    if (file.size > 100 * 1024 * 1024) {
-      setErrorMessage("파일 크기는 100MB 이하만 가능합니다.");
+    // Check file size (max 1GB)
+    if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+      setErrorMessage("파일 크기는 1GB 이하만 가능합니다.");
       setUploadStatus("error");
       return;
     }

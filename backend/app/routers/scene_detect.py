@@ -28,6 +28,7 @@ router = APIRouter(prefix="/api/v1/scene-detect", tags=["scene-detect"])
 # ── Preview store (H.264 트랜스코딩된 영상 임시 저장) ──
 _preview_store: dict[str, tuple[str, float]] = {}  # id → (path, created_at)
 _PREVIEW_TTL = 1800  # 30분
+_UPLOAD_CHUNK_BYTES = 1024 * 1024  # 1MB
 
 
 def _preview_file_path(preview_id: str) -> str:
@@ -77,6 +78,22 @@ def _resolve_preview_path(preview_id: str) -> str | None:
         return None
 
     return path
+
+
+async def _save_upload_to_tempfile(video: UploadFile, fallback_suffix: str = ".mp4") -> str:
+    """
+    Persist UploadFile to a temp file using chunked reads.
+
+    Avoids `await video.read()` full-buffer loads for large uploads.
+    """
+    suffix = Path(video.filename or "").suffix or fallback_suffix
+    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+        while True:
+            chunk = await video.read(_UPLOAD_CHUNK_BYTES)
+            if not chunk:
+                break
+            tmp.write(chunk)
+        return tmp.name
 
 
 class SceneDetectResult(BaseModel):
@@ -332,11 +349,8 @@ async def scene_detect_metadata(
     if not video.filename:
         raise HTTPException(status_code=400, detail="No video file provided")
     
-    # 임시 파일로 저장
-    suffix = Path(video.filename).suffix or ".mp4"
-    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
-        tmp.write(await video.read())
-        tmp_path = tmp.name
+    # 임시 파일로 저장 (chunked read)
+    tmp_path = await _save_upload_to_tempfile(video)
     
     preview_id = str(uuid.uuid4())
     preview_path = _preview_file_path(preview_id)
@@ -452,9 +466,9 @@ async def extract_frames_from_timestamps(
     video_path = os.path.join(work_dir, f"input{suffix}")
 
     try:
-        # 영상 저장
-        with open(video_path, "wb") as f:
-            f.write(await video.read())
+        # 영상 저장 (chunked read)
+        tmp_uploaded = await _save_upload_to_tempfile(video, fallback_suffix=suffix)
+        shutil.move(tmp_uploaded, video_path)
 
         duration = await asyncio.to_thread(get_video_duration, video_path)
 
@@ -534,8 +548,8 @@ async def extract_thumbnails(
     video_path = os.path.join(work_dir, f"input{suffix}")
 
     try:
-        with open(video_path, "wb") as f:
-            f.write(await video.read())
+        tmp_uploaded = await _save_upload_to_tempfile(video, fallback_suffix=suffix)
+        shutil.move(tmp_uploaded, video_path)
 
         thumbnails: list[ThumbnailItem] = []
 

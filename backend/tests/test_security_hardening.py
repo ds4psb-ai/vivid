@@ -222,6 +222,10 @@ class TestBodySizeLimit:
         upload_limit = middleware._get_max_size_for_path("/api/v1/upload/image")
         assert upload_limit == 100 * 1024 * 1024  # 100MB
 
+        # Scene detect paths should allow very large videos
+        scene_detect_limit = middleware._get_max_size_for_path("/api/v1/scene-detect/")
+        assert scene_detect_limit == 1024 * 1024 * 1024  # 1GB
+
         # Dimension paths should allow moderate sizes
         dimension_limit = middleware._get_max_size_for_path("/api/dimension/3d/generate")
         assert dimension_limit == 50 * 1024 * 1024  # 50MB

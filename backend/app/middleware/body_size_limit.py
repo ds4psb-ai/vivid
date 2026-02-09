@@ -52,6 +52,7 @@ class BodySizeLimitMiddleware(BaseHTTPMiddleware):
     # Format: path_prefix -> max_bytes
     LARGE_BODY_PATHS: Dict[str, int] = {
         "/api/v1/upload": 100 * 1024 * 1024,      # 100MB for file uploads
+        "/api/v1/scene-detect": 1024 * 1024 * 1024,  # 1GB for academy video upload
         "/api/dimension": 50 * 1024 * 1024,       # 50MB for dimension (may include images)
         "/api/v1/rag/ingest": 50 * 1024 * 1024,   # 50MB for RAG document ingestion
         "/api/v1/batch": 50 * 1024 * 1024,        # 50MB for batch operations

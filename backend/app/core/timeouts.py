@@ -85,6 +85,7 @@ class TimeoutConfig:
 
         # Batch operations - longest
         (r"^/api/v1/batch/", 600.0),          # Batch jobs
+        (r"^/api/v1/scene-detect/", 600.0),   # Academy video upload + ffmpeg
 
         # LLM operations - slow
         (r"^/api/dimension/", 120.0),         # Dimension apps (LLM)
