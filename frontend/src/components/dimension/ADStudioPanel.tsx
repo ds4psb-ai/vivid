@@ -22,6 +22,7 @@ import InsufficientCreditsModal from "./InsufficientCreditsModal";
 import SceneCard from "./ad-studio/SceneCard";
 import SequenceTimeline from "./ad-studio/SequenceTimeline";
 import TransitionConnector from "./ad-studio/TransitionConnector";
+import { useBYOK, getBYOKHeaders } from "@/hooks/useBYOK";
 import { Download, Copy, Film, FileText, Upload } from "lucide-react";
 
 // =============================================================================
@@ -33,6 +34,11 @@ const DIMENSION_KEY = "ad-studio";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8100";
 const MAX_SCENARIO_LENGTH = 10000;
 const CREDIT_COST = 10;
+const MODEL_OPTIONS = [
+  { value: "gemini-3-pro-preview", label: "Gemini 3 Pro" },
+  { value: "gemini-2.5-flash-preview-05-20", label: "Gemini 2.5 Flash (Fast)" },
+  { value: "gemini-2.5-pro-preview-05-06", label: "Gemini 2.5 Pro" },
+];
 
 // =============================================================================
 // TYPES
@@ -67,12 +73,19 @@ interface EnginePrompts {
   seedance_2_0: string;
 }
 
+interface ContinuityAnchorsPerScene {
+  character?: string;
+  style?: string;
+}
+
 interface SceneAnalysisResult {
   scene_number: number;
   description: string;
+  description_en?: string;
   techniques: SceneTechniques;
   sequence_context: SequenceContext;
   prompts: EnginePrompts;
+  continuity_anchors?: ContinuityAnchorsPerScene;
 }
 
 interface EmotionalBeat {
@@ -150,6 +163,9 @@ function ADStudioContent() {
   const [enableKling, setEnableKling] = useState(true);
   const [enableSeedance, setEnableSeedance] = useState(true);
 
+  // Model state
+  const [model, setModel] = useState("gemini-3-pro-preview");
+
   // Video tab state
   const [videoUrl, setVideoUrl] = useState("");
   const [sceneTimestamps, setSceneTimestamps] = useState("");
@@ -162,6 +178,9 @@ function ADStudioContent() {
   // React 19
   const [isTransitionPending, startTransition] = useTransition();
   const [optimisticResult, setOptimisticResult] = useOptimistic<ADStudioResult | null>(null);
+
+  // BYOK
+  const { byokKey } = useBYOK();
 
   // Credits
   const creditCtx = useCreditContextOptional();
@@ -250,7 +269,7 @@ function ADStudioContent() {
     setError(null);
     setResult(null);
 
-    if (creditCtx && !creditCtx.hasEnoughCredits(CREDIT_COST)) {
+    if (!byokKey && creditCtx && !creditCtx.hasEnoughCredits(CREDIT_COST)) {
       setShowCreditModal(true);
       return;
     }
@@ -284,17 +303,18 @@ function ADStudioContent() {
       const payload: Record<string, unknown> = {
         scenario: trimmed,
         target_engines: engines,
+        model,
       };
       if (styleHint.trim()) payload.style_hint = styleHint.trim();
 
-      await execute(`${API_BASE}/api/dimension/ad-studio/analyze`, payload);
+      await execute(`${API_BASE}/api/dimension/ad-studio/analyze`, payload, getBYOKHeaders(byokKey));
     } finally {
       setLoading(false);
       startTransition(() => {
         setOptimisticResult(null);
       });
     }
-  }, [scenario, styleHint, enableKling, enableSeedance, creditCtx, execute, setLoading, setError, setResult, startTransition, setOptimisticResult]);
+  }, [scenario, styleHint, model, enableKling, enableSeedance, byokKey, creditCtx, execute, setLoading, setError, setResult, startTransition, setOptimisticResult]);
 
   // Handle video analyze — backend expects JSON { video_url, scene_timestamps }
   const handleAnalyzeVideo = useCallback(async () => {
@@ -315,7 +335,7 @@ function ADStudioContent() {
     setError(null);
     setResult(null);
 
-    if (creditCtx && !creditCtx.hasEnoughCredits(CREDIT_COST)) {
+    if (!byokKey && creditCtx && !creditCtx.hasEnoughCredits(CREDIT_COST)) {
       setShowCreditModal(true);
       return;
     }
@@ -336,14 +356,15 @@ function ADStudioContent() {
         video_url: trimmedUrl,
         scene_timestamps: timestamps,
         target_engines: engines,
+        model,
       };
       if (styleHint.trim()) payload.style_hint = styleHint.trim();
 
-      await execute(`${API_BASE}/api/dimension/ad-studio/analyze-video`, payload);
+      await execute(`${API_BASE}/api/dimension/ad-studio/analyze-video`, payload, getBYOKHeaders(byokKey));
     } finally {
       setLoading(false);
     }
-  }, [videoUrl, sceneTimestamps, styleHint, enableKling, enableSeedance, creditCtx, execute, setLoading, setError, setResult]);
+  }, [videoUrl, sceneTimestamps, styleHint, model, enableKling, enableSeedance, byokKey, creditCtx, execute, setLoading, setError, setResult]);
 
   // Copy all prompts
   const handleCopyAllPrompts = useCallback(() => {
@@ -452,26 +473,30 @@ function ADStudioContent() {
         {/* Video Tab */}
         {activeTab === "video" && (
           <>
+            <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20">
+              <p className="text-xs text-blue-400 leading-relaxed">
+                <strong>사용법:</strong> Academy &gt; 씬 감지에서 영상을 업로드하고,
+                결과에서 영상 URL과 타임스탬프를 복사하세요.
+              </p>
+            </div>
             <DimensionPanel.Input
               label="영상 URL"
               value={videoUrl}
               onChange={(e) => setVideoUrl(e.target.value)}
-              placeholder="https://... (씬 감지에서 업로드된 영상 URL)"
+              placeholder="https://... (씬 감지 결과 URL)"
               disabled={combinedLoading}
             />
-            <DimensionPanel.Input
+            <DimensionPanel.Textarea
               label="씬 타임스탬프 (선택)"
               value={sceneTimestamps}
               onChange={(e) => setSceneTimestamps(e.target.value)}
-              placeholder="00:00, 00:15, 00:30, ... (쉼표 구분)"
+              placeholder={"00:00, 00:15, 00:30\n(씬 감지 결과에서 복사)"}
               disabled={combinedLoading}
+              rows={3}
             />
             {validationError && activeTab === "video" && (
               <p className="text-xs text-red-400 ml-1">{validationError}</p>
             )}
-            <p className="text-[10px] text-slate-400 dark:text-zinc-600 ml-1">
-              Academy 씬 감지 결과의 영상 URL과 타임스탬프를 붙여넣으세요.
-            </p>
           </>
         )}
 
@@ -481,6 +506,15 @@ function ADStudioContent() {
           value={styleHint}
           onChange={(e) => setStyleHint(e.target.value)}
           placeholder="dark and moody, bright pop, neo-noir..."
+          disabled={combinedLoading}
+        />
+
+        {/* AI Model */}
+        <DimensionPanel.Select
+          label="AI 모델"
+          value={model}
+          onChange={(e) => setModel(e.target.value)}
+          options={MODEL_OPTIONS}
           disabled={combinedLoading}
         />
 
@@ -515,6 +549,18 @@ function ADStudioContent() {
           </div>
         </div>
 
+        {/* BYOK Guide */}
+        {!byokKey && (
+          <div className="p-3 rounded-xl bg-amber-500/5 border border-amber-500/10">
+            <p className="text-xs text-amber-400/80 leading-relaxed">
+              <strong>Tip:</strong> Google API 키가 있으면 크레딧 없이 무료 사용 가능!{" "}
+              <a href="/api-key-guide" className="underline hover:text-amber-300">
+                $300 무료 크레딧 받기 →
+              </a>
+            </p>
+          </div>
+        )}
+
         {/* Generate Button */}
         <DimensionPanel.GenerateButton
           onClick={activeTab === "scenario" ? handleAnalyzeScenario : handleAnalyzeVideo}
@@ -523,14 +569,20 @@ function ADStudioContent() {
           className="mt-6"
           icon={<Film className="w-5 h-5" />}
         >
-          분석 시작 ({CREDIT_COST} credits)
+          분석 시작{!byokKey && ` (${CREDIT_COST} credits)`}
         </DimensionPanel.GenerateButton>
       </DimensionPanel.Sidebar>
 
       {/* Content */}
       <DimensionPanel.Content>
         {/* Loading State */}
-        <DimensionPanel.Loading message="시나리오 분석 중... 시퀀스 컨텍스트와 프롬프트를 생성합니다." />
+        <DimensionPanel.Loading
+          message={
+            activeTab === "scenario"
+              ? "시나리오를 분석하고 시퀀스 컨텍스트를 추출합니다..."
+              : "영상 레퍼런스를 분석하고 시네마틱 기법을 매칭합니다..."
+          }
+        />
 
         {/* Error State */}
         <DimensionPanel.Error onRetry={retry} />
@@ -542,6 +594,17 @@ function ADStudioContent() {
               isOptimistic ? "opacity-60" : ""
             }`}
           >
+            {/* Optimistic Progress */}
+            {isOptimistic && (
+              <div className="flex items-center gap-3 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                <div className="w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                <div>
+                  <p className="text-sm font-medium text-amber-400">분석 중...</p>
+                  <p className="text-xs text-amber-400/60">Gemini가 시나리오를 분석하고 프롬프트를 생성합니다</p>
+                </div>
+              </div>
+            )}
+
             {/* Toolbar */}
             {!isOptimistic && (
               <div className="flex items-center justify-between">

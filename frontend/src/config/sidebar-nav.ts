@@ -10,6 +10,7 @@ import {
   Brain,
   ClipboardCheck,
   Shield,
+  Film,
 } from "lucide-react";
 
 export interface SidebarNavItem {
@@ -29,6 +30,7 @@ export const SIDEBAR_NAV_ITEMS: SidebarNavItem[] = [
   { id: "prompt", icon: Sparkles, label: "프롬프터", href: "/?tab=prompt" },
   { id: "parse", icon: ClipboardCopy, label: "파싱", href: "/?tab=parse" },
   { id: "tools", icon: Wrench, label: "툴", href: "/?tab=tools" },
+  { id: "ad-studio", icon: Film, label: "AD Studio", href: "/dimension/ad-studio" },
   { id: "vibe", icon: Brain, label: "철학관", href: "/?tab=vibe", dividerBefore: true },
   { id: "homework", icon: ClipboardCheck, label: "과제", href: "/?tab=homework" },
   { id: "admin", icon: Shield, label: "관리", href: "/?tab=admin", dividerBefore: true, adminOnly: true },

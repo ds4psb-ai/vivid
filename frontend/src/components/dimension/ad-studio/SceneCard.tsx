@@ -73,6 +73,11 @@ export default function SceneCard({ scene, index }: SceneCardProps) {
           <p className="text-sm text-slate-600 dark:text-zinc-400 leading-relaxed">
             {scene.description}
           </p>
+          {scene.description_en && (
+            <p className="text-xs text-slate-400 dark:text-zinc-500 mt-1 italic">
+              {scene.description_en}
+            </p>
+          )}
         </div>
       </div>
 
@@ -151,17 +156,34 @@ export default function SceneCard({ scene, index }: SceneCardProps) {
             <div className="mt-3 space-y-2">
               {scene.prompts.kling_3_0 && (
                 <div className="p-3 bg-amber-500/5 rounded-lg border border-amber-500/10">
-                  <p className="text-[10px] font-bold text-amber-500 uppercase tracking-widest mb-1">Kling 3.0</p>
+                  <p className="text-[10px] font-bold text-amber-500 uppercase tracking-widest mb-1">
+                    Kling 3.0 <span className="text-amber-500/50">({scene.prompts.kling_3_0.split(' ').length}w)</span>
+                  </p>
                   <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed whitespace-pre-wrap">{scene.prompts.kling_3_0}</p>
                 </div>
               )}
               {scene.prompts.seedance_2_0 && (
                 <div className="p-3 bg-violet-500/5 rounded-lg border border-violet-500/10">
-                  <p className="text-[10px] font-bold text-violet-500 uppercase tracking-widest mb-1">Seedance 2.0</p>
+                  <p className="text-[10px] font-bold text-violet-500 uppercase tracking-widest mb-1">
+                    Seedance 2.0 <span className="text-violet-500/50">({scene.prompts.seedance_2_0.split(' ').length}w)</span>
+                  </p>
                   <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed whitespace-pre-wrap">{scene.prompts.seedance_2_0}</p>
                 </div>
               )}
             </div>
+
+            {/* Continuity Anchors */}
+            {scene.continuity_anchors && (
+              <div className="mt-2 p-2 bg-slate-500/5 rounded-lg">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">연속성 앵커</p>
+                {scene.continuity_anchors.character && (
+                  <p className="text-xs text-slate-500">{scene.continuity_anchors.character}</p>
+                )}
+                {scene.continuity_anchors.style && (
+                  <p className="text-xs text-slate-400 italic">{scene.continuity_anchors.style}</p>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
