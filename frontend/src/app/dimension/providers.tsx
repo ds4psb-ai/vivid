@@ -14,7 +14,7 @@
  */
 
 import { TeachingSettingsProvider } from "@/contexts/DimensionSettingsContext";
-import { CreditProvider } from "@/contexts/CreditContext";
+import AppShell from "@/components/AppShell";
 
 interface DimensionProvidersProps {
   children: React.ReactNode;
@@ -24,8 +24,10 @@ export default function DimensionProviders({
   children,
 }: DimensionProvidersProps) {
   return (
-    <CreditProvider>
-      <TeachingSettingsProvider>{children}</TeachingSettingsProvider>
-    </CreditProvider>
+    <AppShell navVariant="academy" showChokki={false}>
+      <TeachingSettingsProvider>
+        <div className="h-screen">{children}</div>
+      </TeachingSettingsProvider>
+    </AppShell>
   );
 }
