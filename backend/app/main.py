@@ -203,26 +203,30 @@ async def lifespan(app: FastAPI):
         logger.error(f"[STARTUP] Database initialization failed: {e}")
         raise  # DB failure is fatal
 
-    # Initialize Redis client (non-fatal - app can run without Redis)
+    # Initialize Redis client (opt-in via REDIS_ENABLED)
     from app.redis_client import init_redis, close_redis
     redis_available = False
-    try:
-        logger.info("[STARTUP] Initializing Redis client...")
-        await init_redis()
-        redis_available = True
-        logger.info("[STARTUP] Redis client initialized successfully")
-    except Exception as e:
-        logger.warning(f"[STARTUP] Redis client initialization failed (non-fatal): {e}")
-
-    # Initialize Arq Redis Pool (non-fatal)
-    app.state.arq_pool = None
-    if redis_available:
+    if settings.REDIS_ENABLED:
         try:
-            logger.info("[STARTUP] Creating Arq Redis pool...")
-            app.state.arq_pool = await create_pool(RedisSettings.from_dsn(settings.REDIS_URL))
-            logger.info("[STARTUP] Arq Redis pool created successfully")
+            logger.info("[STARTUP] Initializing Redis client...")
+            await init_redis()
+            redis_available = True
+            logger.info("[STARTUP] Redis client initialized successfully")
         except Exception as e:
-            logger.warning(f"[STARTUP] Arq Redis pool creation failed (non-fatal): {e}")
+            logger.warning(f"[STARTUP] Redis client initialization failed (non-fatal): {e}")
+
+        # Initialize Arq Redis Pool (non-fatal)
+        app.state.arq_pool = None
+        if redis_available:
+            try:
+                logger.info("[STARTUP] Creating Arq Redis pool...")
+                app.state.arq_pool = await create_pool(RedisSettings.from_dsn(settings.REDIS_URL))
+                logger.info("[STARTUP] Arq Redis pool created successfully")
+            except Exception as e:
+                logger.warning(f"[STARTUP] Arq Redis pool creation failed (non-fatal): {e}")
+    else:
+        app.state.arq_pool = None
+        logger.info("[STARTUP] Redis disabled (REDIS_ENABLED=false), skipping")
 
     # Initialize Drift Cron Service (HITL automation)
     drift_cron = None

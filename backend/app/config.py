@@ -97,6 +97,7 @@ class Settings(BaseSettings):
     
     # Redis (Added Phase 3)
     REDIS_URL: str = "redis://localhost:6380"
+    REDIS_ENABLED: bool = False  # Opt-in: set REDIS_ENABLED=true when Redis is needed
     
     # Capsule Execution Timeouts (seconds)
     CAPSULE_EXECUTION_TIMEOUT: int = 120  # Default timeout for capsule runs (2 minutes)
