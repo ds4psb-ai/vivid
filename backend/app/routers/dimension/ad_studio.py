@@ -290,6 +290,142 @@ class ADStudioResponse(BaseModel):
     beat_structure: Dict[str, Any] = Field(default_factory=dict)
 
 
+# ============================================================================
+# Decomposition Schema Models — for Gemini response_schema enforcement
+# ============================================================================
+
+
+class DecompositionCharacter(BaseModel):
+    """Character extracted from scenario."""
+    binding_token: str = ""
+    name: str = ""
+    description_en: str = ""
+    first_appears_in_shot: int = 1
+    arc_summary_en: str = ""
+
+
+class DecompositionBeat(BaseModel):
+    """Single narrative beat."""
+    beat: str = ""
+    shot_numbers: List[int] = Field(default_factory=list)
+    purpose_en: str = ""
+
+
+class DecompositionBeatStructure(BaseModel):
+    """Beat structure for the sequence."""
+    type: str = "4-act"
+    pacing_profile: str = "dramatic"
+    total_target_duration_sec: int = 10
+    beats: List[DecompositionBeat] = Field(default_factory=list)
+
+
+class DecompositionAudio(BaseModel):
+    """Audio design per shot."""
+    ambient: str = ""
+    sfx: str = ""
+    music: str = ""
+    dialogue: Optional[str] = None
+
+
+class DecompositionShotContinuity(BaseModel):
+    """Per-shot continuity anchors."""
+    character: str = ""
+    style: str = ""
+    end_frame_hint: str = ""
+
+
+class DecompositionTechniques(BaseModel):
+    """Technique IDs per category."""
+    shot_scale: List[str] = Field(default_factory=list)
+    camera_movement: List[str] = Field(default_factory=list)
+    camera_angle: List[str] = Field(default_factory=list)
+    lighting: List[str] = Field(default_factory=list)
+    color: List[str] = Field(default_factory=list)
+    composition: List[str] = Field(default_factory=list)
+    aesthetic_style: List[str] = Field(default_factory=list)
+    physics_motion: List[str] = Field(default_factory=list)
+    focus_technique: List[str] = Field(default_factory=list)
+    editing_rhythm: List[str] = Field(default_factory=list)
+
+
+class DecompositionPrompts(BaseModel):
+    """Engine-specific prompts per shot."""
+    kling_3_0: str = ""
+    seedance_2_0: str = ""
+    veo_3_1: str = ""
+
+
+class DecompositionShot(BaseModel):
+    """Single shot in the decomposition."""
+    shot_number: int = 1
+    beat: str = ""
+    description: str = ""
+    description_en: str = ""
+    shot_type: str = ""
+    duration_weight: float = 1.0
+    techniques: DecompositionTechniques = Field(default_factory=DecompositionTechniques)
+    characters_in_shot: List[str] = Field(default_factory=list)
+    action_en: str = ""
+    audio: DecompositionAudio = Field(default_factory=DecompositionAudio)
+    continuity_anchors: DecompositionShotContinuity = Field(default_factory=DecompositionShotContinuity)
+    transition_to_next: str = ""
+    prompts: DecompositionPrompts = Field(default_factory=DecompositionPrompts)
+
+
+class DecompositionEmotionalBeat(BaseModel):
+    """Emotional arc point."""
+    shot_number: int = 1
+    emotion: str = ""
+    intensity: float = 0.5
+    description: str = ""
+
+
+class DecompositionVisualRhythm(BaseModel):
+    """Visual rhythm progression."""
+    camera_distance_curve: List[str] = Field(default_factory=list)
+    edit_tempo: str = ""
+
+
+class DecompositionColorBeat(BaseModel):
+    """Color progression point."""
+    shot_number: int = 1
+    temperature: str = "neutral"
+    palette: str = ""
+
+
+class DecompositionSequenceContinuity(BaseModel):
+    """Sequence-level continuity anchors."""
+    character_anchors: List[str] = Field(default_factory=list)
+    style_anchors: List[str] = Field(default_factory=list)
+    lighting_anchors: List[str] = Field(default_factory=list)
+
+
+class DecompositionFiveDomains(BaseModel):
+    """VGoT 5-domain analysis."""
+    character_dynamics: str = ""
+    background_continuity: str = ""
+    relationship_evolution: str = ""
+    camera_evolution: str = ""
+    lighting_evolution: str = ""
+
+
+class DecompositionSequence(BaseModel):
+    """Sequence-level analysis."""
+    emotional_arc: List[DecompositionEmotionalBeat] = Field(default_factory=list)
+    visual_rhythm: DecompositionVisualRhythm = Field(default_factory=DecompositionVisualRhythm)
+    color_progression: List[DecompositionColorBeat] = Field(default_factory=list)
+    continuity_anchors: DecompositionSequenceContinuity = Field(default_factory=DecompositionSequenceContinuity)
+    five_domains: DecompositionFiveDomains = Field(default_factory=DecompositionFiveDomains)
+
+
+class DecompositionOutput(BaseModel):
+    """Gemini response_schema for cinematic scenario decomposition."""
+    characters: List[DecompositionCharacter] = Field(default_factory=list)
+    beat_structure: DecompositionBeatStructure = Field(default_factory=DecompositionBeatStructure)
+    shots: List[DecompositionShot] = Field(default_factory=list)
+    sequence: DecompositionSequence = Field(default_factory=DecompositionSequence)
+
+
 class TechniqueInfo(BaseModel):
     """Technique info for the techniques listing endpoint."""
     technique_id: str

@@ -53,6 +53,7 @@ from app.services.cinematic_director_prompts import (
     DECOMPOSITION_USER_TEMPLATE,
     SHOT_TYPE_GUIDELINES,
     PACING_PROFILES,
+    FEW_SHOT_EXAMPLES,
 )
 
 # Legacy v1 aliases (kept for video analysis which still uses simpler format)
@@ -121,6 +122,11 @@ class ADStudioBrain:
             scenario=scenario,
             style_hint=style_hint,
             target_engines=target_engines,
+        )
+
+        # Step 1.5: Validate and fix quality issues
+        raw_analysis = await self._validate_and_fix(
+            raw_analysis, scenario, style_hint, target_engines
         )
 
         if progress_callback:
@@ -228,16 +234,26 @@ class ADStudioBrain:
         target_engines: List[str],
         system_prompt: str = SCENE_ANALYSIS_SYSTEM_PROMPT,
     ) -> Dict[str, Any]:
-        """Call Gemini for cinematic analysis."""
+        """Call Gemini for cinematic analysis with few-shot and schema enforcement."""
+        from app.routers.dimension.ad_studio import DecompositionOutput
+
         style_section = ""
         if style_hint:
             style_section = f"STYLE HINT: {style_hint}"
+
+        # Select and inject few-shot example based on pacing/scenario
+        few_shot_key = self._select_few_shot(style_hint, scenario)
+        few_shot_json = json.dumps(
+            FEW_SHOT_EXAMPLES[few_shot_key], ensure_ascii=False, indent=2
+        )
 
         user_prompt = SCENE_ANALYSIS_USER_TEMPLATE.format(
             scenario=scenario,
             style_hint_section=style_section,
             engines=", ".join(target_engines),
         )
+        # Inject few-shot (separate from .format() to avoid JSON brace conflicts)
+        user_prompt = user_prompt.replace("__FEW_SHOT_PLACEHOLDER__", few_shot_json)
 
         try:
             client = _get_gemini_client(self.model, self.byok_key)
@@ -246,8 +262,9 @@ class ADStudioBrain:
                 contents=user_prompt,
                 config={
                     "system_instruction": system_prompt,
-                    "temperature": 0.3,
+                    "temperature": 0.7,
                     "response_mime_type": "application/json",
+                    "response_schema": DecompositionOutput,
                 },
             )
 
@@ -386,6 +403,156 @@ class ADStudioBrain:
             "kling_3_0": kling_prompt,
             "seedance_2_0": seedance_prompt,
         }
+
+    def _select_few_shot(self, style_hint: Optional[str], scenario: str) -> str:
+        """Select best few-shot example based on style hint and scenario keywords."""
+        text = f"{style_hint or ''} {scenario}".lower()
+
+        explosive_kw = {
+            "action", "chase", "explosion", "fight", "horror", "fast", "rapid",
+            "intense", "battle", "war", "sprint", "crash", "punch",
+            "추격", "전투", "폭발", "액션", "공포", "격투",
+        }
+        contemplative_kw = {
+            "peaceful", "quiet", "slow", "art", "meditation", "nature",
+            "romantic", "gentle", "serene", "calm", "dawn", "lake", "ocean",
+            "평화", "고요", "느린", "자연", "명상", "새벽", "호수",
+        }
+
+        explosive_score = sum(1 for kw in explosive_kw if kw in text)
+        contemplative_score = sum(1 for kw in contemplative_kw if kw in text)
+
+        if explosive_score > contemplative_score and explosive_score > 0:
+            return "explosive"
+        if contemplative_score > explosive_score and contemplative_score > 0:
+            return "contemplative"
+        return "dramatic"
+
+    async def _validate_and_fix(
+        self,
+        raw_analysis: Dict[str, Any],
+        scenario: str,
+        style_hint: Optional[str],
+        target_engines: List[str],
+    ) -> Dict[str, Any]:
+        """Post-process validation with auto-retry on failure."""
+        issues: List[str] = []
+
+        # 1. ANTI-LAZY pattern check
+        anti_lazy = re.compile(
+            r"(위와 동일|이하 생략|similar to|same as (scene|shot)|같은 방식|생략|skip|\.{3,})",
+            re.IGNORECASE,
+        )
+        for shot in raw_analysis.get("shots", []):
+            shot_num = shot.get("shot_number", "?")
+            for field in ("description", "description_en", "action_en"):
+                val = shot.get(field, "")
+                if val and anti_lazy.search(val):
+                    issues.append(f"Shot {shot_num}: ANTI-LAZY in {field}")
+            # Also check engine prompts
+            prompts = shot.get("prompts", {})
+            if isinstance(prompts, dict):
+                for engine_key, prompt_val in prompts.items():
+                    if prompt_val and anti_lazy.search(prompt_val):
+                        issues.append(f"Shot {shot_num}: ANTI-LAZY in prompts.{engine_key}")
+
+        # 2. Engine prompt length check (too short = likely placeholder)
+        for shot in raw_analysis.get("shots", []):
+            shot_num = shot.get("shot_number", "?")
+            prompts = shot.get("prompts", {})
+            if isinstance(prompts, dict):
+                for engine in ("kling_3_0", "seedance_2_0", "veo_3_1"):
+                    p = prompts.get(engine, "")
+                    if p and len(p) < 20:
+                        issues.append(
+                            f"Shot {shot_num}: {engine} prompt too short ({len(p)} chars)"
+                        )
+
+        # 3. Beat structure completeness
+        beats = raw_analysis.get("beat_structure", {}).get("beats", [])
+        found_beats = {b.get("beat") for b in beats if isinstance(b, dict)}
+        required_beats = {"OPENER", "CLIMAX", "RESOLVE"}
+        missing = required_beats - found_beats
+        if missing:
+            issues.append(f"Missing required beats: {missing}")
+
+        # 4. Character binding consistency
+        chars = raw_analysis.get("characters", [])
+        char_names = set()
+        for c in chars:
+            if isinstance(c, dict):
+                char_names.add(c.get("name", ""))
+        for shot in raw_analysis.get("shots", []):
+            for c in shot.get("characters_in_shot", []):
+                token = c if isinstance(c, str) else c.get("name", "") if isinstance(c, dict) else ""
+                # Extract name from binding token: [Character A: desc] → Character A
+                clean = re.sub(r"\[([^:]+):.*\]", r"\1", token).strip()
+                if clean and clean not in char_names and not any(
+                    clean in name for name in char_names
+                ):
+                    issues.append(
+                        f"Shot {shot.get('shot_number', '?')}: unbound character '{clean}'"
+                    )
+
+        # 5. Retry once if issues found
+        if issues:
+            logger.warning(f"[ad-brain] Validation found {len(issues)} issues: {issues}")
+            return await self._retry_with_fixes(
+                raw_analysis, issues, scenario, style_hint, target_engines
+            )
+
+        return raw_analysis
+
+    async def _retry_with_fixes(
+        self,
+        original: Dict[str, Any],
+        issues: List[str],
+        scenario: str,
+        style_hint: Optional[str],
+        target_engines: List[str],
+    ) -> Dict[str, Any]:
+        """Retry Gemini with fix instructions for validation issues."""
+        from app.routers.dimension.ad_studio import DecompositionOutput
+
+        issues_text = "\n".join(f"- {issue}" for issue in issues)
+        fix_prompt = (
+            "The following JSON was generated for a cinematic decomposition but has quality issues.\n\n"
+            f"## ISSUES TO FIX\n{issues_text}\n\n"
+            "## ORIGINAL JSON\n"
+            f"{json.dumps(original, ensure_ascii=False, indent=2)}\n\n"
+            "## INSTRUCTIONS\n"
+            "Fix ALL listed issues. For ANTI-LAZY issues, rewrite the text with unique, specific content. "
+            "For short prompts, expand with cinematic detail (30-80 words). "
+            "For missing beats, add the required beat entries. "
+            "For unbound characters, ensure they match the characters list.\n"
+            "Return the COMPLETE fixed JSON."
+        )
+
+        try:
+            client = _get_gemini_client(self.model, self.byok_key)
+            response = await client.aio.models.generate_content(
+                model=self.model,
+                contents=fix_prompt,
+                config={
+                    "system_instruction": "You are a JSON fixer for cinematic decomposition outputs. Fix the issues and return valid JSON.",
+                    "temperature": 0.4,
+                    "response_mime_type": "application/json",
+                    "response_schema": DecompositionOutput,
+                },
+            )
+
+            raw_text = response.text.strip()
+            if raw_text.startswith("```"):
+                raw_text = re.sub(r"^```(?:json)?\n?", "", raw_text)
+                raw_text = re.sub(r"\n?```$", "", raw_text)
+
+            fixed = json.loads(raw_text)
+            logger.info(f"[ad-brain] Retry fix successful, {len(issues)} issues addressed")
+            return fixed
+
+        except Exception as e:
+            logger.warning(f"[ad-brain] Retry fix failed: {e}, returning original")
+            return original
 
     def _enrich_techniques(self, techniques_raw: Dict[str, Any]) -> "SceneTechniques":
         """Enrich technique IDs with full technique data from RAG corpus.
