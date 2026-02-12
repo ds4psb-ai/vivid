@@ -59,8 +59,14 @@ export function CreditProvider({ children, pollingInterval = 30000 }: CreditProv
             });
             setError(null);
         } catch (err) {
-            // Don't reset balance on error (keep last known value)
-            setError(err instanceof Error ? err.message : "Failed to load credits");
+            // Silence 401 errors (unauthenticated / BYOK users)
+            const msg = err instanceof Error ? err.message : String(err);
+            if (msg.includes("401") || msg.includes("Unauthorized")) {
+                // Keep balance at 0 silently — BYOK bypasses credit checks
+                setError(null);
+            } else {
+                setError(msg || "Failed to load credits");
+            }
         } finally {
             setIsLoading(false);
         }

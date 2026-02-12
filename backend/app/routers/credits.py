@@ -15,7 +15,7 @@ from app.credit_service import (
 )
 from app.database import get_db
 from app.models import CreditLedger
-from app.auth import require_user_id
+from app.auth import require_user_id, get_user_id
 from app.utils.error_sanitize import safe_error_detail
 
 
@@ -79,12 +79,24 @@ class DeductRequest(BaseModel):
 
 @router.get("/balance", response_model=BalanceResponse)
 async def get_balance(
-    user_id: str = Depends(require_user_id),
+    user_id: Optional[str] = Depends(get_user_id),
     db: AsyncSession = Depends(get_db),
 ):
-    """Get user's current credit balance."""
+    """Get user's current credit balance.
+
+    Returns zero balance for unauthenticated users (e.g. BYOK mode)
+    instead of 401, so the frontend credit polling doesn't error-loop.
+    """
+    if not user_id:
+        return BalanceResponse(
+            user_id="anonymous",
+            balance=0,
+            subscription_credits=0,
+            topup_credits=0,
+            promo_credits=0,
+        )
     user_credits = await get_or_create_user_credits(db, user_id)
-    
+
     return BalanceResponse(
         user_id=user_credits.user_id,
         balance=user_credits.balance,
