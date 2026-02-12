@@ -99,7 +99,7 @@ export default function SceneCard({ scene, index }: SceneCardProps) {
       )}
 
       {/* Prompt Copy Buttons */}
-      <div className="px-5 pb-4 grid grid-cols-2 gap-2">
+      <div className="px-5 pb-4 grid grid-cols-3 gap-2">
         {scene.prompts.kling_3_0 && (
           <button
             onClick={() => handleCopyPrompt("kling", scene.prompts.kling_3_0)}
@@ -121,6 +121,18 @@ export default function SceneCard({ scene, index }: SceneCardProps) {
               <><Check className="w-3.5 h-3.5" /> 복사됨!</>
             ) : (
               <><Copy className="w-3.5 h-3.5" /> Seedance 2.0</>
+            )}
+          </button>
+        )}
+        {scene.prompts.veo_3_1 && (
+          <button
+            onClick={() => handleCopyPrompt("veo", scene.prompts.veo_3_1!)}
+            className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors border border-emerald-500/20"
+          >
+            {copiedEngine === "veo" ? (
+              <><Check className="w-3.5 h-3.5" /> 복사됨!</>
+            ) : (
+              <><Copy className="w-3.5 h-3.5" /> Veo 3.1</>
             )}
           </button>
         )}
@@ -168,6 +180,14 @@ export default function SceneCard({ scene, index }: SceneCardProps) {
                     Seedance 2.0 <span className="text-violet-500/50">({scene.prompts.seedance_2_0.split(' ').length}w)</span>
                   </p>
                   <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed whitespace-pre-wrap">{scene.prompts.seedance_2_0}</p>
+                </div>
+              )}
+              {scene.prompts.veo_3_1 && (
+                <div className="p-3 bg-emerald-500/5 rounded-lg border border-emerald-500/10">
+                  <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mb-1">
+                    Veo 3.1 <span className="text-emerald-500/50">({scene.prompts.veo_3_1.split(' ').length}w)</span>
+                  </p>
+                  <p className="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed whitespace-pre-wrap">{scene.prompts.veo_3_1}</p>
                 </div>
               )}
             </div>

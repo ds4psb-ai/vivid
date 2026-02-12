@@ -20,6 +20,7 @@ from app.services.adapters.kling_adapter import (
     get_kling_motion_intensity,
 )
 from app.services.adapters.seedance_adapter import generate_seedance_prompt
+from app.services.adapters.veo_adapter import generate_veo_prompt
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +63,7 @@ class ADPromptEngine:
             # Generate per-engine prompts
             kling_prompt = generate_kling_prompt(scene, seq_ctx)
             seedance_prompt = generate_seedance_prompt(scene, seq_ctx)
+            veo_prompt = generate_veo_prompt(scene, seq_ctx)
 
             # Get engine-specific metadata
             camera_preset = get_kling_camera_preset(techniques)
@@ -72,6 +74,7 @@ class ADPromptEngine:
                 "scene_number": scene_num,
                 "kling_3_0": kling_prompt,
                 "seedance_2_0": seedance_prompt,
+                "veo_3_1": veo_prompt,
                 "kling_metadata": {
                     "camera_preset": camera_preset,
                     "motion_intensity": motion_preset,

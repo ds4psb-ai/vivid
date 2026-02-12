@@ -71,6 +71,7 @@ interface SequenceContext {
 interface EnginePrompts {
   kling_3_0: string;
   seedance_2_0: string;
+  veo_3_1?: string;
 }
 
 interface ContinuityAnchorsPerScene {
@@ -162,6 +163,7 @@ function ADStudioContent() {
   const [styleHint, setStyleHint] = useState("");
   const [enableKling, setEnableKling] = useState(true);
   const [enableSeedance, setEnableSeedance] = useState(true);
+  const [enableVeo, setEnableVeo] = useState(true);
 
   // Model state
   const [model, setModel] = useState("gemini-3-pro-preview");
@@ -261,7 +263,7 @@ function ADStudioContent() {
       setValidationError(`시나리오는 ${MAX_SCENARIO_LENGTH}자 이하로 입력해주세요`);
       return;
     }
-    if (!enableKling && !enableSeedance) {
+    if (!enableKling && !enableSeedance && !enableVeo) {
       setValidationError("하나 이상의 엔진을 선택하세요");
       return;
     }
@@ -289,7 +291,7 @@ function ADStudioContent() {
           description: "분석 중...",
           techniques: { composition: [], camera_movement: [], camera_angle: [], lighting: [], color: [] },
           sequence_context: { emotional_position: "...", camera_distance_flow: "..." },
-          prompts: { kling_3_0: "생성 중...", seedance_2_0: "생성 중..." },
+          prompts: { kling_3_0: "생성 중...", seedance_2_0: "생성 중...", veo_3_1: "생성 중..." },
         })),
         evidence_refs: [],
       });
@@ -299,6 +301,7 @@ function ADStudioContent() {
       const engines: string[] = [];
       if (enableKling) engines.push("kling");
       if (enableSeedance) engines.push("seedance");
+      if (enableVeo) engines.push("veo");
 
       const payload: Record<string, unknown> = {
         scenario: trimmed,
@@ -327,7 +330,7 @@ function ADStudioContent() {
       setValidationError("올바른 URL을 입력하세요 (http:// 또는 https://)");
       return;
     }
-    if (!enableKling && !enableSeedance) {
+    if (!enableKling && !enableSeedance && !enableVeo) {
       setValidationError("하나 이상의 엔진을 선택하세요");
       return;
     }
@@ -346,6 +349,7 @@ function ADStudioContent() {
       const engines: string[] = [];
       if (enableKling) engines.push("kling");
       if (enableSeedance) engines.push("seedance");
+      if (enableVeo) engines.push("veo");
 
       const timestamps = sceneTimestamps
         .split(",")
@@ -373,10 +377,11 @@ function ADStudioContent() {
       const lines = [`--- Scene ${s.scene_number} ---`];
       if (enableKling) lines.push(`[Kling 3.0]\n${s.prompts.kling_3_0}`);
       if (enableSeedance) lines.push(`[Seedance 2.0]\n${s.prompts.seedance_2_0}`);
+      if (enableVeo && s.prompts.veo_3_1) lines.push(`[Veo 3.1]\n${s.prompts.veo_3_1}`);
       return lines.join("\n\n");
     }).join("\n\n");
     copyToClipboard(allPrompts);
-  }, [adResult, enableKling, enableSeedance, copyToClipboard]);
+  }, [adResult, enableKling, enableSeedance, enableVeo, copyToClipboard]);
 
   // Export JSON
   const handleExportJson = useCallback(() => {
@@ -523,7 +528,7 @@ function ADStudioContent() {
           <label className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1">
             타겟 엔진
           </label>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <button
               onClick={() => setEnableKling(!enableKling)}
               disabled={combinedLoading}
@@ -545,6 +550,17 @@ function ADStudioContent() {
               } disabled:opacity-50`}
             >
               Seedance 2.0
+            </button>
+            <button
+              onClick={() => setEnableVeo(!enableVeo)}
+              disabled={combinedLoading}
+              className={`py-2 px-3 rounded-lg text-xs font-medium transition-all ${
+                enableVeo
+                  ? `${classes.bg} text-white`
+                  : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-white/10"
+              } disabled:opacity-50`}
+            >
+              Veo 3.1
             </button>
           </div>
         </div>
