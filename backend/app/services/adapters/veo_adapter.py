@@ -97,6 +97,16 @@ def generate_veo_prompt(
     if audio:
         layers.append(f"Audio: {audio}")
 
+    # Layer 8: Physics & Dynamics
+    physics_desc = _build_physics_layer(techniques)
+    if physics_desc:
+        layers.append(physics_desc)
+
+    # Layer 9: Negative Constraints
+    negative_desc = _build_negative_layer(techniques)
+    if negative_desc:
+        layers.append(negative_desc)
+
     return ". ".join(layers) if layers else desc
 
 
@@ -203,6 +213,78 @@ def _build_style_layer(
             parts.append(", ".join(str(a) for a in style_anchors[:2]))
 
     return "Style: " + ", ".join(parts) if parts else ""
+
+
+# ─── Physics technique keywords for Layer 8 ───
+_PHYSICS_KEYWORDS: Dict[str, str] = {
+    "cloth_simulation": "realistic fabric weight and draping with wind interaction",
+    "liquid_dynamics": "fluid motion with surface tension, splash, and ripple physics",
+    "particle_dispersion": "atmospheric particles floating and dispersing through light",
+    "hair_physics": "natural hair sway, bounce, and wind-blown strand dynamics",
+    "smoke_volumetrics": "volumetric smoke interacting with light beams, 3D fog density",
+    "fire_dynamics": "realistic flame turbulence, ember scatter, heat shimmer distortion",
+    "glass_refraction": "light splitting through glass with prismatic caustic patterns",
+    "water_surface": "water surface ripple propagation and reflection distortion",
+    "destruction_physics": "shattering debris with realistic trajectories and impact force",
+    "fabric_flow": "weightless textile undulation, gravity-defying silk ballet",
+}
+
+# ─── Negative prompt mappings ───
+_NEGATIVE_MAP: Dict[str, List[str]] = {
+    "handheld_shaky": ["stabilized", "tripod", "smooth glide"],
+    "static_hold": ["camera movement", "pan", "dolly"],
+    "slow_motion_editing": ["real-time speed", "fast motion"],
+    "high_key_lighting": ["dark shadows", "low-key", "moody"],
+    "low_key_lighting": ["bright", "high-key", "flat lighting"],
+    "shallow_dof": ["deep focus", "everything sharp"],
+    "deep_focus": ["shallow depth of field", "bokeh", "blurred background"],
+    "desaturated_muted": ["vibrant", "saturated", "neon colors"],
+    "neon_saturated": ["muted", "desaturated", "pastel"],
+}
+
+
+def _build_physics_layer(techniques: Dict[str, Any]) -> str:
+    """Layer 8: Physics & Dynamics — explicit physics verbs for Veo 3.1."""
+    parts: List[str] = []
+
+    # Check physics_motion category
+    physics = techniques.get("physics_motion", [])
+    for item in physics:
+        tid = _extract_id(item)
+        if tid in _PHYSICS_KEYWORDS:
+            parts.append(_PHYSICS_KEYWORDS[tid])
+        else:
+            parts.append(_technique_to_text(item) + " physics")
+
+    # Also scan for implicit physics cues in other categories
+    movements = techniques.get("camera_movement", [])
+    for m in movements:
+        tid = _extract_id(m)
+        if tid in ("crash_zoom", "fpv_drone_dive", "vertigo_effect"):
+            parts.append(f"{_technique_to_text(m)} with physical momentum")
+
+    if not parts:
+        return ""
+    return "Physics: " + ", ".join(parts[:3])  # Cap at 3 for prompt economy
+
+
+def _build_negative_layer(techniques: Dict[str, Any]) -> str:
+    """Layer 9: Negative Constraints — auto-derive what to avoid."""
+    negatives: List[str] = []
+
+    for cat_items in techniques.values():
+        if not isinstance(cat_items, list):
+            continue
+        for item in cat_items:
+            tid = _extract_id(item)
+            if tid in _NEGATIVE_MAP:
+                negatives.extend(_NEGATIVE_MAP[tid])
+
+    if not negatives:
+        return ""
+    # Deduplicate and cap
+    unique = list(dict.fromkeys(negatives))[:5]
+    return "Avoid: " + ", ".join(unique)
 
 
 def _technique_to_text(technique: Any) -> str:

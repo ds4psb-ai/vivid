@@ -148,7 +148,7 @@ class TestADStudioScenarioRequest:
         req = ADStudioScenarioRequest(
             scenario="A scene of tension building in a dark room.",
         )
-        assert req.target_engines == ["kling", "seedance"]
+        assert req.target_engines == ["kling", "seedance", "veo"]
 
     def test_custom_engines(self):
         req = ADStudioScenarioRequest(
@@ -724,7 +724,8 @@ class TestConstants:
     def test_allowed_engines(self):
         assert "kling" in ALLOWED_ENGINES
         assert "seedance" in ALLOWED_ENGINES
-        assert len(ALLOWED_ENGINES) == 2
+        assert len(ALLOWED_ENGINES) == 3
+        assert "veo" in ALLOWED_ENGINES
 
     def test_max_scenario_length(self):
         assert MAX_SCENARIO_LENGTH == 10000

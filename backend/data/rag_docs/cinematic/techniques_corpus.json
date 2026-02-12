@@ -4002,6 +4002,1275 @@
       "source_refs": [
         "wolfcrow"
       ]
+    },
+    {
+      "technique_id": "solapunk",
+      "category": "aesthetic_style",
+      "name_ko": "솔라펑크",
+      "name_en": "Solapunk",
+      "description_ko": "친환경 미래 미학. 태양광, 식물, 유기적 건축이 어우러진 유토피안 비전.",
+      "visual_effect_ko": "희망적 미래, 유기적 기술, 자연과 기술의 조화",
+      "best_for": [
+        "utopia",
+        "eco_future",
+        "hopeful_sci_fi"
+      ],
+      "prompt_keywords": {
+        "kling": "solarpunk aesthetic, lush greenery with solar panels, organic architecture",
+        "seedance": "solarpunk utopian cityscape, bio-integrated technology, verdant rooftop gardens",
+        "veo": "Wide shot on 24mm lens: solarpunk city with organic architecture, lush vertical gardens, warm golden sunlight, bio-integrated solar technology, hopeful utopian atmosphere"
+      },
+      "combinable_with": [
+        "natural_golden_hour",
+        "crane_up",
+        "warm_desaturated"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "opener"
+    },
+    {
+      "technique_id": "biopunk",
+      "category": "aesthetic_style",
+      "name_ko": "바이오펑크",
+      "name_en": "Biopunk",
+      "description_ko": "생체공학과 유기체 기반 기술 미학. 생물학적 변형과 바이오테크 디스토피아.",
+      "visual_effect_ko": "유기적 공포, 생물학적 변형, 습하고 어두운 분위기",
+      "best_for": [
+        "horror",
+        "sci_fi",
+        "dystopia"
+      ],
+      "prompt_keywords": {
+        "kling": "biopunk aesthetic, organic technology, bioluminescent growths on machinery",
+        "seedance": "biopunk laboratory, biological augmentation, wet organic surfaces with dim green bioluminescence",
+        "veo": "Medium shot on 50mm lens: biopunk environment with organic technology, bioluminescent tendrils, wet humid atmosphere, green-tinted shadows"
+      },
+      "combinable_with": [
+        "low_key_lighting",
+        "slow_push_in",
+        "cool_blue"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "middle"
+    },
+    {
+      "technique_id": "wes_anderson_flat",
+      "category": "aesthetic_style",
+      "name_ko": "웨스 앤더슨 스타일",
+      "name_en": "Wes Anderson Flat",
+      "description_ko": "파스텔 색조, 완벽한 좌우 대칭, 플랫 라이팅. 스토리북 미학.",
+      "visual_effect_ko": "동화적 세계관, 정교한 인위성, 유머러스한 아름다움",
+      "best_for": [
+        "comedy",
+        "whimsy",
+        "character_introduction"
+      ],
+      "prompt_keywords": {
+        "kling": "Wes Anderson style, pastel color palette, perfectly symmetrical flat composition",
+        "seedance": "Wes Anderson aesthetic, dollhouse symmetry, candy-colored palette, flat frontal framing",
+        "veo": "Locked wide shot on 40mm lens: perfectly centered bilateral symmetry, pastel palette, flat even lighting, storybook production design, deadpan staging"
+      },
+      "combinable_with": [
+        "symmetric_composition",
+        "high_key_lighting",
+        "pastel_palette"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "opener"
+    },
+    {
+      "technique_id": "film_noir_neo",
+      "category": "aesthetic_style",
+      "name_ko": "네오 누아르",
+      "name_en": "Neo Noir",
+      "description_ko": "고전 필름 누아르의 현대적 재해석. 네온 + 그림자 + 도시 밤.",
+      "visual_effect_ko": "도시적 위험, 도덕적 모호함, 스타일리시한 어둠",
+      "best_for": [
+        "crime",
+        "mystery",
+        "night_scene"
+      ],
+      "prompt_keywords": {
+        "kling": "neo noir style, neon reflections on wet streets, deep shadows with colored highlights",
+        "seedance": "neo noir cityscape, rain-slicked streets reflecting neon, high contrast shadows with magenta accents",
+        "veo": "Medium shot on 50mm lens: neo noir urban night, rain-wet asphalt reflecting neon signs, deep contrasty shadows, magenta and cyan color accents, morally ambiguous atmosphere"
+      },
+      "combinable_with": [
+        "chiaroscuro",
+        "neon_saturated",
+        "low_angle"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "any"
+    },
+    {
+      "technique_id": "cyberpunk_neon",
+      "category": "aesthetic_style",
+      "name_ko": "사이버펑크 네온",
+      "name_en": "Cyberpunk Neon",
+      "description_ko": "네온 조명이 지배하는 디스토피안 미래 도시. 기술과 퇴폐의 공존.",
+      "visual_effect_ko": "기술적 과잉, 네온 과포화, 미래적 퇴폐",
+      "best_for": [
+        "sci_fi",
+        "action",
+        "night_urban"
+      ],
+      "prompt_keywords": {
+        "kling": "cyberpunk neon city, holographic advertisements, dense urban dystopia",
+        "seedance": "cyberpunk metropolis drenched in neon, holographic billboards, crowded rain-soaked streets",
+        "veo": "Wide shot on 24mm lens: cyberpunk megacity, dense neon signage, holographic ads, rain-soaked streets reflecting pink and blue light, dystopian urban density"
+      },
+      "combinable_with": [
+        "neon_saturated",
+        "dutch_angle",
+        "handheld_shaky"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "opener"
+    },
+    {
+      "technique_id": "steampunk",
+      "category": "aesthetic_style",
+      "name_ko": "스팀펑크",
+      "name_en": "Steampunk",
+      "description_ko": "빅토리안 산업혁명 미학. 황동, 증기, 기계장치, 따뜻한 금속 톤.",
+      "visual_effect_ko": "기계적 경이, 빅토리안 화려함, 따뜻한 금속 질감",
+      "best_for": [
+        "fantasy",
+        "adventure",
+        "period"
+      ],
+      "prompt_keywords": {
+        "kling": "steampunk aesthetic, brass gears and copper pipes, Victorian industrial machinery",
+        "seedance": "steampunk workshop, brass clockwork mechanisms, warm copper tones with steam wisps",
+        "veo": "Medium shot on 35mm lens: steampunk interior with brass gears and copper pipes, warm amber lighting, steam wisps, Victorian industrial grandeur"
+      },
+      "combinable_with": [
+        "warm_desaturated",
+        "rim_light",
+        "foreground_layering"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "any"
+    },
+    {
+      "technique_id": "vaporwave",
+      "category": "aesthetic_style",
+      "name_ko": "베이퍼웨이브",
+      "name_en": "Vaporwave",
+      "description_ko": "80~90년대 레트로퓨처리즘. 핑크/시안 그라디언트, 로마 조각상, 디지털 그리드.",
+      "visual_effect_ko": "레트로 노스탤지어, 디지털 초현실, 신비로운 분위기",
+      "best_for": [
+        "music_video",
+        "abstract",
+        "nostalgia"
+      ],
+      "prompt_keywords": {
+        "kling": "vaporwave aesthetic, pink and cyan gradients, Roman bust statues, digital grid landscape",
+        "seedance": "vaporwave dreamscape, sunset gradient sky, marble statues, retro digital grid, palm tree silhouettes",
+        "veo": "Wide shot on 35mm lens: vaporwave landscape with pink-to-cyan gradient sky, marble bust sculpture, digital grid floor, palm tree silhouettes, dreamy retro-futurist atmosphere"
+      },
+      "combinable_with": [
+        "neon_saturated",
+        "pastel_palette",
+        "slow_dissolve"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "opener"
+    },
+    {
+      "technique_id": "crash_zoom",
+      "category": "camera_movement",
+      "name_ko": "크래시 줌",
+      "name_en": "Crash Zoom",
+      "description_ko": "극도로 빠른 줌인/줌아웃. 충격, 서프라이즈, 코미디 타이밍에 사용.",
+      "visual_effect_ko": "충격적 강조, 코믹 타이밍, 즉각적 주의 집중",
+      "best_for": [
+        "comedy",
+        "surprise",
+        "action_beat"
+      ],
+      "prompt_keywords": {
+        "kling": "crash zoom in on subject, ultra-fast zoom snap, sudden magnification",
+        "seedance": "violent crash zoom snapping onto subject, abrupt focal length shift, comedic emphasis zoom",
+        "veo": "Crash zoom on 70-200mm lens: ultra-rapid zoom snap onto subject's face, sudden dramatic magnification, comedic or shocking emphasis"
+      },
+      "combinable_with": [
+        "whip_pan",
+        "rapid_cuts",
+        "dutch_angle"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "middle"
+    },
+    {
+      "technique_id": "vertigo_effect",
+      "category": "camera_movement",
+      "name_ko": "버티고 이펙트 (돌리 줌)",
+      "name_en": "Vertigo Effect / Dolly Zoom",
+      "description_ko": "돌리 인 + 줌 아웃 (또는 반대) 동시 실행. 배경 왜곡으로 불안감 극대화.",
+      "visual_effect_ko": "공간 왜곡, 극심한 불안, 초현실적 긴장",
+      "best_for": [
+        "horror",
+        "realization",
+        "psychological_tension"
+      ],
+      "prompt_keywords": {
+        "kling": "dolly zoom vertigo effect, background warping while subject stays same size, Hitchcock zoom",
+        "seedance": "vertigo dolly-zoom effect, simultaneous dolly-in and zoom-out creating spatial distortion, Hitchcock-inspired perspective warp",
+        "veo": "Dolly zoom on 50mm lens: camera pushing forward while lens zooms out, background compressing and warping around stationary subject, vertigo-inducing spatial distortion"
+      },
+      "combinable_with": [
+        "slow_push_in",
+        "chiaroscuro",
+        "dutch_angle"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "middle"
+    },
+    {
+      "technique_id": "fpv_drone_dive",
+      "category": "camera_movement",
+      "name_ko": "FPV 드론 다이브",
+      "name_en": "FPV Drone Dive",
+      "description_ko": "1인칭 드론 시점의 고속 하강/관통 촬영. 극한 역동성과 몰입감.",
+      "visual_effect_ko": "극한 속도감, 관통하는 몰입, 아드레날린",
+      "best_for": [
+        "action",
+        "establishing_shot",
+        "extreme_sports"
+      ],
+      "prompt_keywords": {
+        "kling": "FPV drone dive through environment, first-person aerial plunge, high-speed threading through obstacles",
+        "seedance": "FPV drone racing perspective, diving through narrow gaps at high speed, first-person aerial threading",
+        "veo": "FPV drone shot on ultra-wide lens: high-speed dive through environment, threading between obstacles, first-person aerial perspective, extreme velocity motion blur"
+      },
+      "combinable_with": [
+        "bird_eye",
+        "whip_pan",
+        "speed_ramp"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "opener"
+    },
+    {
+      "technique_id": "parallax_scroll",
+      "category": "camera_movement",
+      "name_ko": "패럴랙스 스크롤",
+      "name_en": "Parallax Scroll",
+      "description_ko": "전경/중경/후경이 다른 속도로 이동하며 깊이감 생성. 2.5D 효과.",
+      "visual_effect_ko": "입체적 깊이, 레이어드 공간감, 그래픽 노블 미학",
+      "best_for": [
+        "title_sequence",
+        "storytelling",
+        "depth_staging"
+      ],
+      "prompt_keywords": {
+        "kling": "parallax scrolling effect, layered depth planes moving at different speeds, 2.5D motion",
+        "seedance": "parallax depth layers scrolling independently, foreground sliding faster than background, dimensional depth illusion",
+        "veo": "Lateral tracking on 35mm lens: parallax layers moving at different speeds, foreground rushing past while background glides slowly, 2.5D dimensional depth effect"
+      },
+      "combinable_with": [
+        "foreground_layering",
+        "lateral_tracking",
+        "frame_within_frame"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "any"
+    },
+    {
+      "technique_id": "lens_whacking",
+      "category": "camera_movement",
+      "name_ko": "렌즈 웨킹",
+      "name_en": "Lens Whacking / Free Lensing",
+      "description_ko": "렌즈를 본체에서 분리/기울여 촬영. 불규칙 보케, 광선 누출, 초현실적 포커스.",
+      "visual_effect_ko": "광선 누출, 유기적 보케, 몽환적 불규칙",
+      "best_for": [
+        "dream_sequence",
+        "memory",
+        "music_video"
+      ],
+      "prompt_keywords": {
+        "kling": "free-lensing effect, light leaks with irregular bokeh, dreamy unfocused edges",
+        "seedance": "lens whacking aesthetic, organic light leaks bleeding across frame, irregular selective focus with ethereal bokeh",
+        "veo": "Close-up on detached 50mm lens: light leak streaks bleeding across frame, irregular tilt-shift focus, dreamy organic bokeh, ethereal memory-like quality"
+      },
+      "combinable_with": [
+        "soft_diffused_light",
+        "slow_dissolve",
+        "natural_golden_hour"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "middle"
+    },
+    {
+      "technique_id": "bisexual_lighting",
+      "category": "lighting",
+      "name_ko": "바이섹슈얼 라이팅",
+      "name_en": "Bisexual Lighting",
+      "description_ko": "핑크와 블루 네온이 양쪽에서 비추는 이중 색조 조명. 현대 뮤직비디오/드라마 미학.",
+      "visual_effect_ko": "이중성, 현대적 세련미, 대비적 아름다움",
+      "best_for": [
+        "music_video",
+        "character_duality",
+        "modern_drama"
+      ],
+      "prompt_keywords": {
+        "kling": "bisexual lighting, pink and blue neon lights from opposite sides, dual-tone face lighting",
+        "seedance": "dual-tone bisexual lighting, magenta from left and cyan from right, split face illumination",
+        "veo": "Close-up on 85mm lens: bisexual lighting with hot pink from left and cool blue from right, split-face dual-tone, contemporary editorial aesthetic"
+      },
+      "combinable_with": [
+        "neon_saturated",
+        "extreme_closeup",
+        "symmetric_composition"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "any"
+    },
+    {
+      "technique_id": "rembrandt_lighting",
+      "category": "lighting",
+      "name_ko": "렘브란트 라이팅",
+      "name_en": "Rembrandt Lighting",
+      "description_ko": "코 그림자가 반대쪽 볼의 삼각형 하이라이트를 만드는 클래식 초상화 조명.",
+      "visual_effect_ko": "고전적 깊이, 인물의 입체감, 회화적 아름다움",
+      "best_for": [
+        "portrait",
+        "drama",
+        "character_study"
+      ],
+      "prompt_keywords": {
+        "kling": "Rembrandt lighting, triangle highlight on shadowed cheek, classic portrait lighting setup",
+        "seedance": "Rembrandt portrait lighting, nose shadow meeting cheek shadow to form triangle, warm key with dramatic fill ratio",
+        "veo": "Close-up on 85mm lens: Rembrandt lighting with triangle highlight on shadowed cheek, warm key light at 45 degrees, deep shadow sculpting, painterly portrait quality"
+      },
+      "combinable_with": [
+        "chiaroscuro",
+        "rule_of_thirds",
+        "slow_push_in"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "any"
+    },
+    {
+      "technique_id": "practical_light_only",
+      "category": "lighting",
+      "name_ko": "프랙티컬 라이트 온리",
+      "name_en": "Practical Light Only",
+      "description_ko": "씬 내 실제 광원(램프, 촛불, 모니터)만으로 조명. 극사실적 분위기.",
+      "visual_effect_ko": "극사실성, 현장감, 자연스러운 생활감",
+      "best_for": [
+        "realism",
+        "intimate_scene",
+        "documentary"
+      ],
+      "prompt_keywords": {
+        "kling": "practical lighting only, illuminated by in-scene lamps and candles, no artificial film lights",
+        "seedance": "practical light sources only, room lit by table lamp and window, authentic lived-in illumination quality",
+        "veo": "Medium shot on 35mm lens: lit only by practical sources, warm table lamp and cool window light mixing, authentic lived-in quality, no artificial film lighting, documentary realism"
+      },
+      "combinable_with": [
+        "eye_level",
+        "long_take",
+        "warm_desaturated"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "any"
+    },
+    {
+      "technique_id": "teal_orange_grade",
+      "category": "color",
+      "name_ko": "틸/오렌지 그레이딩",
+      "name_en": "Teal and Orange Grade",
+      "description_ko": "보색 대비의 블록버스터 표준 컬러 그레이딩. 피부톤(오렌지) vs 배경(틸).",
+      "visual_effect_ko": "블록버스터 세련미, 인물 분리, 영화적 광택",
+      "best_for": [
+        "blockbuster",
+        "action",
+        "commercial"
+      ],
+      "prompt_keywords": {
+        "kling": "teal and orange color grading, warm skin tones against cool blue-green backgrounds",
+        "seedance": "Hollywood teal-orange grading, complementary warm skin against cool teal shadows, blockbuster color science",
+        "veo": "Medium shot on 50mm lens: teal and orange color grading, warm orange skin tones separated from cool teal backgrounds, blockbuster color science, polished cinematic look"
+      },
+      "combinable_with": [
+        "complementary_contrast",
+        "dolly_in",
+        "rim_light"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "any"
+    },
+    {
+      "technique_id": "day_for_night",
+      "category": "color",
+      "name_ko": "데이 포 나이트",
+      "name_en": "Day for Night",
+      "description_ko": "낮에 촬영하여 밤처럼 보이게 하는 그레이딩. 블루 톤 + 노출 다운.",
+      "visual_effect_ko": "인위적 야경, 신비로운 달빛, 레트로 영화 기법",
+      "best_for": [
+        "night_scene",
+        "retro",
+        "budget_filmmaking"
+      ],
+      "prompt_keywords": {
+        "kling": "day for night look, heavy blue tint simulating moonlight, underexposed daytime footage",
+        "seedance": "day-for-night grading, deep blue moonlight simulation, artificially darkened daytime with visible sky detail",
+        "veo": "Wide shot on 35mm lens: day-for-night grading, deep blue moonlight tint over daytime footage, underexposed with visible sky detail, classic Hollywood night simulation"
+      },
+      "combinable_with": [
+        "cool_blue",
+        "silhouette",
+        "high_angle"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "any"
+    },
+    {
+      "technique_id": "cloth_simulation",
+      "category": "physics_motion",
+      "name_ko": "천 시뮬레이션",
+      "name_en": "Cloth Simulation",
+      "description_ko": "직물, 의상, 커튼 등의 물리적 움직임을 정밀하게 재현. Veo 3.1 물리 엔진 활용.",
+      "visual_effect_ko": "질감의 사실감, 물리적 존재감, 유기적 흐름",
+      "best_for": [
+        "fashion",
+        "action",
+        "wind_scene"
+      ],
+      "prompt_keywords": {
+        "kling": "realistic cloth physics, fabric draping and flowing with wind, garment weight and inertia",
+        "seedance": "physically accurate cloth movement, fabric billowing and settling with weight, textile physics simulation",
+        "veo": "Medium shot on 50mm lens: cloth simulation with fabric reacting to wind and gravity, realistic draping and billowing, material weight and inertia visible, silk flow physics"
+      },
+      "combinable_with": [
+        "lateral_tracking",
+        "soft_diffused_light",
+        "slow_motion_editing"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "any"
+    },
+    {
+      "technique_id": "liquid_dynamics",
+      "category": "physics_motion",
+      "name_ko": "액체 다이나믹스",
+      "name_en": "Liquid Dynamics",
+      "description_ko": "물, 잉크, 페인트 등 액체의 물리적 움직임. 스플래시, 리플, 푸어링.",
+      "visual_effect_ko": "유동적 아름다움, 물리적 역동성, 시각적 충격",
+      "best_for": [
+        "product_shot",
+        "abstract",
+        "high_speed"
+      ],
+      "prompt_keywords": {
+        "kling": "liquid dynamics, water splashing with realistic physics, fluid pouring and rippling",
+        "seedance": "physically accurate liquid motion, water splash with droplets and surface tension, fluid dynamics simulation",
+        "veo": "Close-up on 100mm macro lens: liquid dynamics with splash physics, droplets separating with surface tension, fluid motion captured in precise detail, hydrodynamic realism"
+      },
+      "combinable_with": [
+        "slow_motion_editing",
+        "crash_zoom",
+        "high_key_lighting"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "middle"
+    },
+    {
+      "technique_id": "particle_dispersion",
+      "category": "physics_motion",
+      "name_ko": "파티클 디스퍼전",
+      "name_en": "Particle Dispersion",
+      "description_ko": "먼지, 연기, 불꽃, 꽃잎 등 입자의 물리적 확산. 대기감과 시각적 질감 추가.",
+      "visual_effect_ko": "대기감, 시각적 질감, 공간의 깊이",
+      "best_for": [
+        "atmosphere",
+        "action_aftermath",
+        "beauty_shot"
+      ],
+      "prompt_keywords": {
+        "kling": "particle dispersion, dust motes floating in light beam, smoke wisps curling",
+        "seedance": "atmospheric particle effects, floating dust illuminated by light shaft, organic debris dispersion",
+        "veo": "Medium shot on 50mm lens: particle dispersion with dust motes floating through light beam, smoke wisps curling with air currents, atmospheric depth and texture"
+      },
+      "combinable_with": [
+        "rim_light",
+        "chiaroscuro",
+        "slow_motion_editing"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "any"
+    },
+    {
+      "technique_id": "hair_physics",
+      "category": "physics_motion",
+      "name_ko": "헤어 물리",
+      "name_en": "Hair Physics",
+      "description_ko": "머리카락의 물리적 움직임. 바람, 회전, 관성에 따른 자연스러운 모발 역학.",
+      "visual_effect_ko": "캐릭터 사실감, 유기적 움직임, 감각적 디테일",
+      "best_for": [
+        "character_shot",
+        "beauty",
+        "slow_motion"
+      ],
+      "prompt_keywords": {
+        "kling": "realistic hair physics, strands flowing and bouncing with movement, wind-blown hair dynamics",
+        "seedance": "physically accurate hair movement, individual strands reacting to wind and motion, natural hair sway and bounce",
+        "veo": "Close-up on 85mm lens: hair physics with individual strands flowing in wind, natural sway bounce and settle, realistic hair dynamics with weight and inertia"
+      },
+      "combinable_with": [
+        "slow_motion_editing",
+        "rim_light",
+        "soft_diffused_light"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "any"
+    },
+    {
+      "technique_id": "canted_pov",
+      "category": "camera_angle",
+      "name_ko": "감정적 POV",
+      "name_en": "Canted POV",
+      "description_ko": "캐릭터 시점 + 기울어진 프레임. 취한/다친/혼란 상태의 주관적 시점.",
+      "visual_effect_ko": "주관적 혼란, 캐릭터 내면, 불안정한 인식",
+      "best_for": [
+        "drunk_scene",
+        "injury",
+        "confusion"
+      ],
+      "prompt_keywords": {
+        "kling": "canted POV shot, tilted first-person perspective, disoriented subjective viewpoint",
+        "seedance": "canted point-of-view, tilted subjective perspective simulating disorientation, character's unsteady personal vision",
+        "veo": "Canted POV on 24mm lens: tilted first-person perspective, swaying unsteady movement, blurred edges, disoriented subjective viewpoint simulating impaired state"
+      },
+      "combinable_with": [
+        "dutch_angle",
+        "handheld_shaky",
+        "lens_whacking"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "middle"
+    },
+    {
+      "technique_id": "visual_rhyme",
+      "category": "composition",
+      "name_ko": "비주얼 라임",
+      "name_en": "Visual Rhyme",
+      "description_ko": "다른 씬에서 유사한 형태/구도를 반복하여 시각적 연결성 생성.",
+      "visual_effect_ko": "시각적 연결, 테마적 반복, 은유적 대응",
+      "best_for": [
+        "parallel_narrative",
+        "thematic_connection",
+        "montage"
+      ],
+      "prompt_keywords": {
+        "kling": "visual rhyme, matching compositional element echoing previous scene's shape or framing",
+        "seedance": "visual rhyme composition, recurring shape or framing pattern connecting thematically to earlier scene",
+        "veo": "Medium shot on 50mm lens: visual rhyme echoing earlier scene's composition, matching shape language and framing, thematic visual callback, narrative symmetry"
+      },
+      "combinable_with": [
+        "match_cut",
+        "rule_of_thirds",
+        "cross_dissolve"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "closer"
+    },
+    {
+      "technique_id": "dark_academia",
+      "category": "aesthetic_style",
+      "name_ko": "다크 아카데미아",
+      "name_en": "Dark Academia",
+      "description_ko": "고전적 학문, 어두운 도서관, 트위드 의상, 캔들라이트의 미학.",
+      "visual_effect_ko": "지적 신비, 고전적 우아, 어두운 로맨스",
+      "best_for": [
+        "drama",
+        "mystery",
+        "period"
+      ],
+      "prompt_keywords": {
+        "kling": "dark academia aesthetic, candlelit library, leather-bound books, tweed and dark wood",
+        "seedance": "dark academia interior, warm candlelight on bookshelves, classical architecture with deep shadows",
+        "veo": "Medium shot on 50mm lens: dark academia library interior, candlelight on leather-bound books, dark wood paneling, classical bust sculpture, warm amber shadows"
+      },
+      "combinable_with": [
+        "chiaroscuro",
+        "warm_desaturated",
+        "practical_light_only"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "any"
+    },
+    {
+      "technique_id": "liminal_space",
+      "category": "aesthetic_style",
+      "name_ko": "리미널 스페이스",
+      "name_en": "Liminal Space",
+      "description_ko": "텅 빈 복도, 빈 쇼핑몰, 빈 수영장 등 전이 공간의 불안한 비어있음.",
+      "visual_effect_ko": "잠재적 불안, 초현실적 고요, 무인의 공포",
+      "best_for": [
+        "horror",
+        "surreal",
+        "atmospheric"
+      ],
+      "prompt_keywords": {
+        "kling": "liminal space, empty hallway with fluorescent lights, eerie abandoned transitional space",
+        "seedance": "liminal space aesthetic, deserted corridor under flickering fluorescents, uncanny empty backroom",
+        "veo": "Wide shot on 24mm lens: liminal space, empty fluorescent-lit corridor stretching into distance, eerie vacancy, unsettling familiar-yet-wrong atmosphere"
+      },
+      "combinable_with": [
+        "negative_space",
+        "static_hold",
+        "cool_blue"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "opener"
+    },
+    {
+      "technique_id": "cottagecore",
+      "category": "aesthetic_style",
+      "name_ko": "코티지코어",
+      "name_en": "Cottagecore",
+      "description_ko": "전원적 자연, 꽃밭, 빵 굽기, 린넨 의상 등 목가적 삶의 낭만화.",
+      "visual_effect_ko": "목가적 평화, 자연의 따뜻함, 소박한 아름다움",
+      "best_for": [
+        "romance",
+        "lifestyle",
+        "food"
+      ],
+      "prompt_keywords": {
+        "kling": "cottagecore aesthetic, wildflower meadow, linen dress, rustic kitchen",
+        "seedance": "cottagecore pastoral scene, wildflower field in golden light, handmade bread on wooden table",
+        "veo": "Wide shot on 35mm lens: cottagecore meadow with wildflowers, golden hour light, linen-clad figure, rustic wooden fence, pastoral romantic warmth"
+      },
+      "combinable_with": [
+        "natural_golden_hour",
+        "soft_diffused_light",
+        "dappled_light"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "opener"
+    },
+    {
+      "technique_id": "smoke_volumetrics",
+      "category": "physics_motion",
+      "name_ko": "스모크 볼류메트릭스",
+      "name_en": "Smoke Volumetrics",
+      "description_ko": "연기/안개의 3D 볼륨 렌더링. 빛과 상호작용하는 대기 효과.",
+      "visual_effect_ko": "대기의 깊이, 빛의 가시화, 신비로운 밀도",
+      "best_for": [
+        "atmosphere",
+        "horror",
+        "concert"
+      ],
+      "prompt_keywords": {
+        "kling": "volumetric smoke interacting with light beams, 3D fog density, atmospheric haze depth",
+        "seedance": "volumetric smoke with visible light shafts, dense atmospheric fog catching beam light, 3D haze interaction",
+        "veo": "Medium shot on 35mm lens: volumetric smoke with visible light beams penetrating, 3D fog density reacting to movement, atmospheric haze catching shaft light"
+      },
+      "combinable_with": [
+        "rim_light",
+        "chiaroscuro",
+        "slow_push_in"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "any"
+    },
+    {
+      "technique_id": "fire_dynamics",
+      "category": "physics_motion",
+      "name_ko": "화염 역학",
+      "name_en": "Fire Dynamics",
+      "description_ko": "불꽃, 폭발, 촛불 등 화염의 물리적 시뮬레이션. 빛과 열의 표현.",
+      "visual_effect_ko": "원초적 에너지, 위험과 따뜻함, 역동적 빛",
+      "best_for": [
+        "action",
+        "ritual",
+        "intimate_moment"
+      ],
+      "prompt_keywords": {
+        "kling": "fire dynamics with realistic flame flickering, combustion physics, embers and heat distortion",
+        "seedance": "physically accurate fire behavior, realistic flame turbulence and ember scatter, heat shimmer distortion",
+        "veo": "Close-up on 85mm lens: fire dynamics with realistic flame turbulence, ember particles rising, heat shimmer distortion warping background, combustion light casting orange flicker"
+      },
+      "combinable_with": [
+        "practical_light_only",
+        "rim_light",
+        "slow_motion_editing"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "any"
+    },
+    {
+      "technique_id": "glass_refraction",
+      "category": "physics_motion",
+      "name_ko": "유리 굴절",
+      "name_en": "Glass Refraction",
+      "description_ko": "유리, 크리스탈, 물방울을 통한 빛의 굴절과 산란. 프리즘 효과.",
+      "visual_effect_ko": "빛의 분해, 크리스탈 럭셔리, 과학적 아름다움",
+      "best_for": [
+        "product_shot",
+        "luxury",
+        "abstract"
+      ],
+      "prompt_keywords": {
+        "kling": "glass refraction, light splitting through crystal prism, rainbow caustics on surface",
+        "seedance": "crystal refraction with prismatic light splitting, rainbow caustic patterns, glass-bent light dispersion",
+        "veo": "Close-up on 100mm macro lens: glass refraction splitting light into prismatic rainbows, caustic light patterns, crystal dispersion, scientific beauty of bent light"
+      },
+      "combinable_with": [
+        "high_key_lighting",
+        "slow_motion_editing",
+        "complementary_contrast"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "middle"
+    },
+    {
+      "technique_id": "water_surface",
+      "category": "physics_motion",
+      "name_ko": "수면 역학",
+      "name_en": "Water Surface Dynamics",
+      "description_ko": "수면 반사, 파문, 물결 패턴의 물리적 시뮬레이션.",
+      "visual_effect_ko": "반사의 이중성, 고요와 파문, 시적 메타포",
+      "best_for": [
+        "reflection",
+        "calm",
+        "metaphor"
+      ],
+      "prompt_keywords": {
+        "kling": "water surface physics, ripple propagation, reflection distortion on calm water",
+        "seedance": "water surface dynamics, concentric ripples distorting reflection, still-to-turbulent surface physics",
+        "veo": "Wide shot on 35mm lens: water surface with expanding concentric ripples, reflection distortion in real-time, surface tension physics, poetic ripple propagation"
+      },
+      "combinable_with": [
+        "slow_motion_editing",
+        "natural_golden_hour",
+        "deep_focus"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "any"
+    },
+    {
+      "technique_id": "jib_sweep",
+      "category": "camera_movement",
+      "name_ko": "지브 스윕",
+      "name_en": "Jib Sweep",
+      "description_ko": "지브(소형 크레인) 암의 부드러운 호를 그리는 수직+수평 복합 움직임.",
+      "visual_effect_ko": "우아한 상승, 부드러운 공간 전환, 영웅적 등장",
+      "best_for": [
+        "character_reveal",
+        "transition",
+        "ceremony"
+      ],
+      "prompt_keywords": {
+        "kling": "jib sweep, smooth arcing crane movement combining vertical and horizontal, sweeping reveal",
+        "seedance": "jib arm sweep, graceful arcing combined vertical-horizontal crane motion, smooth sweeping character reveal",
+        "veo": "Jib sweep on 35mm lens: smooth arcing crane movement combining upward and lateral motion, graceful sweeping reveal, elegant camera choreography"
+      },
+      "combinable_with": [
+        "crane_up",
+        "lateral_tracking",
+        "slow_dissolve"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "opener"
+    },
+    {
+      "technique_id": "through_focus",
+      "category": "focus_technique",
+      "name_ko": "쓰루 포커스",
+      "name_en": "Through Focus",
+      "description_ko": "전경 → 배경 또는 반대로 전 영역을 순차적으로 지나가는 포커스 풀.",
+      "visual_effect_ko": "깊이 탐색, 순차적 발견, 공간의 서사",
+      "best_for": [
+        "discovery",
+        "revelation",
+        "depth_staging"
+      ],
+      "prompt_keywords": {
+        "kling": "through focus pulling from foreground to background, depth-scanning focus sweep",
+        "seedance": "through-focus sweep, focal plane scanning from near to far, sequential depth revelation",
+        "veo": "Medium shot on 85mm lens: through-focus sweep pulling from extreme foreground to background, sequential depth revelation, spatial narrative scanning"
+      },
+      "combinable_with": [
+        "foreground_layering",
+        "rack_focus",
+        "slow_push_in"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "middle"
+    },
+    {
+      "technique_id": "aerial_survey",
+      "category": "camera_angle",
+      "name_ko": "항공 서베이",
+      "name_en": "Aerial Survey",
+      "description_ko": "드론/헬리콥터에서 넓은 지형을 조감하는 서베이 앵글. 스케일 설정.",
+      "visual_effect_ko": "광활한 스케일, 지리적 맥락, 서사적 거리감",
+      "best_for": [
+        "establishing",
+        "landscape",
+        "epic"
+      ],
+      "prompt_keywords": {
+        "kling": "aerial survey, drone overview of vast landscape, sweeping overhead terrain scan",
+        "seedance": "aerial survey drone scan, vast landscape overview from high altitude, sweeping geographical terrain reveal",
+        "veo": "Aerial survey on 16mm lens: sweeping drone overview of vast landscape, high-altitude terrain scan, epic geographical scale, panoramic overhead survey"
+      },
+      "combinable_with": [
+        "drone_aerial",
+        "crane_up",
+        "natural_golden_hour"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "opener"
+    },
+    {
+      "technique_id": "destruction_physics",
+      "category": "physics_motion",
+      "name_ko": "파괴 물리",
+      "name_en": "Destruction Physics",
+      "description_ko": "유리 깨짐, 폭발, 건물 붕괴 등 대규모 파괴의 물리 시뮬레이션.",
+      "visual_effect_ko": "카타르시스적 파괴, 역동적 충격, 스펙터클",
+      "best_for": [
+        "action",
+        "climax",
+        "disaster"
+      ],
+      "prompt_keywords": {
+        "kling": "destruction physics, shattering glass, debris flying with realistic trajectory, explosive force",
+        "seedance": "physically accurate destruction, glass shattering with fragment scatter, explosive debris with real trajectories",
+        "veo": "Wide shot on 24mm lens: destruction physics with shattering glass, debris flying with realistic trajectories, explosive force sending particles outward, high-energy impact simulation"
+      },
+      "combinable_with": [
+        "speed_ramp",
+        "crash_zoom",
+        "handheld_shaky"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "middle"
+    },
+    {
+      "technique_id": "fabric_flow",
+      "category": "physics_motion",
+      "name_ko": "패브릭 플로우",
+      "name_en": "Fabric Flow",
+      "description_ko": "천, 실크, 리본 등이 공기 중에 흐르듯 움직이는 우아한 물리. 무중력/수중 느낌.",
+      "visual_effect_ko": "우아한 무중력, 감각적 유동, 초현실적 아름다움",
+      "best_for": [
+        "fashion",
+        "dance",
+        "dream_sequence"
+      ],
+      "prompt_keywords": {
+        "kling": "flowing fabric physics, silk billowing in slow motion, weightless textile undulation",
+        "seedance": "ethereal fabric flow, silk unfurling weightlessly, slow-motion textile ballet with gravity-defying draping",
+        "veo": "Medium shot on 85mm lens: fabric flow physics with silk billowing weightlessly, slow-motion textile undulation, gravity-defying draping, ethereal material ballet"
+      },
+      "combinable_with": [
+        "slow_motion_editing",
+        "soft_diffused_light",
+        "lateral_tracking"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "middle"
+    },
+    {
+      "technique_id": "full_body_shot",
+      "category": "shot_scale",
+      "name_ko": "풀 바디 샷",
+      "name_en": "Full Body Shot",
+      "description_ko": "인물의 전신을 프레임에 담는 샷. 의상, 체형, 동작 전체 표현.",
+      "visual_effect_ko": "인물 전체 소개, 의상 강조, 공간과 인물 관계",
+      "best_for": [
+        "fashion",
+        "character_intro",
+        "dance"
+      ],
+      "prompt_keywords": {
+        "kling": "full body shot showing complete figure head to toe, entire character visible",
+        "seedance": "full body framing showing complete figure, head-to-toe character presentation with environment context",
+        "veo": "Full body shot on 35mm lens: complete figure head to toe in frame, character-environment spatial relationship, full wardrobe and posture visible"
+      },
+      "combinable_with": [
+        "eye_level",
+        "rule_of_thirds",
+        "natural_golden_hour"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "any"
+    },
+    {
+      "technique_id": "cowboy_shot",
+      "category": "shot_scale",
+      "name_ko": "카우보이 샷",
+      "name_en": "Cowboy Shot",
+      "description_ko": "무릎 위~허리 중간 정도까지 포함하는 프레이밍. 웨스턴 영화에서 유래.",
+      "visual_effect_ko": "액션 준비, 서부극 장르감, 중간 거리 긴장",
+      "best_for": [
+        "western",
+        "confrontation",
+        "action_prep"
+      ],
+      "prompt_keywords": {
+        "kling": "cowboy shot, framed from mid-thigh up, character ready for action stance",
+        "seedance": "cowboy shot framing from mid-thigh up, action-ready stance, genre-specific western-inspired framing",
+        "veo": "Cowboy shot on 50mm lens: framed from mid-thigh up, subject in action-ready stance, hands near waist level, western-genre confrontational framing"
+      },
+      "combinable_with": [
+        "eye_level",
+        "low_angle",
+        "hard_contrast_light"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "any"
+    },
+    {
+      "technique_id": "anamorphic_flare",
+      "category": "lens_character",
+      "name_ko": "아나모픽 플레어",
+      "name_en": "Anamorphic Flare",
+      "description_ko": "아나모픽 렌즈 특유의 수평 렌즈 플레어. 블록버스터 시네마틱 감성.",
+      "visual_effect_ko": "블록버스터 감성, 수평 빛줄기, 극장 영화의 기호",
+      "best_for": [
+        "blockbuster",
+        "sci_fi",
+        "epic"
+      ],
+      "prompt_keywords": {
+        "kling": "anamorphic horizontal lens flares, wide-screen cinematic streak flares",
+        "seedance": "anamorphic lens flares stretching horizontally, widescreen blockbuster streak highlights",
+        "veo": "Shot on anamorphic lens: horizontal streak flares across frame, compressed depth, oval bokeh, widescreen blockbuster cinematic language"
+      },
+      "combinable_with": [
+        "anamorphic_lens",
+        "neon_saturated",
+        "dolly_in"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "any"
+    },
+    {
+      "technique_id": "forced_perspective",
+      "category": "composition",
+      "name_ko": "강제 원근법",
+      "name_en": "Forced Perspective",
+      "description_ko": "카메라 위치와 피사체 배치로 크기/거리 착시 생성.",
+      "visual_effect_ko": "스케일 착시, 유머러스 비교, 실용적 VFX",
+      "best_for": [
+        "comedy",
+        "fantasy",
+        "practical_vfx"
+      ],
+      "prompt_keywords": {
+        "kling": "forced perspective illusion, size distortion through camera placement, scale trick",
+        "seedance": "forced perspective composition, visual scale illusion through precise camera-subject positioning",
+        "veo": "Forced perspective on 35mm lens: optical illusion through precise camera-subject distance, apparent size distortion, practical in-camera scale trick"
+      },
+      "combinable_with": [
+        "deep_focus",
+        "wide_angle_24mm",
+        "low_angle"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "any"
+    },
+    {
+      "technique_id": "double_exposure",
+      "category": "composition",
+      "name_ko": "이중 노출",
+      "name_en": "Double Exposure",
+      "description_ko": "두 이미지를 겹쳐 합성. 내면세계/기억/이중성 표현.",
+      "visual_effect_ko": "이중성, 내면 투영, 시적 중첩",
+      "best_for": [
+        "inner_world",
+        "memory",
+        "duality"
+      ],
+      "prompt_keywords": {
+        "kling": "double exposure overlay, two layered images superimposed, transparent face over landscape",
+        "seedance": "double exposure blend, portrait overlaid with landscape, transparent memory superimposition",
+        "veo": "Double exposure: portrait silhouette merged with landscape imagery, two transparent layers superimposed, inner world projected outward, poetic visual duality"
+      },
+      "combinable_with": [
+        "silhouette",
+        "slow_dissolve",
+        "monochromatic"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "any"
+    },
+    {
+      "technique_id": "negative_fill",
+      "category": "lighting",
+      "name_ko": "네거티브 필",
+      "name_en": "Negative Fill",
+      "description_ko": "검은 반사판/플래그로 빛을 흡수하여 그림자 쪽 콘트라스트 강화.",
+      "visual_effect_ko": "깊은 그림자, 극적 콘트라스트, 조각적 인물",
+      "best_for": [
+        "dramatic_portrait",
+        "film_noir",
+        "character_depth"
+      ],
+      "prompt_keywords": {
+        "kling": "negative fill lighting, deepened shadow side, enhanced contrast through light subtraction",
+        "seedance": "negative fill with absorbed light on shadow side, increased contrast ratio, sculpted dramatic shadows",
+        "veo": "Close-up on 85mm lens: negative fill deepening shadow side, enhanced contrast ratio through light subtraction, sculpted dramatic facial shadows, cinematic depth"
+      },
+      "combinable_with": [
+        "chiaroscuro",
+        "rembrandt_lighting",
+        "side_lighting"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "any"
+    },
+    {
+      "technique_id": "cross_lighting",
+      "category": "lighting",
+      "name_ko": "크로스 라이팅",
+      "name_en": "Cross Lighting",
+      "description_ko": "양쪽에서 교차하는 두 개의 광원. 입체감 극대화, 드라마틱 질감.",
+      "visual_effect_ko": "극적 입체감, 이중 하이라이트, 조각적 양감",
+      "best_for": [
+        "action",
+        "confrontation",
+        "product"
+      ],
+      "prompt_keywords": {
+        "kling": "cross lighting from two sides, dual key lights creating dramatic dimension, sculpted edge definition",
+        "seedance": "cross-lighting setup with two opposing key lights, dramatic dual-directional sculpting, maximum dimensional definition",
+        "veo": "Medium shot on 50mm lens: cross lighting from opposing sides creating maximum dimensional sculpting, dual rim highlights, dramatic dual-key three-dimensionality"
+      },
+      "combinable_with": [
+        "rim_light",
+        "hard_contrast_light",
+        "complementary_contrast"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "any"
+    },
+    {
+      "technique_id": "stroboscopic",
+      "category": "lighting",
+      "name_ko": "스트로보스코픽",
+      "name_en": "Stroboscopic Light",
+      "description_ko": "깜박이는 스트로브 조명. 클럽, 공포, 액션 모먼트 분절.",
+      "visual_effect_ko": "순간 포착, 불연속 모션, 긴장과 에너지",
+      "best_for": [
+        "party",
+        "horror",
+        "action_flash"
+      ],
+      "prompt_keywords": {
+        "kling": "stroboscopic flashing light, rapid on-off illumination, freeze-frame strobe effect",
+        "seedance": "stroboscopic lighting, rapid flash freezing motion, strobe-lit discontinuous movement",
+        "veo": "Medium shot on 35mm lens: stroboscopic light with rapid on-off flash, discontinuous motion capture, strobe-frozen action moments, nightclub or horror energy"
+      },
+      "combinable_with": [
+        "neon_saturated",
+        "rapid_cuts",
+        "handheld_shaky"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "middle"
+    },
+    {
+      "technique_id": "window_light",
+      "category": "lighting",
+      "name_ko": "창문 광",
+      "name_en": "Window Light",
+      "description_ko": "창문을 통해 들어오는 자연광. 회화적 인물묘사의 기본 광원.",
+      "visual_effect_ko": "회화적 자연광, 일상의 아름다움, 부드러운 방향성",
+      "best_for": [
+        "portrait",
+        "interior",
+        "intimate"
+      ],
+      "prompt_keywords": {
+        "kling": "window light, natural sidelight from window, painterly atmospheric daylight",
+        "seedance": "natural window light, soft directional daylight streaming through window, painterly atmospheric illumination",
+        "veo": "Medium shot on 50mm lens: natural window light streaming from side, soft directional daylight, painterly Vermeer-like atmosphere, gentle gradient shadow"
+      },
+      "combinable_with": [
+        "soft_diffused_light",
+        "motivated_lighting",
+        "eye_level"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "any"
+    },
+    {
+      "technique_id": "back_lighting",
+      "category": "lighting",
+      "name_ko": "백라이트",
+      "name_en": "Back Lighting",
+      "description_ko": "피사체 뒤에서 비추는 광원. 실루엣, 후광, 에지 하이라이트.",
+      "visual_effect_ko": "신성, 신비, 분리감, 에지 글로우",
+      "best_for": [
+        "hero_moment",
+        "angel",
+        "reveal"
+      ],
+      "prompt_keywords": {
+        "kling": "backlighting creating edge glow, backlit silhouette with rim light halo",
+        "seedance": "strong backlighting creating luminous edge outline, backlit subject with glowing rim highlight",
+        "veo": "Medium shot on 50mm lens: strong backlighting creating luminous rim light outline, subject edge glowing with halo effect, atmospheric backlit depth separation"
+      },
+      "combinable_with": [
+        "rim_light",
+        "silhouette",
+        "lens_whacking"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "any"
+    },
+    {
+      "technique_id": "color_wash",
+      "category": "color",
+      "name_ko": "컬러 워시",
+      "name_en": "Color Wash",
+      "description_ko": "단일 색조로 전체 프레임을 물들이는 그레이딩. 감정 또는 장소 코딩.",
+      "visual_effect_ko": "감정 코딩, 공간 색 정체성, 시각적 통일",
+      "best_for": [
+        "mood_setting",
+        "location_coding",
+        "dream"
+      ],
+      "prompt_keywords": {
+        "kling": "color wash, entire frame bathed in single dominant color tone",
+        "seedance": "color wash grading, full-frame dominant single-color tint, emotional monochrome palette saturation",
+        "veo": "Shot with color wash: entire frame dominated by single color tone, emotional monochromatic tint, visual mood coding, full-scene color atmosphere"
+      },
+      "combinable_with": [
+        "monochromatic",
+        "neon_saturated",
+        "cool_blue"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "any"
+    },
+    {
+      "technique_id": "split_toning",
+      "category": "color",
+      "name_ko": "스플릿 토닝",
+      "name_en": "Split Toning",
+      "description_ko": "하이라이트와 섀도우에 다른 색조를 적용. 영화적 깊이와 분위기.",
+      "visual_effect_ko": "색채적 깊이, 영화적 분위기, 섬세한 톤 분리",
+      "best_for": [
+        "cinematic",
+        "editorial",
+        "mood"
+      ],
+      "prompt_keywords": {
+        "kling": "split toning, warm highlights with cool shadows, dual-tone color grading",
+        "seedance": "split-toned grading, warm amber highlights against cool blue shadows, bifocal color separation",
+        "veo": "Shot with split toning: warm amber in highlights, cool blue in shadows, complementary tonal separation, cinematic dual-tone depth grading"
+      },
+      "combinable_with": [
+        "teal_orange_grade",
+        "chiaroscuro",
+        "warm_desaturated"
+      ],
+      "source_refs": [
+        "web_research_2026"
+      ],
+      "multi_shot_hint": "any"
     }
   ],
   "mood_technique_map": {
@@ -4012,7 +5281,10 @@
       "hard_contrast_light",
       "rapid_cuts",
       "rack_focus",
-      "side_lighting"
+      "side_lighting",
+      "vertigo_effect",
+      "split_diopter",
+      "tight_framing"
     ],
     "serenity": [
       "natural_golden_hour",
@@ -4059,7 +5331,10 @@
       "jump_cut",
       "handheld_shaky",
       "flash_cut",
-      "glitch_transition"
+      "glitch_transition",
+      "crash_zoom",
+      "fpv_drone_dive",
+      "rotation_360"
     ],
     "mystery": [
       "chiaroscuro",
@@ -4117,7 +5392,9 @@
       "arc_orbit",
       "speed_ramp",
       "handheld_shaky",
-      "rotation_360"
+      "rotation_360",
+      "crash_zoom",
+      "fpv_drone_dive"
     ],
     "contemplation": [
       "long_take",
@@ -4137,14 +5414,19 @@
       "dolly_zoom",
       "fish_eye_lens",
       "tilt_shift_focus",
-      "reverse_motion"
+      "reverse_motion",
+      "lens_whacking",
+      "morph_transition",
+      "parallax_scroll"
     ],
     "joy": [
       "natural_golden_hour",
       "high_key_lighting",
       "pastel_palette",
       "crane_up",
-      "lateral_tracking"
+      "lateral_tracking",
+      "dappled_light",
+      "bounce_light"
     ],
     "melancholy": [
       "cool_blue",
@@ -4172,7 +5454,9 @@
       "extreme_wide_shot",
       "anamorphic_lens",
       "drone_aerial",
-      "deep_focus"
+      "deep_focus",
+      "fpv_drone_dive",
+      "gods_eye_view"
     ],
     "intimacy": [
       "shallow_dof",
@@ -4193,21 +5477,25 @@
       "crane_up",
       "arc_orbit",
       "complementary_contrast",
-      "speed_ramp"
+      "speed_ramp",
+      "freeze_frame"
     ],
     "dread": [
       "slow_push_in",
       "underlight",
       "low_key_lighting",
       "flash_cut",
-      "dutch_tilt"
+      "dutch_tilt",
+      "canted_pov",
+      "vertigo_effect"
     ],
     "whimsy": [
       "tilt_shift_focus",
       "pastel_palette",
       "iris_transition",
       "center_framing",
-      "high_key_lighting"
+      "high_key_lighting",
+      "wes_anderson_flat"
     ]
   },
   "transition_mood_map": {
@@ -4241,17 +5529,19 @@
   },
   "metadata": {
     "created_at": "2026-02-12",
-    "total_techniques": 153,
+    "total_techniques": 200,
     "categories": {
-      "camera_angle": 15,
-      "camera_movement": 22,
-      "color": 16,
-      "composition": 20,
+      "aesthetic_style": 10,
+      "camera_angle": 17,
+      "camera_movement": 28,
+      "color": 20,
+      "composition": 23,
       "editing_rhythm": 13,
-      "focus_technique": 12,
-      "lens_character": 12,
-      "lighting": 18,
-      "shot_scale": 12,
+      "focus_technique": 13,
+      "lens_character": 13,
+      "lighting": 26,
+      "physics_motion": 10,
+      "shot_scale": 14,
       "transition": 13
     },
     "source": "Cinematic Technique Corpus for AD Studio",

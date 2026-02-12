@@ -1,9 +1,9 @@
 """AD Studio Brain — Core cinematic analysis service.
 
 Analyzes scenarios or video references and produces:
-1. Per-scene cinematic technique breakdown
-2. Sequence intelligence (emotional arc, transitions, continuity)
-3. Engine-optimized prompts (Kling 3.0, Seedance 2.0)
+1. 5-Domain cinematic decomposition (VGoT-inspired)
+2. Beat structure + emotional arc + pacing profile
+3. Character-bound, engine-optimized multi-shot prompts
 
 Usage:
     from app.services.ad_brain import ADStudioBrain
@@ -11,7 +11,7 @@ Usage:
     brain = ADStudioBrain(model="gemini-3-pro-preview")
     result = await brain.analyze_scenario(
         scenario="한 남자가 빈 거리를 걷다가...",
-        target_engines=["kling", "seedance"],
+        target_engines=["kling", "seedance", "veo"],
     )
 """
 from __future__ import annotations
@@ -44,83 +44,20 @@ def _get_gemini_client(model: str, byok_key: Optional[str] = None):
 
 
 # ============================================================================
-# Constants
+# Constants & Prompts
 # ============================================================================
 
-SCENE_ANALYSIS_SYSTEM_PROMPT = """You are an expert cinematic analyst and assistant director.
-Your task is to analyze a scenario and break it into scenes, then for each scene:
-1. Identify the cinematic techniques (composition, camera movement, angle, lighting, color)
-2. Describe the emotional tone
-3. Suggest transitions between scenes
-4. Generate optimized prompts for AI video generation engines
+# Import the v2 Director prompts from the dedicated module
+from app.services.cinematic_director_prompts import (
+    DIRECTOR_SYSTEM_V2,
+    DECOMPOSITION_USER_TEMPLATE,
+    SHOT_TYPE_GUIDELINES,
+    PACING_PROFILES,
+)
 
-IMPORTANT RULES:
-- All Korean description fields (설명, 감정_위치, etc.) MUST be in Korean
-- All prompt fields (kling_3_0, seedance_2_0) MUST be in English
-- Do NOT mention any real director or artist names in any output field
-- Focus on atomic cinematic techniques, not auteur styles
-- Be specific about camera distances: EWS, WS, FS, MS, MCU, CU, ECU
-- Include continuity anchors (character appearance, style constants)
-"""
-
-SCENE_ANALYSIS_USER_TEMPLATE = """Analyze this scenario and generate cinematic scene breakdown:
-
-SCENARIO:
-{scenario}
-
-{style_hint_section}
-
-Generate a JSON response with this exact structure:
-{{
-  "scenes": [
-    {{
-      "scene_number": 1,
-      "description": "Korean scene description",
-      "description_en": "English scene summary",
-      "techniques": {{
-        "composition": ["technique_id1", "technique_id2"],
-        "camera_movement": ["technique_id"],
-        "camera_angle": ["technique_id"],
-        "lighting": ["technique_id"],
-        "color": ["technique_id"]
-      }},
-      "sequence_context": {{
-        "emotional_position": "Korean: where on the emotional arc",
-        "camera_distance_flow": "Korean: e.g., 이전 WS → 현재 CU → 다음 MS",
-        "transition_in": "Korean: how we enter this scene",
-        "transition_out_setup": "Korean: setup for next scene transition"
-      }},
-      "continuity_anchors": {{
-        "character": "Korean: character appearance constants",
-        "style": "English: visual style constants"
-      }},
-      "prompts": {{
-        "kling_3_0": "English prompt optimized for Kling 3.0. Subject-first structure. Include camera_preset, motion hints, composition details. 30-50 words.",
-        "seedance_2_0": "English prompt optimized for Seedance 2.0. Cinematic description style. Include visual atmosphere and motion flow. 40-60 words."
-      }}
-    }}
-  ],
-  "sequence": {{
-    "emotional_arc": [
-      {{"scene_number": 1, "emotion": "Korean emotion", "intensity": 0.3, "description": "Korean description"}}
-    ],
-    "visual_rhythm": {{
-      "camera_distance_curve": ["WS", "MS", "CU"],
-      "edit_tempo": "Korean: edit rhythm description"
-    }},
-    "color_progression": [
-      {{"scene_number": 1, "temperature": "warm", "palette": "Korean palette desc"}}
-    ],
-    "continuity_anchors": {{
-      "character_anchors": ["Korean: constant character elements"],
-      "style_anchors": ["English: constant style elements"],
-      "lighting_anchors": ["Korean: constant lighting elements"]
-    }}
-  }}
-}}
-
-Target engines: {engines}
-Respond ONLY with valid JSON. No markdown code blocks."""
+# Legacy v1 aliases (kept for video analysis which still uses simpler format)
+SCENE_ANALYSIS_SYSTEM_PROMPT = DIRECTOR_SYSTEM_V2
+SCENE_ANALYSIS_USER_TEMPLATE = DECOMPOSITION_USER_TEMPLATE
 
 VIDEO_ANALYSIS_SYSTEM_PROMPT = """You are an expert cinematic analyst. Analyze video scenes based on timestamps and visual descriptions.
 For each scene segment, identify cinematic techniques and generate prompts for AI video recreation.
@@ -152,13 +89,13 @@ class ADStudioBrain:
         db: Optional[AsyncSession] = None,
         progress_callback: Optional[Callable] = None,
     ):
-        """Analyze a text scenario and generate cinematic prompts.
+        """Analyze a text scenario via 5-Domain cinematic decomposition.
 
-        Steps:
-        1. Send scenario to Gemini for scene breakdown
-        2. Enrich with technique RAG data
-        3. Build sequence intelligence
-        4. Generate engine-optimized prompts
+        Pipeline (VGoT-inspired):
+        1. LLM Director decomposes scenario → beat structure + characters + shots
+        2. Enrich shot techniques with RAG corpus data
+        3. Build sequence intelligence (emotional arc, pacing, continuity)
+        4. Return structured result with engine-ready outputs
         """
         from app.routers.dimension.ad_studio import (
             ADStudioResponse,
@@ -174,11 +111,11 @@ class ADStudioBrain:
             ContinuityAnchors,
         )
 
-        target_engines = target_engines or ["kling", "seedance"]
+        target_engines = target_engines or ["kling", "seedance", "veo"]
 
-        # Step 1: Gemini scene breakdown
+        # Step 1: 5-Domain Decomposition via Director LLM
         if progress_callback:
-            progress_callback(0.1, "Gemini로 씬 분석 중...")
+            progress_callback(0.1, "시네마틱 디렉터가 시나리오 분해 중...")
 
         raw_analysis = await self._call_gemini_analysis(
             scenario=scenario,
@@ -187,29 +124,36 @@ class ADStudioBrain:
         )
 
         if progress_callback:
-            progress_callback(0.4, "시네마틱 기법 매칭 중...")
+            progress_callback(0.3, "캐릭터·비트 구조 추출 중...")
 
-        # Step 2: Enrich with technique RAG
-        scenes_data = raw_analysis.get("scenes", [])
+        # Step 2: Extract new 5-Domain fields
+        characters_data = raw_analysis.get("characters", [])
+        beat_structure = raw_analysis.get("beat_structure", {})
+        shots_data = raw_analysis.get("shots", raw_analysis.get("scenes", []))
         sequence_data = raw_analysis.get("sequence", {})
 
-        enriched_scenes: List[SceneAnalysis] = []
-        evidence_refs: List[str] = []
+        if progress_callback:
+            progress_callback(0.5, "기법 RAG 매칭 중...")
 
-        for scene_raw in scenes_data:
-            scene = self._build_scene_analysis(scene_raw)
+        # Step 3: Enrich with technique RAG
+        enriched_scenes: List[SceneAnalysis] = []
+        for shot_raw in shots_data:
+            scene = self._build_scene_analysis(shot_raw)
             enriched_scenes.append(scene)
 
         if progress_callback:
             progress_callback(0.7, "시퀀스 인텔리전스 구축 중...")
 
-        # Step 3: Build sequence analysis
+        # Step 4: Build sequence analysis (now with 5-domain data)
         sequence = self._build_sequence_analysis(sequence_data, enriched_scenes)
 
-        # Step 4: Compile evidence refs
+        # Step 5: Compile evidence + metadata
         evidence_refs = [
-            f"db:ad_studio:analysis:{len(enriched_scenes)}_scenes",
+            f"db:ad_studio:analysis:{len(enriched_scenes)}_shots",
             f"model:{self.model}",
+            f"decomposition:5-domain",
+            f"beat_structure:{beat_structure.get('type', 'auto')}",
+            f"pacing:{beat_structure.get('pacing_profile', 'dramatic')}",
         ]
 
         if progress_callback:
@@ -220,6 +164,8 @@ class ADStudioBrain:
             sequence=sequence,
             scenes=enriched_scenes,
             evidence_refs=evidence_refs,
+            characters=characters_data,
+            beat_structure=beat_structure,
         )
 
     async def analyze_video(
@@ -322,7 +268,10 @@ class ADStudioBrain:
             raise
 
     def _build_scene_analysis(self, scene_raw: Dict[str, Any]):
-        """Build a SceneAnalysis from raw Gemini output, enriched with technique RAG."""
+        """Build a SceneAnalysis from raw Gemini 5-Domain output, enriched with technique RAG.
+
+        Handles both legacy format (scenes) and new format (shots with beat/action/audio).
+        """
         from app.routers.dimension.ad_studio import (
             SceneAnalysis,
             SequenceContext,
@@ -331,33 +280,118 @@ class ADStudioBrain:
             EnginePrompts,
         )
 
-        # Load techniques for enrichment
+        # Load techniques for enrichment (expanded categories)
         technique_tags = self._enrich_techniques(scene_raw.get("techniques", {}))
 
+        # Build sequence_context from new or legacy format
         seq_ctx_raw = scene_raw.get("sequence_context", {})
+        beat = scene_raw.get("beat", "")
+        transition = scene_raw.get("transition_to_next", "")
+
+        # Extract prompts — legacy or build from new fields
         prompts_raw = scene_raw.get("prompts", {})
+        if not prompts_raw and scene_raw.get("description_en"):
+            # Auto-build prompts from 5-Domain shot data
+            prompts_raw = self._auto_build_prompts(scene_raw)
+
+        # Build continuity anchors (expanded format)
+        anchors = scene_raw.get("continuity_anchors", {})
 
         return SceneAnalysis(
-            scene_number=scene_raw.get("scene_number", 0),
+            scene_number=scene_raw.get("shot_number", scene_raw.get("scene_number", 0)),
             description=scene_raw.get("description", ""),
             description_en=scene_raw.get("description_en", ""),
             techniques=technique_tags,
             sequence_context=SequenceContext(
                 previous_exit=seq_ctx_raw.get("previous_exit"),
-                transition_in=seq_ctx_raw.get("transition_in"),
-                transition_out_setup=seq_ctx_raw.get("transition_out_setup"),
-                emotional_position=seq_ctx_raw.get("emotional_position", ""),
+                transition_in=seq_ctx_raw.get("transition_in", transition),
+                transition_out_setup=seq_ctx_raw.get("transition_out_setup", transition),
+                emotional_position=seq_ctx_raw.get("emotional_position", beat),
                 camera_distance_flow=seq_ctx_raw.get("camera_distance_flow", ""),
             ),
             prompts=EnginePrompts(
                 kling_3_0=prompts_raw.get("kling_3_0", ""),
                 seedance_2_0=prompts_raw.get("seedance_2_0", ""),
+                veo_3_1=prompts_raw.get("veo_3_1", ""),
             ),
-            continuity_anchors=scene_raw.get("continuity_anchors"),
+            continuity_anchors=anchors,
         )
 
+    def _auto_build_prompts(self, shot_raw: Dict[str, Any]) -> Dict[str, str]:
+        """Auto-build engine prompts from 5-Domain shot fields.
+
+        When the LLM returns the new format (shots with action, audio, characters),
+        we synthesize per-engine prompts from the structured data.
+        """
+        desc_en = shot_raw.get("description_en", "")
+        action_en = shot_raw.get("action_en", "")
+        audio = shot_raw.get("audio", {})
+        characters = shot_raw.get("characters_in_shot", [])
+        techniques = shot_raw.get("techniques", {})
+
+        # Extract technique names for prompt building
+        camera_moves = techniques.get("camera_movement", [])
+        shot_scales = techniques.get("shot_scale", techniques.get("camera_angle", []))
+        lighting = techniques.get("lighting", [])
+
+        # Build camera text
+        camera_text = ""
+        if shot_scales:
+            scale = shot_scales[0] if isinstance(shot_scales[0], str) else ""
+            camera_text = scale.replace("_", " ")
+        if camera_moves:
+            move = camera_moves[0] if isinstance(camera_moves[0], str) else ""
+            camera_text += f" with {move.replace('_', ' ')}"
+
+        # Build character text
+        char_text = ""
+        if characters:
+            char_text = ", ".join(str(c) for c in characters[:2])
+
+        # Audio hint
+        audio_text = ""
+        if audio:
+            ambient = audio.get("ambient", "")
+            music = audio.get("music", "")
+            if ambient:
+                audio_text = f"Sound: {ambient}."
+            if music:
+                audio_text += f" Music: {music}."
+
+        # Kling: Subject-first, 5-Layer (Scene → Characters → Action → Camera → Style)
+        kling_parts = []
+        if desc_en:
+            kling_parts.append(desc_en.rstrip("."))
+        if char_text:
+            kling_parts.append(char_text)
+        if action_en:
+            kling_parts.append(action_en.rstrip("."))
+        if camera_text:
+            kling_parts.append(camera_text.strip())
+        kling_prompt = ". ".join(kling_parts)[:200]
+
+        # Seedance: Cinematic atmosphere, motion-focused
+        seedance_parts = []
+        if desc_en:
+            seedance_parts.append(desc_en)
+        if action_en:
+            seedance_parts.append(action_en)
+        if camera_text:
+            seedance_parts.append(f"Shot: {camera_text.strip()}.")
+        if audio_text:
+            seedance_parts.append(audio_text)
+        seedance_prompt = " ".join(seedance_parts)[:300]
+
+        return {
+            "kling_3_0": kling_prompt,
+            "seedance_2_0": seedance_prompt,
+        }
+
     def _enrich_techniques(self, techniques_raw: Dict[str, Any]) -> "SceneTechniques":
-        """Enrich technique IDs with full technique data from RAG corpus."""
+        """Enrich technique IDs with full technique data from RAG corpus.
+
+        Now supports all 12 categories from the expanded corpus.
+        """
         from app.routers.dimension.ad_studio import SceneTechniques, TechniqueTag
 
         result = SceneTechniques()
@@ -368,8 +402,17 @@ class ADStudioBrain:
             logger.warning("[ad-brain] cinematic_techniques not available, using raw IDs")
             return result
 
-        for category in ["composition", "camera_movement", "camera_angle", "lighting", "color"]:
+        # All 12 categories from the expanded corpus
+        all_categories = [
+            "composition", "camera_movement", "camera_angle", "lighting", "color",
+            "shot_scale", "focus_technique", "lens_character", "editing_rhythm",
+            "transition_type", "aesthetic_style", "physics_motion",
+        ]
+
+        for category in all_categories:
             ids = techniques_raw.get(category, [])
+            if not ids:
+                continue
             tags = []
             for tid in ids:
                 if isinstance(tid, str):
@@ -400,19 +443,22 @@ class ADStudioBrain:
         sequence_raw: Dict[str, Any],
         scenes: List,
     ):
-        """Build SequenceAnalysis from raw data."""
+        """Build SequenceAnalysis from raw data, including 5-Domain analysis."""
         from app.routers.dimension.ad_studio import (
             SequenceAnalysis,
             EmotionalBeat,
             ColorBeat,
             VisualRhythm,
             ContinuityAnchors,
+            FiveDomains,
         )
 
         emotional_arc = []
         for beat in sequence_raw.get("emotional_arc", []):
+            # Support both shot_number (v2) and scene_number (v1)
+            num = beat.get("shot_number", beat.get("scene_number", 0))
             emotional_arc.append(EmotionalBeat(
-                scene_number=beat.get("scene_number", 0),
+                scene_number=num,
                 emotion=beat.get("emotion", ""),
                 intensity=max(0.0, min(1.0, float(beat.get("intensity", 0.5)))),
                 description=beat.get("description", ""),
@@ -420,8 +466,9 @@ class ADStudioBrain:
 
         color_progression = []
         for cb in sequence_raw.get("color_progression", []):
+            num = cb.get("shot_number", cb.get("scene_number", 0))
             color_progression.append(ColorBeat(
-                scene_number=cb.get("scene_number", 0),
+                scene_number=num,
                 temperature=cb.get("temperature", "neutral"),
                 palette=cb.get("palette", ""),
                 hex_hint=cb.get("hex_hint"),
@@ -440,9 +487,20 @@ class ADStudioBrain:
             lighting_anchors=anchors_raw.get("lighting_anchors", []),
         ) if anchors_raw else None
 
+        # v2: 5-Domain analysis (VGoT-inspired)
+        five_raw = sequence_raw.get("five_domains", {})
+        five_domains = FiveDomains(
+            character_dynamics=five_raw.get("character_dynamics", ""),
+            background_continuity=five_raw.get("background_continuity", ""),
+            relationship_evolution=five_raw.get("relationship_evolution", ""),
+            camera_evolution=five_raw.get("camera_evolution", ""),
+            lighting_evolution=five_raw.get("lighting_evolution", ""),
+        ) if five_raw else None
+
         return SequenceAnalysis(
             emotional_arc=emotional_arc,
             visual_rhythm=visual_rhythm,
             color_progression=color_progression,
             continuity_anchors=continuity,
+            five_domains=five_domains,
         )

@@ -50,7 +50,12 @@ def generate_kling_prompt(
 ) -> str:
     """Generate a Kling 3.0 optimized prompt from scene analysis.
 
-    Structure: Subject-first → Environment → Camera → Lighting → Style
+    5-Layer Formula (2026 best practice):
+      1. Scene — environment, location, time of day, atmosphere
+      2. Characters — identities with consistent descriptors
+      3. Action — sequential movement with motion verbs
+      4. Camera — cinematic camera movement + lens detail
+      5. Audio & Style — sound effects, dialogue, visual style
 
     Args:
         scene: Scene analysis data with techniques and description
@@ -64,40 +69,77 @@ def generate_kling_prompt(
     if isinstance(prompts, dict) and prompts.get("kling_3_0"):
         return prompts["kling_3_0"]
 
-    # Build from techniques
-    parts = []
-
-    # Subject (from description_en or description)
-    desc = scene.get("description_en") or scene.get("description", "")
-    if desc:
-        parts.append(desc)
-
-    # Camera movement
     techniques = scene.get("techniques", {})
+    layers: List[str] = []
+
+    # Layer 1: Scene (environment + atmosphere)
+    desc = scene.get("description_en") or scene.get("description", "")
+    color = techniques.get("color", [])
+    lighting = techniques.get("lighting", [])
+    scene_parts = []
+    if desc:
+        scene_parts.append(desc)
+    if color:
+        color_text = ", ".join(_technique_to_text(c) for c in color[:2])
+        scene_parts.append(f"{color_text} atmosphere")
+    if lighting:
+        light_text = ", ".join(_technique_to_text(lt) for lt in lighting[:2])
+        scene_parts.append(f"lit by {light_text}")
+    if scene_parts:
+        layers.append(". ".join(scene_parts))
+
+    # Layer 2: Characters (with consistent binding descriptors)
+    characters = scene.get("characters", [])
+    if characters:
+        char_descs = []
+        for i, char in enumerate(characters):
+            if isinstance(char, str):
+                char_descs.append(f"[Character {chr(65+i)}: {char}]")
+            elif isinstance(char, dict):
+                name = char.get("name", f"Character {chr(65+i)}")
+                appearance = char.get("description", char.get("appearance", ""))
+                char_descs.append(f"[{name}: {appearance}]")
+        layers.append(" ".join(char_descs))
+
+    # Layer 3: Action (motion verbs, temporal flow)
+    action = scene.get("action_en") or scene.get("action", "")
+    if action:
+        layers.append(action)
+
+    # Layer 4: Camera (movement + composition)
+    camera_parts = []
     camera_moves = techniques.get("camera_movement", [])
     if camera_moves:
-        move_names = [_technique_to_text(t) for t in camera_moves]
-        parts.append(", ".join(move_names))
-
-    # Composition
+        move_names = [_technique_to_text(t) for t in camera_moves[:2]]
+        camera_parts.append(", ".join(move_names))
     composition = techniques.get("composition", [])
     if composition:
-        comp_names = [_technique_to_text(t) for t in composition]
-        parts.append(", ".join(comp_names))
+        comp_names = [_technique_to_text(t) for t in composition[:1]]
+        camera_parts.append(", ".join(comp_names))
+    shot_scale = techniques.get("shot_scale", [])
+    if shot_scale:
+        camera_parts.insert(0, _technique_to_text(shot_scale[0]))
+    if camera_parts:
+        layers.append(", ".join(camera_parts))
 
-    # Lighting
-    lighting = techniques.get("lighting", [])
-    if lighting:
-        light_names = [_technique_to_text(t) for t in lighting]
-        parts.append(", ".join(light_names))
+    # Layer 5: Audio & Style
+    style_parts = []
+    aesthetic = techniques.get("aesthetic_style", [])
+    if aesthetic:
+        style_parts.append(_technique_to_text(aesthetic[0]) + " style")
+    audio = scene.get("audio_hint", "")
+    if audio:
+        style_parts.append(f"Audio: {audio}")
+    # Style anchors from sequence
+    if sequence_context:
+        anchors = sequence_context.get("global_style_anchors", [])
+        if anchors and isinstance(anchors, list):
+            style_parts.append(", ".join(str(a) for a in anchors[:2]))
+    if style_parts:
+        layers.append(". ".join(style_parts))
 
-    # Color
-    color = techniques.get("color", [])
-    if color:
-        color_names = [_technique_to_text(t) for t in color]
-        parts.append(", ".join(color_names))
+    return ". ".join(layers) if layers else desc
 
-    return ". ".join(parts) if parts else desc
 
 
 def get_kling_camera_preset(techniques: Dict[str, Any]) -> Optional[str]:

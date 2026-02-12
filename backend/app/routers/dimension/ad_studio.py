@@ -56,8 +56,8 @@ router = APIRouter(prefix="/ad-studio", tags=["AD Studio"])
 
 MAX_SCENARIO_LENGTH = 10000
 MAX_STYLE_HINT_LENGTH = 500
-ALLOWED_ENGINES = {"kling", "seedance"}
-DEFAULT_ENGINES = ["kling", "seedance"]
+ALLOWED_ENGINES = {"kling", "seedance", "veo"}
+DEFAULT_ENGINES = ["kling", "seedance", "veo"]
 
 
 # ============================================================================
@@ -188,12 +188,22 @@ class ContinuityAnchors(BaseModel):
     lighting_anchors: List[str] = Field(default_factory=list)  # Korean
 
 
+class FiveDomains(BaseModel):
+    """VGoT-inspired 5-domain analysis for cross-shot coherence."""
+    character_dynamics: str = ""  # English
+    background_continuity: str = ""  # English
+    relationship_evolution: str = ""  # English
+    camera_evolution: str = ""  # English
+    lighting_evolution: str = ""  # English
+
+
 class SequenceAnalysis(BaseModel):
     """Cross-scene intelligence."""
     emotional_arc: List[EmotionalBeat] = Field(default_factory=list)
     visual_rhythm: Optional[VisualRhythm] = None
     color_progression: List[ColorBeat] = Field(default_factory=list)
     continuity_anchors: Optional[ContinuityAnchors] = None
+    five_domains: Optional[FiveDomains] = None
 
 
 class SequenceContext(BaseModel):
@@ -215,18 +225,26 @@ class TechniqueTag(BaseModel):
 
 
 class SceneTechniques(BaseModel):
-    """All techniques applied to a scene."""
+    """All techniques applied to a scene (12 categories)."""
     composition: List[TechniqueTag] = Field(default_factory=list)
     camera_movement: List[TechniqueTag] = Field(default_factory=list)
     camera_angle: List[TechniqueTag] = Field(default_factory=list)
     lighting: List[TechniqueTag] = Field(default_factory=list)
     color: List[TechniqueTag] = Field(default_factory=list)
+    shot_scale: List[TechniqueTag] = Field(default_factory=list)
+    focus_technique: List[TechniqueTag] = Field(default_factory=list)
+    lens_character: List[TechniqueTag] = Field(default_factory=list)
+    editing_rhythm: List[TechniqueTag] = Field(default_factory=list)
+    transition_type: List[TechniqueTag] = Field(default_factory=list)
+    aesthetic_style: List[TechniqueTag] = Field(default_factory=list)
+    physics_motion: List[TechniqueTag] = Field(default_factory=list)
 
 
 class EnginePrompts(BaseModel):
     """Optimized prompts per video engine."""
     kling_3_0: str = ""  # English
     seedance_2_0: str = ""  # English
+    veo_3_1: str = ""  # English
 
 
 class SceneAnalysis(BaseModel):
@@ -248,6 +266,9 @@ class ADStudioResponse(BaseModel):
     evidence_refs: List[str] = Field(default_factory=list)
     trace_id: str = ""
     metrics: Optional[Dict[str, Any]] = None
+    # v2: 5-Domain decomposition fields
+    characters: List[Dict[str, Any]] = Field(default_factory=list)
+    beat_structure: Dict[str, Any] = Field(default_factory=dict)
 
 
 class TechniqueInfo(BaseModel):
