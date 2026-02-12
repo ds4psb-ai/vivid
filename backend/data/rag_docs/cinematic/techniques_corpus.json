@@ -1,0 +1,855 @@
+{
+  "title": "Cinematic Technique Corpus - AD Studio",
+  "version": "1.0.0",
+  "description": "원자적 영화 기법 코퍼스. 구도, 카메라 움직임, 각도, 조명, 색감, 편집 리듬, 전환 기법 포함.",
+  "techniques": [
+    {
+      "technique_id": "rule_of_thirds",
+      "category": "composition",
+      "name_ko": "삼분법 구도",
+      "name_en": "Rule of Thirds",
+      "description_ko": "프레임을 가로세로 3등분하여 교차점에 주요 피사체 배치. 자연스러운 시선 유도와 균형감 제공.",
+      "visual_effect_ko": "안정적 구도, 자연스러운 시선 흐름, 의도된 여백",
+      "best_for": ["portrait", "landscape", "dialogue"],
+      "prompt_keywords": {
+        "kling": "rule of thirds composition, subject placed at intersection point",
+        "seedance": "off-center subject placement, rule of thirds framing, balanced negative space"
+      },
+      "combinable_with": ["eye_level", "natural_golden_hour", "soft_diffused_light"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "symmetric_composition",
+      "category": "composition",
+      "name_ko": "대칭 구도",
+      "name_en": "Symmetric Composition",
+      "description_ko": "프레임 중앙축 기준 좌우 대칭 배치. 질서, 긴장, 불안한 평온을 표현.",
+      "visual_effect_ko": "힘의 균형, 통제된 긴장감, 인위적 질서",
+      "best_for": ["confrontation", "power_balance", "spatial_introduction"],
+      "prompt_keywords": {
+        "kling": "symmetrical framing, centered subject, balanced composition",
+        "seedance": "mirror-like balanced composition, centered bilateral symmetry"
+      },
+      "combinable_with": ["low_angle", "chiaroscuro", "slow_push_in"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "leading_lines",
+      "category": "composition",
+      "name_ko": "유도선 구도",
+      "name_en": "Leading Lines",
+      "description_ko": "건축물, 도로, 자연물 등의 선을 활용해 시선을 피사체로 유도. 깊이감과 방향성 강화.",
+      "visual_effect_ko": "시선 유도, 원근감 강조, 공간 깊이",
+      "best_for": ["establishing_shot", "journey", "narrative_direction"],
+      "prompt_keywords": {
+        "kling": "leading lines composition, converging perspective lines guiding toward subject",
+        "seedance": "architectural leading lines, vanishing point composition, depth through linear perspective"
+      },
+      "combinable_with": ["dolly_in", "low_angle", "warm_desaturated"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "frame_within_frame",
+      "category": "composition",
+      "name_ko": "프레임 속 프레임",
+      "name_en": "Frame Within Frame",
+      "description_ko": "문, 창문, 거울 등 프레임 내 요소로 2차 프레임 생성. 고립감, 관찰자 시점, 서사 층위 표현.",
+      "visual_effect_ko": "시각적 층위, 고립감, 관음증적 시점",
+      "best_for": ["isolation", "surveillance", "emotional_distance"],
+      "prompt_keywords": {
+        "kling": "frame within frame, subject seen through doorway, nested framing",
+        "seedance": "natural frame element surrounding subject, doorway or window framing composition"
+      },
+      "combinable_with": ["chiaroscuro", "static_shot", "slow_dissolve"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "dutch_angle",
+      "category": "composition",
+      "name_ko": "더치 앵글 (기울어진 구도)",
+      "name_en": "Dutch Angle",
+      "description_ko": "카메라를 의도적으로 기울여 수평선을 비틀어 촬영. 불안, 혼란, 심리적 왜곡 표현.",
+      "visual_effect_ko": "불안정, 심리적 혼란, 긴장감",
+      "best_for": ["psychological_tension", "horror", "disorientation"],
+      "prompt_keywords": {
+        "kling": "dutch angle, tilted camera, canted frame composition",
+        "seedance": "diagonal tilted framing, disorienting canted angle, skewed horizon line"
+      },
+      "combinable_with": ["hard_contrast_light", "rapid_cuts", "handheld"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "negative_space",
+      "category": "composition",
+      "name_ko": "네거티브 스페이스",
+      "name_en": "Negative Space",
+      "description_ko": "피사체 주변에 의도적 여백을 두어 고독, 공허, 사색적 분위기 조성.",
+      "visual_effect_ko": "고독감, 여백의 미, 공간적 고립",
+      "best_for": ["loneliness", "contemplation", "minimalism"],
+      "prompt_keywords": {
+        "kling": "negative space composition, small subject surrounded by empty space",
+        "seedance": "vast negative space, isolated subject in expansive emptiness, minimalist framing"
+      },
+      "combinable_with": ["high_angle", "cool_blue", "long_take"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "golden_ratio",
+      "category": "composition",
+      "name_ko": "황금 비율 구도",
+      "name_en": "Golden Ratio",
+      "description_ko": "1:1.618 비율의 나선형 또는 격자 활용. 삼분법보다 정교한 시각적 조화.",
+      "visual_effect_ko": "유기적 조화, 자연스러운 아름다움, 정교한 균형",
+      "best_for": ["beauty_shot", "portrait", "nature"],
+      "prompt_keywords": {
+        "kling": "golden ratio composition, fibonacci spiral framing, harmonious proportions",
+        "seedance": "golden ratio spiral composition, organic proportional balance, fibonacci-guided placement"
+      },
+      "combinable_with": ["soft_diffused_light", "eye_level", "slow_dissolve"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "foreground_layering",
+      "category": "composition",
+      "name_ko": "전경 레이어링",
+      "name_en": "Foreground Layering",
+      "description_ko": "전경-중경-후경에 요소를 배치하여 깊이감 극대화. 입체적 공간감 연출.",
+      "visual_effect_ko": "공간 깊이, 입체감, 시각적 복잡도",
+      "best_for": ["depth_staging", "environmental_storytelling", "establishing_shot"],
+      "prompt_keywords": {
+        "kling": "foreground layering, deep staging with elements at multiple depth planes",
+        "seedance": "layered depth composition, foreground-midground-background staging, dimensional framing"
+      },
+      "combinable_with": ["dolly_in", "rack_focus", "chiaroscuro"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "overhead_flat_lay",
+      "category": "composition",
+      "name_ko": "탑뷰 플랫 레이",
+      "name_en": "Overhead Flat Lay",
+      "description_ko": "완전히 위에서 내려다보는 구도. 오브제 나열, 지도적 시점, 신의 관점 표현.",
+      "visual_effect_ko": "초월적 관점, 패턴 강조, 통제감",
+      "best_for": ["object_arrangement", "ritual", "spatial_mapping"],
+      "prompt_keywords": {
+        "kling": "overhead flat lay, top-down view, objects arranged on surface",
+        "seedance": "directly overhead composition, flat lay arrangement, god's eye perspective"
+      },
+      "combinable_with": ["bird_eye", "monochromatic", "match_cut"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "dolly_in",
+      "category": "camera_movement",
+      "name_ko": "돌리 인 (전진 이동)",
+      "name_en": "Dolly In",
+      "description_ko": "카메라가 피사체를 향해 물리적으로 전진. 줌과 달리 원근감 변화 동반. 긴장감 고조, 내면 접근.",
+      "visual_effect_ko": "긴장 고조, 친밀감, 심리적 접근",
+      "best_for": ["emotional_climax", "revelation", "confrontation"],
+      "prompt_keywords": {
+        "kling": "slow dolly in, camera pushing toward subject, gradual forward movement",
+        "seedance": "deliberate dolly push toward subject, gradually closing distance, forward tracking"
+      },
+      "combinable_with": ["symmetric_composition", "chiaroscuro", "slow_dissolve"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "dolly_out",
+      "category": "camera_movement",
+      "name_ko": "돌리 아웃 (후퇴 이동)",
+      "name_en": "Dolly Out",
+      "description_ko": "카메라가 피사체로부터 물리적으로 후퇴. 고립감, 무력감, 공간 확장 표현.",
+      "visual_effect_ko": "고립감, 공간 확장, 감정적 거리",
+      "best_for": ["ending", "isolation", "environmental_reveal"],
+      "prompt_keywords": {
+        "kling": "dolly out, camera pulling back from subject, widening perspective",
+        "seedance": "retreating dolly movement, expanding spatial context, pulling away from subject"
+      },
+      "combinable_with": ["negative_space", "cool_blue", "fade_through_black"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "lateral_tracking",
+      "category": "camera_movement",
+      "name_ko": "측면 트래킹",
+      "name_en": "Lateral Tracking",
+      "description_ko": "피사체와 나란히 측면 이동. 여정, 동행, 흐름을 표현.",
+      "visual_effect_ko": "동행감, 여정의 흐름, 수평적 운동감",
+      "best_for": ["walking_scene", "journey", "conversation_in_motion"],
+      "prompt_keywords": {
+        "kling": "lateral tracking shot, camera moving alongside subject, side-scrolling movement",
+        "seedance": "parallel lateral tracking, camera sliding sideways following subject, horizontal dolly"
+      },
+      "combinable_with": ["eye_level", "natural_golden_hour", "long_take"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "crane_up",
+      "category": "camera_movement",
+      "name_ko": "크레인 업",
+      "name_en": "Crane Up",
+      "description_ko": "카메라가 수직 상승하며 공간을 확장. 해방감, 초월, 에픽 스케일 연출.",
+      "visual_effect_ko": "해방감, 공간 확장, 서사적 스케일",
+      "best_for": ["transition", "ending", "establishing_shot"],
+      "prompt_keywords": {
+        "kling": "crane up, camera rising vertically, ascending aerial movement",
+        "seedance": "vertical crane ascent, camera lifting upward revealing wider scene, rising perspective"
+      },
+      "combinable_with": ["high_angle", "warm_desaturated", "slow_dissolve"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "crane_down",
+      "category": "camera_movement",
+      "name_ko": "크레인 다운",
+      "name_en": "Crane Down",
+      "description_ko": "카메라가 수직 하강. 구체화, 집중, 하강하는 감정 표현.",
+      "visual_effect_ko": "구체적 집중, 하강감, 현실 진입",
+      "best_for": ["opening", "focusing_detail", "grounding"],
+      "prompt_keywords": {
+        "kling": "crane down, camera descending, lowering aerial movement toward subject",
+        "seedance": "vertical crane descent, camera lowering to reveal subject, descending approach"
+      },
+      "combinable_with": ["low_angle", "foreground_layering", "j_cut"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "steadicam_float",
+      "category": "camera_movement",
+      "name_ko": "스테디캠 플로팅",
+      "name_en": "Steadicam Float",
+      "description_ko": "안정화된 카메라로 부유하듯 이동. 몽환적 분위기, 공간 탐색, 롱테이크에 적합.",
+      "visual_effect_ko": "몽환적 부유감, 매끄러운 탐색, 관찰자 시점",
+      "best_for": ["long_take", "interior_exploration", "following_character"],
+      "prompt_keywords": {
+        "kling": "steadicam floating movement, smooth gliding camera, weightless tracking",
+        "seedance": "stabilized floating camera, gliding steadicam movement, smooth unbroken tracking"
+      },
+      "combinable_with": ["frame_within_frame", "soft_diffused_light", "long_take"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "whip_pan",
+      "category": "camera_movement",
+      "name_ko": "휩 팬",
+      "name_en": "Whip Pan",
+      "description_ko": "카메라를 극도로 빠르게 수평 회전. 시간/공간 전환, 에너지 폭발 표현.",
+      "visual_effect_ko": "시공간 도약, 에너지 폭발, 급전환",
+      "best_for": ["scene_transition", "comedic_timing", "action_sequence"],
+      "prompt_keywords": {
+        "kling": "whip pan, rapid horizontal camera sweep, fast swish pan with motion blur",
+        "seedance": "ultra-fast horizontal whip pan, blurred rapid camera rotation, swish transition"
+      },
+      "combinable_with": ["rapid_cuts", "complementary_contrast", "whip_pan_transition"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "arc_orbit",
+      "category": "camera_movement",
+      "name_ko": "아크 (궤도 촬영)",
+      "name_en": "Arc / Orbit Shot",
+      "description_ko": "피사체를 중심으로 카메라가 원호를 그리며 회전. 인물 부각, 순간의 정지, 드라마틱 강조.",
+      "visual_effect_ko": "인물 부각, 시간 정지감, 드라마틱 순환",
+      "best_for": ["character_reveal", "dramatic_moment", "power_display"],
+      "prompt_keywords": {
+        "kling": "arc shot orbiting around subject, camera circling character, rotational tracking",
+        "seedance": "orbital camera movement around subject, 360 arc tracking, circular dolly around figure"
+      },
+      "combinable_with": ["rim_light", "slow_motion_editing", "symmetric_composition"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "slow_push_in",
+      "category": "camera_movement",
+      "name_ko": "슬로우 푸시 인",
+      "name_en": "Slow Push In",
+      "description_ko": "매우 느린 속도로 피사체에 접근. 미묘한 긴장감, 불길한 예감, 내면 탐색.",
+      "visual_effect_ko": "잠재적 긴장, 불길한 예감, 은밀한 접근",
+      "best_for": ["suspense", "internal_monologue", "building_tension"],
+      "prompt_keywords": {
+        "kling": "very slow push in, imperceptible forward camera movement, gradual creeping approach",
+        "seedance": "ultra-slow forward dolly, nearly imperceptible push toward subject, creeping approach"
+      },
+      "combinable_with": ["chiaroscuro", "long_take", "j_cut"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "pull_back_reveal",
+      "category": "camera_movement",
+      "name_ko": "풀백 리빌",
+      "name_en": "Pull Back Reveal",
+      "description_ko": "클로즈업에서 시작해 점진적으로 후퇴하며 전체 상황 공개. 반전, 맥락 노출 효과.",
+      "visual_effect_ko": "반전 효과, 맥락 확장, 서프라이즈",
+      "best_for": ["plot_twist", "context_reveal", "opening_scene"],
+      "prompt_keywords": {
+        "kling": "pull back reveal, starting close then widening to show full scene, reverse dolly",
+        "seedance": "retreating reveal shot, dolly back exposing wider context, zoom-out surprise"
+      },
+      "combinable_with": ["foreground_layering", "crane_up", "l_cut"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "eye_level",
+      "category": "camera_angle",
+      "name_ko": "아이 레벨 (눈높이)",
+      "name_en": "Eye Level",
+      "description_ko": "피사체와 동일한 눈높이에서 촬영. 관객과 동등한 위치, 자연스러운 동일시.",
+      "visual_effect_ko": "자연스러운 동일시, 객관적 관찰, 중립적 시점",
+      "best_for": ["dialogue", "neutral_observation", "empathy"],
+      "prompt_keywords": {
+        "kling": "eye level shot, camera at subject's eye height, neutral angle",
+        "seedance": "eye-level perspective, camera positioned at natural viewing height, neutral straight-on angle"
+      },
+      "combinable_with": ["rule_of_thirds", "lateral_tracking", "soft_diffused_light"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "low_angle",
+      "category": "camera_angle",
+      "name_ko": "로우 앵글",
+      "name_en": "Low Angle",
+      "description_ko": "카메라를 피사체 아래에서 위를 향해 촬영. 권위, 위압감, 영웅적 이미지 강조.",
+      "visual_effect_ko": "권위감, 위압감, 영웅적 크기",
+      "best_for": ["power", "heroism", "intimidation"],
+      "prompt_keywords": {
+        "kling": "low angle shot, camera looking up at subject, imposing upward perspective",
+        "seedance": "low camera angle looking upward, towering subject perspective, dramatic upshot"
+      },
+      "combinable_with": ["symmetric_composition", "hard_contrast_light", "slow_push_in"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "high_angle",
+      "category": "camera_angle",
+      "name_ko": "하이 앵글",
+      "name_en": "High Angle",
+      "description_ko": "카메라를 피사체 위에서 아래를 향해 촬영. 왜소함, 취약함, 관찰자 시점 표현.",
+      "visual_effect_ko": "왜소함, 취약함, 감시적 관찰",
+      "best_for": ["vulnerability", "surveillance", "emotional_suppression"],
+      "prompt_keywords": {
+        "kling": "high angle shot, camera looking down at subject, diminishing downward perspective",
+        "seedance": "elevated camera angle looking downward, subject appears small, overhead observational view"
+      },
+      "combinable_with": ["negative_space", "cool_blue", "crane_down"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "bird_eye",
+      "category": "camera_angle",
+      "name_ko": "버즈 아이 (조감)",
+      "name_en": "Bird's Eye View",
+      "description_ko": "완전히 수직 위에서 촬영. 패턴, 지형, 초월적 관점 표현.",
+      "visual_effect_ko": "초월적 관점, 패턴 인지, 신의 시선",
+      "best_for": ["establishing_geography", "pattern_revelation", "abstract_composition"],
+      "prompt_keywords": {
+        "kling": "bird's eye view, directly overhead, top-down aerial perspective",
+        "seedance": "vertical bird's eye view, straight-down aerial perspective, map-like overhead angle"
+      },
+      "combinable_with": ["overhead_flat_lay", "monochromatic", "slow_dissolve"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "worm_eye",
+      "category": "camera_angle",
+      "name_ko": "웜즈 아이 (개미 시점)",
+      "name_en": "Worm's Eye View",
+      "description_ko": "지면 수준에서 완전히 위를 올려다보는 극단적 앵글. 거대함, 초현실, 불안 표현.",
+      "visual_effect_ko": "극단적 왜곡, 거대함, 초현실적 불안",
+      "best_for": ["surreal", "extreme_power", "architectural_grandeur"],
+      "prompt_keywords": {
+        "kling": "worm's eye view, camera on ground looking straight up, extreme low perspective",
+        "seedance": "ground-level upward perspective, extreme low angle from floor, towering vertigo shot"
+      },
+      "combinable_with": ["dutch_angle", "hard_contrast_light", "slow_push_in"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "dutch_tilt",
+      "category": "camera_angle",
+      "name_ko": "더치 틸트",
+      "name_en": "Dutch Tilt",
+      "description_ko": "카메라를 기울인 채 촬영하는 앵글 변형. 불안, 비정상, 심리적 왜곡 강조.",
+      "visual_effect_ko": "비정상성, 심리적 불균형, 긴장",
+      "best_for": ["psychological_disturbance", "villain_introduction", "chaos"],
+      "prompt_keywords": {
+        "kling": "dutch tilt angle, rotated camera axis, tilted horizon line",
+        "seedance": "canted dutch angle, rotated frame with tilted horizon, diagonal perspective shift"
+      },
+      "combinable_with": ["hard_contrast_light", "neon_saturated", "rapid_cuts"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "over_the_shoulder",
+      "category": "camera_angle",
+      "name_ko": "오버 더 숄더",
+      "name_en": "Over the Shoulder",
+      "description_ko": "한 인물의 어깨 너머로 상대방을 촬영. 대화 장면의 시점 전환, 관계 동학 표현.",
+      "visual_effect_ko": "대화 맥락, 관계 동학, 시점 전환",
+      "best_for": ["dialogue", "confrontation", "relationship_dynamics"],
+      "prompt_keywords": {
+        "kling": "over the shoulder shot, camera behind one person looking at another, OTS framing",
+        "seedance": "over-the-shoulder perspective, one figure's back framing the facing subject, dialogue OTS"
+      },
+      "combinable_with": ["rule_of_thirds", "soft_diffused_light", "eye_level"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "extreme_closeup",
+      "category": "camera_angle",
+      "name_ko": "익스트림 클로즈업",
+      "name_en": "Extreme Close-Up",
+      "description_ko": "눈, 입, 손 등 신체 일부만 프레임에 가득 채움. 감정 극대화, 디테일 강조.",
+      "visual_effect_ko": "감정 극대화, 미세 표정 포착, 긴장감",
+      "best_for": ["emotional_peak", "detail_reveal", "tension"],
+      "prompt_keywords": {
+        "kling": "extreme close-up, tight framing on eyes or detail, macro-level facial shot",
+        "seedance": "extreme close-up filling frame with single detail, macro shot of face or object"
+      },
+      "combinable_with": ["chiaroscuro", "slow_push_in", "j_cut"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "chiaroscuro",
+      "category": "lighting",
+      "name_ko": "키아로스쿠로 (명암 대비)",
+      "name_en": "Chiaroscuro",
+      "description_ko": "극단적인 명암 대비 조명. 르네상스 회화에서 유래. 드라마틱 긴장, 도덕적 이중성 표현.",
+      "visual_effect_ko": "극적 명암, 도덕적 이중성, 회화적 깊이",
+      "best_for": ["drama", "moral_ambiguity", "noir"],
+      "prompt_keywords": {
+        "kling": "chiaroscuro lighting, dramatic light and shadow contrast, deep shadows with bright highlights",
+        "seedance": "Renaissance chiaroscuro, extreme contrast between light and dark areas, painterly shadow play"
+      },
+      "combinable_with": ["symmetric_composition", "slow_push_in", "warm_desaturated"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "rim_light",
+      "category": "lighting",
+      "name_ko": "림 라이트 (역광 윤곽)",
+      "name_en": "Rim Light",
+      "description_ko": "피사체 뒤에서 윤곽을 따라 빛을 비춤. 실루엣 분리, 신비감, 후광 효과.",
+      "visual_effect_ko": "윤곽 강조, 신비감, 분리감",
+      "best_for": ["character_introduction", "mystery", "sacred_moment"],
+      "prompt_keywords": {
+        "kling": "rim lighting, backlit edge glow outlining subject, luminous contour highlight",
+        "seedance": "strong rim light outlining subject silhouette, backlit halo effect, glowing edge highlight"
+      },
+      "combinable_with": ["silhouette", "arc_orbit", "slow_dissolve"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "silhouette",
+      "category": "lighting",
+      "name_ko": "실루엣",
+      "name_en": "Silhouette",
+      "description_ko": "피사체를 완전한 역광으로 어둡게 처리. 형태만 남겨 상징성, 익명성, 보편성 표현.",
+      "visual_effect_ko": "상징성, 익명성, 보편적 형태",
+      "best_for": ["symbolism", "anonymity", "opening_credits"],
+      "prompt_keywords": {
+        "kling": "silhouette, subject as dark shape against bright background, backlit shadow figure",
+        "seedance": "pure silhouette against bright background, dark figure outline, shape-only backlighting"
+      },
+      "combinable_with": ["negative_space", "warm_desaturated", "fade_through_black"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "natural_golden_hour",
+      "category": "lighting",
+      "name_ko": "자연 골든아워 조명",
+      "name_en": "Natural Golden Hour",
+      "description_ko": "일출/일몰 시간대의 따뜻한 자연광 활용. 노스탤지어, 따뜻함, 희망적 분위기.",
+      "visual_effect_ko": "따뜻한 노스탤지어, 희망, 아름다운 자연광",
+      "best_for": ["romance", "nostalgia", "hopeful_ending"],
+      "prompt_keywords": {
+        "kling": "golden hour natural light, warm sunset glow, soft amber sunlight",
+        "seedance": "golden hour warm natural lighting, soft amber sun at low angle, nostalgic sunset glow"
+      },
+      "combinable_with": ["rule_of_thirds", "lateral_tracking", "slow_dissolve"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "soft_diffused_light",
+      "category": "lighting",
+      "name_ko": "소프트 디퓨즈 라이트",
+      "name_en": "Soft Diffused Light",
+      "description_ko": "빛을 분산시켜 그림자를 부드럽게 처리. 친밀감, 안전함, 꿈결 같은 분위기.",
+      "visual_effect_ko": "부드러움, 친밀감, 몽환적 분위기",
+      "best_for": ["intimacy", "dream_sequence", "beauty_shot"],
+      "prompt_keywords": {
+        "kling": "soft diffused lighting, gentle even illumination, no harsh shadows",
+        "seedance": "softly diffused light wrapping subject, gentle shadowless illumination, dreamy glow"
+      },
+      "combinable_with": ["golden_ratio", "steadicam_float", "slow_dissolve"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "hard_contrast_light",
+      "category": "lighting",
+      "name_ko": "하드 콘트라스트 조명",
+      "name_en": "Hard Contrast Light",
+      "description_ko": "강한 직사광으로 날카로운 그림자 생성. 긴장, 위험, 극적 대립 표현.",
+      "visual_effect_ko": "날카로운 대비, 긴장감, 극적 충돌",
+      "best_for": ["confrontation", "danger", "high_stakes"],
+      "prompt_keywords": {
+        "kling": "hard contrast lighting, sharp defined shadows, intense directional light",
+        "seedance": "harsh direct light casting sharp shadows, high-contrast illumination, dramatic hard light"
+      },
+      "combinable_with": ["dutch_angle", "low_angle", "rapid_cuts"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "practical_lights",
+      "category": "lighting",
+      "name_ko": "프랙티컬 라이트 (실용 조명)",
+      "name_en": "Practical Lights",
+      "description_ko": "장면 내 실제 광원(램프, 네온, 촛불 등)을 활용한 조명. 리얼리즘, 분위기 강화.",
+      "visual_effect_ko": "리얼리즘, 장소 특정성, 자연스러운 분위기",
+      "best_for": ["realism", "period_piece", "atmospheric_scene"],
+      "prompt_keywords": {
+        "kling": "practical lighting from visible light sources, lamp-lit scene, in-scene light source",
+        "seedance": "practical in-frame light sources illuminating scene, visible lamps or candles as key light"
+      },
+      "combinable_with": ["warm_desaturated", "foreground_layering", "long_take"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "top_light",
+      "category": "lighting",
+      "name_ko": "탑 라이트 (두정부 조명)",
+      "name_en": "Top Light",
+      "description_ko": "피사체 바로 위에서 내려오는 조명. 눈 아래 그림자가 깊어져 위압감, 신성, 심문 느낌.",
+      "visual_effect_ko": "위압감, 신성, 심문 분위기",
+      "best_for": ["interrogation", "divine_moment", "isolation"],
+      "prompt_keywords": {
+        "kling": "top light, overhead downward illumination, deep eye socket shadows",
+        "seedance": "directly overhead lighting casting deep facial shadows, top-down pool of light"
+      },
+      "combinable_with": ["high_angle", "symmetric_composition", "chiaroscuro"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "warm_desaturated",
+      "category": "color",
+      "name_ko": "웜 디새추레이티드 (따뜻한 저채도)",
+      "name_en": "Warm Desaturated",
+      "description_ko": "따뜻한 톤에 채도를 낮춘 팔레트. 회고록적 분위기, 기억 속 따뜻함, 세피아 느낌.",
+      "visual_effect_ko": "회고적 따뜻함, 기억의 질감, 시간의 무게",
+      "best_for": ["flashback", "memoir", "period_piece"],
+      "prompt_keywords": {
+        "kling": "warm desaturated color palette, muted amber tones, faded warm hues",
+        "seedance": "subdued warm color grading, low-saturation amber and ochre tones, vintage warmth"
+      },
+      "combinable_with": ["natural_golden_hour", "lateral_tracking", "slow_dissolve"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "cool_blue",
+      "category": "color",
+      "name_ko": "쿨 블루 (차가운 청색)",
+      "name_en": "Cool Blue",
+      "description_ko": "청색/시안 톤 지배적 팔레트. 고독, 소외, 밤의 고요함, 기술적 냉정함 표현.",
+      "visual_effect_ko": "고독, 냉정함, 밤의 정적",
+      "best_for": ["loneliness", "night_scene", "technology", "isolation"],
+      "prompt_keywords": {
+        "kling": "cool blue color grading, dominant blue-cyan tones, cold atmospheric palette",
+        "seedance": "cold blue-toned color grading, icy cyan atmosphere, desaturated cool palette"
+      },
+      "combinable_with": ["negative_space", "high_angle", "long_take"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "monochromatic",
+      "category": "color",
+      "name_ko": "모노크로매틱 (단색조)",
+      "name_en": "Monochromatic",
+      "description_ko": "단일 색상의 명도/채도 변화만으로 구성. 시대성, 회상, 예술적 추상 표현.",
+      "visual_effect_ko": "시대성, 추상적 아름다움, 순수한 형태",
+      "best_for": ["period_piece", "memory", "artistic_expression"],
+      "prompt_keywords": {
+        "kling": "monochromatic color scheme, single hue variations, tonal range within one color",
+        "seedance": "monochrome single-color palette, varying shades and tints of one hue, tonal unity"
+      },
+      "combinable_with": ["chiaroscuro", "symmetric_composition", "slow_dissolve"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "complementary_contrast",
+      "category": "color",
+      "name_ko": "보색 대비",
+      "name_en": "Complementary Contrast",
+      "description_ko": "색상환 반대편 색 조합(주황-청, 빨강-초록 등). 시각적 충돌, 에너지, 대립 표현.",
+      "visual_effect_ko": "시각적 충돌, 에너지, 극적 대비",
+      "best_for": ["conflict", "energy", "visual_impact"],
+      "prompt_keywords": {
+        "kling": "complementary color contrast, orange and teal, opposing colors on color wheel",
+        "seedance": "bold complementary color palette, warm-cool color opposition, vibrant dual-tone contrast"
+      },
+      "combinable_with": ["hard_contrast_light", "whip_pan", "rapid_cuts"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "neon_saturated",
+      "category": "color",
+      "name_ko": "네온 새추레이티드 (고채도 네온)",
+      "name_en": "Neon Saturated",
+      "description_ko": "네온 사인, 형광 조명 등 고채도 인공 색감. 도시적 밤, 사이버펑크, 쾌락적 분위기.",
+      "visual_effect_ko": "도시적 밤문화, 인공적 쾌락, 사이버 미래",
+      "best_for": ["urban_night", "cyberpunk", "party_scene"],
+      "prompt_keywords": {
+        "kling": "neon saturated colors, vivid fluorescent lights, intense glowing hues",
+        "seedance": "hyper-saturated neon colors, glowing fluorescent palette, vibrant artificial lighting"
+      },
+      "combinable_with": ["dutch_tilt", "whip_pan", "rapid_cuts"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "earthy_natural",
+      "category": "color",
+      "name_ko": "어시 내추럴 (자연 톤)",
+      "name_en": "Earthy Natural",
+      "description_ko": "갈색, 올리브, 카키 등 자연에서 온 색감. 유기적 따뜻함, 대지의 안정감.",
+      "visual_effect_ko": "유기적 안정감, 자연 친화, 소박한 따뜻함",
+      "best_for": ["nature_documentary", "rural_setting", "organic_warmth"],
+      "prompt_keywords": {
+        "kling": "earthy natural tones, muted brown and olive palette, organic warm colors",
+        "seedance": "earthy brown-green palette, natural subdued color tones, organic muted warmth"
+      },
+      "combinable_with": ["natural_golden_hour", "lateral_tracking", "long_take"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "slow_dissolve",
+      "category": "editing_rhythm",
+      "name_ko": "슬로우 디졸브",
+      "name_en": "Slow Dissolve",
+      "description_ko": "한 장면이 서서히 녹아들며 다음 장면으로 전환. 시간 경과, 꿈, 기억의 연결 표현.",
+      "visual_effect_ko": "시간 흐름, 기억의 중첩, 몽환적 전환",
+      "best_for": ["time_passage", "dream_sequence", "memory_transition"],
+      "prompt_keywords": {
+        "kling": "slow dissolve transition, gradual scene blending, fading overlap between shots",
+        "seedance": "gentle dissolve between scenes, slow crossfade transition, overlapping temporal blend"
+      },
+      "combinable_with": ["soft_diffused_light", "warm_desaturated", "crane_up"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "rapid_cuts",
+      "category": "editing_rhythm",
+      "name_ko": "래피드 컷 (빠른 편집)",
+      "name_en": "Rapid Cuts",
+      "description_ko": "짧은 쇼트를 빠르게 연결. 긴박감, 에너지, 시각적 충격 표현.",
+      "visual_effect_ko": "긴박감, 에너지 폭발, 시각적 충격",
+      "best_for": ["action_sequence", "montage", "panic"],
+      "prompt_keywords": {
+        "kling": "rapid cutting rhythm, quick successive shots, fast-paced editing",
+        "seedance": "fast-cut editing pace, rapid shot succession, high-frequency scene changes"
+      },
+      "combinable_with": ["dutch_angle", "complementary_contrast", "whip_pan"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "long_take",
+      "category": "editing_rhythm",
+      "name_ko": "롱 테이크 (장회 촬영)",
+      "name_en": "Long Take",
+      "description_ko": "컷 없이 하나의 쇼트를 길게 유지. 리얼타임 몰입, 공간 탐색, 연기 집중.",
+      "visual_effect_ko": "실시간 몰입, 공간 연속성, 긴장의 지속",
+      "best_for": ["immersion", "tension_building", "spatial_exploration"],
+      "prompt_keywords": {
+        "kling": "long take, unbroken continuous shot, single extended shot without cuts",
+        "seedance": "unbroken single-take shot, continuous uncut camera movement, extended real-time sequence"
+      },
+      "combinable_with": ["steadicam_float", "lateral_tracking", "practical_lights"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "montage",
+      "category": "editing_rhythm",
+      "name_ko": "몽타주",
+      "name_en": "Montage",
+      "description_ko": "시간/공간이 다른 쇼트들을 연결해 의미를 생성. 압축된 서사, 병치적 메시지 전달.",
+      "visual_effect_ko": "시간 압축, 의미 병치, 서사적 비약",
+      "best_for": ["time_compression", "training_sequence", "thematic_juxtaposition"],
+      "prompt_keywords": {
+        "kling": "montage sequence, juxtaposed shots creating meaning, edited collage of moments",
+        "seedance": "montage editing sequence, thematic shot juxtaposition, compressed narrative through cutting"
+      },
+      "combinable_with": ["complementary_contrast", "crane_up", "match_cut"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "slow_motion_editing",
+      "category": "editing_rhythm",
+      "name_ko": "슬로우 모션 편집",
+      "name_en": "Slow Motion Editing",
+      "description_ko": "프레임 레이트를 높여 재생 속도를 늦춘 편집. 순간 강조, 아름다움, 감정 확장.",
+      "visual_effect_ko": "순간의 확장, 서정적 아름다움, 감정 증폭",
+      "best_for": ["emotional_peak", "action_impact", "beauty_shot"],
+      "prompt_keywords": {
+        "kling": "slow motion, time dilation effect, extended moment at reduced speed",
+        "seedance": "slow-motion temporal stretch, decelerated action, elongated moment in time"
+      },
+      "combinable_with": ["arc_orbit", "rim_light", "match_cut"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "match_cut",
+      "category": "transition",
+      "name_ko": "매치 컷",
+      "name_en": "Match Cut",
+      "description_ko": "형태, 색상, 동작이 유사한 요소로 다른 시공간 장면을 연결. 시각적 연속성 속 비약.",
+      "visual_effect_ko": "시각적 연속성, 시공간 비약, 은유적 연결",
+      "best_for": ["scene_transition", "thematic_link", "time_jump"],
+      "prompt_keywords": {
+        "kling": "match cut transition, shape or motion similarity bridging two scenes",
+        "seedance": "match cut linking similar shapes across scenes, visual continuity transition, form-based edit"
+      },
+      "combinable_with": ["montage", "slow_dissolve", "complementary_contrast"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "pillar_wipe",
+      "category": "transition",
+      "name_ko": "필러 와이프",
+      "name_en": "Pillar Wipe",
+      "description_ko": "기둥, 벽 등 수직 구조물 뒤로 카메라가 지나가며 장면 전환. 자연스러운 물리적 와이프.",
+      "visual_effect_ko": "자연스러운 전환, 공간 연속성, 물리적 와이프",
+      "best_for": ["continuous_narrative", "location_change", "elegant_transition"],
+      "prompt_keywords": {
+        "kling": "pillar wipe transition, camera passing behind vertical element to reveal new scene",
+        "seedance": "natural wipe transition behind architectural element, physical object wipe reveal"
+      },
+      "combinable_with": ["lateral_tracking", "steadicam_float", "long_take"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "whip_pan_transition",
+      "category": "transition",
+      "name_ko": "휩 팬 전환",
+      "name_en": "Whip Pan Transition",
+      "description_ko": "빠른 팬으로 화면이 블러되며 다른 장면으로 전환. 에너지, 속도감, 시간 점프.",
+      "visual_effect_ko": "에너지 전환, 시간 점프, 빠른 장면 교체",
+      "best_for": ["energetic_transition", "comedic_timing", "parallel_action"],
+      "prompt_keywords": {
+        "kling": "whip pan transition, fast blur swipe between scenes, swish pan scene change",
+        "seedance": "blur-speed whip pan scene transition, motion-blurred swipe cut, rapid pan scene switch"
+      },
+      "combinable_with": ["whip_pan", "rapid_cuts", "complementary_contrast"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "j_cut",
+      "category": "transition",
+      "name_ko": "J 컷",
+      "name_en": "J-Cut",
+      "description_ko": "다음 장면의 사운드가 현재 장면 위에 먼저 시작. 심리적 예고, 매끄러운 전환.",
+      "visual_effect_ko": "심리적 예고, 시간의 중첩, 매끄러운 전환",
+      "best_for": ["foreshadowing", "smooth_transition", "dialogue_bridge"],
+      "prompt_keywords": {
+        "kling": "J-cut audio bridge, next scene sound over current visual, audio-led transition",
+        "seedance": "J-cut sound preceding visual transition, audio from upcoming scene overlapping current"
+      },
+      "combinable_with": ["slow_push_in", "dolly_in", "warm_desaturated"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "l_cut",
+      "category": "transition",
+      "name_ko": "L 컷",
+      "name_en": "L-Cut",
+      "description_ko": "현재 장면의 사운드가 다음 장면 위에 지속. 감정 여운, 연속성 유지.",
+      "visual_effect_ko": "감정 여운, 사운드 연속성, 기억의 잔향",
+      "best_for": ["emotional_lingering", "dialogue_continuation", "memory_overlap"],
+      "prompt_keywords": {
+        "kling": "L-cut audio continuation, previous scene sound over new visual, audio trail transition",
+        "seedance": "L-cut audio lingering into next scene, sound carrying over visual transition"
+      },
+      "combinable_with": ["pull_back_reveal", "dolly_out", "cool_blue"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "fade_through_black",
+      "category": "transition",
+      "name_ko": "페이드 스루 블랙",
+      "name_en": "Fade Through Black",
+      "description_ko": "화면이 검은색으로 서서히 사라졌다 다시 나타남. 시간 경과, 장(chapter) 구분, 엔딩.",
+      "visual_effect_ko": "시간 단절, 장 구분, 종결감",
+      "best_for": ["chapter_break", "ending", "significant_time_passage"],
+      "prompt_keywords": {
+        "kling": "fade to black then fade in, darkness transition, blackout scene change",
+        "seedance": "fade through black transition, scene dissolving to darkness then emerging, black interval"
+      },
+      "combinable_with": ["dolly_out", "silhouette", "cool_blue"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "jump_cut",
+      "category": "transition",
+      "name_ko": "점프 컷",
+      "name_en": "Jump Cut",
+      "description_ko": "같은 피사체의 시간을 건너뛰어 연결. 시간 압축, 불안, 주관적 시간 표현.",
+      "visual_effect_ko": "시간 압축, 불안정, 주관적 시간 인식",
+      "best_for": ["time_compression", "anxiety", "subjective_experience"],
+      "prompt_keywords": {
+        "kling": "jump cut, discontinuous time skip on same subject, jarring temporal edit",
+        "seedance": "jump cut time skip, abrupt temporal discontinuity on same frame, stuttering time edit"
+      },
+      "combinable_with": ["handheld_cam", "dutch_angle", "rapid_cuts"],
+      "source_refs": ["internal"]
+    },
+    {
+      "technique_id": "cross_dissolve",
+      "category": "transition",
+      "name_ko": "크로스 디졸브",
+      "name_en": "Cross Dissolve",
+      "description_ko": "두 장면이 동시에 겹치며 전환. 시간/공간의 부드러운 연결, 관계 병치.",
+      "visual_effect_ko": "부드러운 전환, 시공간 연결, 관계적 병치",
+      "best_for": ["gentle_transition", "parallel_stories", "emotional_connection"],
+      "prompt_keywords": {
+        "kling": "cross dissolve, two scenes overlapping and blending, gradual crossfade",
+        "seedance": "cross dissolve blending two scenes simultaneously, overlapping visual crossfade transition"
+      },
+      "combinable_with": ["slow_dissolve", "warm_desaturated", "crane_up"],
+      "source_refs": ["internal"]
+    }
+  ],
+  "mood_technique_map": {
+    "tension": ["slow_push_in", "chiaroscuro", "dutch_angle", "hard_contrast_light", "rapid_cuts"],
+    "serenity": ["natural_golden_hour", "soft_diffused_light", "slow_dissolve", "long_take", "negative_space"],
+    "power": ["low_angle", "symmetric_composition", "hard_contrast_light", "arc_orbit", "top_light"],
+    "vulnerability": ["high_angle", "negative_space", "cool_blue", "dolly_out", "soft_diffused_light"],
+    "nostalgia": ["warm_desaturated", "natural_golden_hour", "slow_dissolve", "cross_dissolve", "montage"],
+    "chaos": ["dutch_angle", "rapid_cuts", "whip_pan", "neon_saturated", "jump_cut"],
+    "mystery": ["chiaroscuro", "rim_light", "slow_push_in", "frame_within_frame", "silhouette"],
+    "romance": ["natural_golden_hour", "soft_diffused_light", "golden_ratio", "slow_dissolve", "lateral_tracking"],
+    "horror": ["dutch_tilt", "worm_eye", "hard_contrast_light", "jump_cut", "slow_push_in"],
+    "epic": ["crane_up", "bird_eye", "low_angle", "montage", "complementary_contrast"],
+    "isolation": ["negative_space", "dolly_out", "cool_blue", "high_angle", "long_take"],
+    "energy": ["whip_pan", "rapid_cuts", "neon_saturated", "complementary_contrast", "arc_orbit"],
+    "contemplation": ["long_take", "steadicam_float", "negative_space", "eye_level", "earthy_natural"],
+    "surreal": ["dutch_angle", "worm_eye", "slow_motion_editing", "cross_dissolve", "monochromatic"]
+  },
+  "transition_mood_map": {
+    "smooth": ["cross_dissolve", "slow_dissolve", "j_cut", "l_cut"],
+    "energetic": ["whip_pan_transition", "match_cut", "jump_cut"],
+    "dramatic": ["fade_through_black", "match_cut", "pillar_wipe"],
+    "continuous": ["pillar_wipe", "l_cut", "j_cut", "lateral_tracking"],
+    "disruptive": ["jump_cut", "whip_pan_transition", "rapid_cuts"]
+  },
+  "metadata": {
+    "created_at": "2026-02-12",
+    "total_techniques": 50,
+    "categories": {
+      "composition": 9,
+      "camera_movement": 10,
+      "camera_angle": 8,
+      "lighting": 8,
+      "color": 6,
+      "editing_rhythm": 5,
+      "transition": 7
+    },
+    "source": "Cinematic Technique Corpus for AD Studio",
+    "app_key": "dimension.ad.studio"
+  }
+}

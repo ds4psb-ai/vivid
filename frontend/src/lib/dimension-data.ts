@@ -208,6 +208,19 @@ export const DIMENSION_ITEMS: DimensionItemData[] = [
     descEn: "Optimized prompts for Veo, Kling, Sora",
     isNew: true,
   },
+  {
+    id: "ad-studio",
+    href: "/dimension/ad-studio",
+    iconName: "film",
+    dimensionCode: "ad-studio",
+    stage: "pre_production",
+    stageOrder: 5,
+    titleKo: "AD 스튜디오",
+    titleEn: "AD Studio",
+    descKo: "조감독 AI — 시네마틱 프롬프트 자동 생성",
+    descEn: "Assistant Director — cinematic prompt generation",
+    isNew: true,
+  },
 
   // ========== Stage 3: 제작 (Production) ==========
   {
@@ -422,6 +435,7 @@ export const ROUTE_KEYS: Record<string, string> = {
   "/dimension/aesthetic": "aesthetic-director",
   "/dimension/character-consistency": "character-consistency",
   "/dimension/suno": "suno-music",
+  "/dimension/ad-studio": "ad-studio",
   "/dimension/kling": "kling-video",
   // Mega Apps
   "/dna-lab": "dna-lab",

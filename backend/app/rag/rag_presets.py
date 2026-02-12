@@ -315,6 +315,17 @@ DIMENSION_RAG_PRESETS: Dict[str, RAGPreset] = {
     "AI": RAGPreset(
         rag_enabled=True,  # P0: AI 페르소나 RAG 활성화 (2026-01-13)
     ),
+
+    "AD_STUDIO": RAGPreset(
+        rag_enabled=True,
+        auteur_mode=False,
+        confidence_threshold=0.6,
+        use_google_search=False,
+        dimension_corpus="cinematic_techniques",
+        cache_ttl=3600,
+        max_sources=5,
+        answer_max_length=600,
+    ),
 }
 
 # 기본 프리셋 (정의되지 않은 차원용)

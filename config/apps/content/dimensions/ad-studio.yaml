@@ -1,0 +1,48 @@
+$schema: "vivid-app/v2"
+
+metadata:
+  name: ad-studio
+  type: dimension
+  version: "1.0.0"
+  bounded_context: content
+
+display:
+  name_ko: "AD 스튜디오"
+  name_en: "AD Studio"
+  icon: "🎬"
+  description: "조감독 AI — 레퍼런스 분석에서 시네마틱 프롬프트 자동 생성"
+
+capabilities:
+  - name: rag
+    enabled: true
+    config:
+      mode: always
+      auteur_mode: false
+      confidence_threshold: 0.5
+      max_sources: 10
+      retrieval:
+        strategy: hybrid
+        top_k: 15
+        rrf_k: 60
+
+  - name: execution
+    enabled: true
+    config:
+      credit_cost: 10
+      endpoint: "/api/dimension/ad-studio/analyze"
+      capsule_key: "ad-studio.analyze"
+
+extensions:
+  dimension:
+    tool_type: analysis
+    supports_streaming: true
+
+keywords:
+  patterns:
+    - "ad studio"
+    - "assistant director"
+    - "조감독"
+    - "시네마틱"
+    - "프롬프트 생성"
+    - "kling"
+    - "seedance"

@@ -36,6 +36,7 @@ export type DimensionCode =
   | "prompt"
   | "json-gen"
   | "nanobanana"
+  | "ad-studio"
   | "analysis"; // Phase 1-2: Merged VPE + AD
 
 /**
@@ -244,6 +245,15 @@ export const DIMENSION_TOKENS: Record<DimensionCode, DimensionToken> = {
     label: "Nanobanana Editor Adapter",
     labelKo: "나노바나나 에디터",
     description: "Convert lighting and camera presets into ShotContract",
+  },
+  "ad-studio": {
+    code: "ad-studio",
+    cssVar: "--color-dimension-ad-studio",
+    tailwindKey: "dimension-ad-studio",
+    themeColor: "amber",
+    label: "AD Studio",
+    labelKo: "AD 스튜디오",
+    description: "Assistant Director AI — sequence-aware cinematic prompts",
   },
   // Phase 1-2: Merged VPE + AD - DNA Lab V7 Neon Red theme
   analysis: {
@@ -498,6 +508,7 @@ const DIMENSION_GRADIENTS: Record<DimensionCode, string> = {
   "prompt": "bg-gradient-to-r from-violet-500 to-purple-600",
   "json-gen": "bg-gradient-to-r from-violet-500 to-purple-600",
   "nanobanana": "bg-gradient-to-r from-amber-500 to-orange-600",
+  "ad-studio": "bg-gradient-to-r from-amber-500 to-orange-600",
   "analysis": "bg-gradient-to-r from-red-500 to-rose-600", // Phase 1-2: DNA Lab V7 Neon Red
 };
 

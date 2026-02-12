@@ -73,6 +73,8 @@ class DimensionCapsuleId(str, Enum):
     NANOBANANA_CONVERT = "dimension.nanobanana.convert"
     # Prompt Alchemy - AI Video Platform Prompt Translator
     PROMPT_TRANSLATE = "prompt.alchemy.translate"
+    # AD Studio - Assistant Director cinematic analysis
+    AD_STUDIO_ANALYZE = "ad-studio.analyze"
 
 
 # Input validation limits
