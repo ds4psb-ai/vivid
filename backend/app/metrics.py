@@ -29,50 +29,72 @@ from prometheus_client import Counter, Histogram, Gauge, generate_latest, REGIST
 logger = logging.getLogger(__name__)
 
 
+def _gauge(name: str, desc: str, labels: list[str]) -> Gauge:
+    """Create or reuse a Gauge (safe for uvicorn --reload)."""
+    try:
+        return Gauge(name, desc, labels)
+    except ValueError:
+        return REGISTRY._names_to_collectors[name]
+
+
+def _counter(name: str, desc: str, labels: list[str]) -> Counter:
+    try:
+        return Counter(name, desc, labels)
+    except ValueError:
+        return REGISTRY._names_to_collectors[name]
+
+
+def _histogram(name: str, desc: str, labels: list[str], buckets=Histogram.DEFAULT_BUCKETS) -> Histogram:
+    try:
+        return Histogram(name, desc, labels, buckets=buckets)
+    except ValueError:
+        return REGISTRY._names_to_collectors[name]
+
+
 # =============================================================================
 # DNA Lab Metrics
 # =============================================================================
 
 # Drift Detection
-drift_detection_score = Gauge(
+drift_detection_score = _gauge(
     "dna_lab_drift_detection_score",
     "Current drift score for auteur logic vectors",
     ["auteur_key"],
 )
 
-drift_detection_duration = Histogram(
+drift_detection_duration = _histogram(
     "dna_lab_drift_detection_duration_seconds",
     "Time spent on drift detection",
     ["auteur_key"],
     buckets=[0.1, 0.5, 1.0, 2.0, 5.0, 10.0],
 )
 
-drift_detection_total = Counter(
+drift_detection_total = _counter(
     "dna_lab_drift_detection_total",
     "Total drift detection runs",
     ["auteur_key", "action"],
 )
 
-vector_version_created = Counter(
+vector_version_created = _counter(
     "dna_lab_vector_version_created_total",
     "Number of logic vector versions created",
     ["auteur_key", "action"],
 )
 
 # HITL
-hitl_review_pending = Gauge(
+hitl_review_pending = _gauge(
     "dna_lab_hitl_review_pending_count",
     "Number of pending HITL reviews",
     ["item_type"],
 )
 
-hitl_review_total = Counter(
+hitl_review_total = _counter(
     "dna_lab_hitl_review_total",
     "Total HITL reviews processed",
     ["item_type", "decision"],
 )
 
-hitl_review_duration = Histogram(
+hitl_review_duration = _histogram(
     "dna_lab_hitl_review_duration_seconds",
     "Time from queue to review completion",
     ["item_type", "decision"],
@@ -80,41 +102,41 @@ hitl_review_duration = Histogram(
 )
 
 # Transpiler
-transpiler_latency = Histogram(
+transpiler_latency = _histogram(
     "dna_lab_transpiler_latency_seconds",
     "Transpiler execution time by engine",
     ["engine"],
     buckets=[0.01, 0.05, 0.1, 0.25, 0.5, 1.0],
 )
 
-transpiler_total = Counter(
+transpiler_total = _counter(
     "dna_lab_transpiler_total",
     "Total transpiler calls",
     ["engine", "status"],
 )
 
-transpiler_errors = Counter(
+transpiler_errors = _counter(
     "dna_lab_transpiler_errors_total",
     "Transpiler error count by engine",
     ["engine", "error_type"],
 )
 
 # Pipeline
-pipeline_execution_duration = Histogram(
+pipeline_execution_duration = _histogram(
     "dna_lab_pipeline_duration_seconds",
     "Full pipeline execution time",
     ["status"],
     buckets=[1.0, 5.0, 10.0, 30.0, 60.0, 120.0, 300.0],
 )
 
-pipeline_step_duration = Histogram(
+pipeline_step_duration = _histogram(
     "dna_lab_pipeline_step_duration_seconds",
     "Individual step execution time",
     ["step"],
     buckets=[0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0],
 )
 
-pipeline_total = Counter(
+pipeline_total = _counter(
     "dna_lab_pipeline_total",
     "Total pipeline executions",
     ["status"],
@@ -124,20 +146,20 @@ pipeline_total = Counter(
 # System Metrics
 # =============================================================================
 
-request_duration = Histogram(
+request_duration = _histogram(
     "http_request_duration_seconds",
     "HTTP request duration",
     ["endpoint", "method", "status_code"],
     buckets=[0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0],
 )
 
-request_total = Counter(
+request_total = _counter(
     "http_request_total",
     "Total HTTP requests",
     ["endpoint", "method", "status_code"],
 )
 
-error_total = Counter(
+error_total = _counter(
     "error_total",
     "Total errors by type and module",
     ["error_type", "module"],
