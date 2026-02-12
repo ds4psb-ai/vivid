@@ -32,6 +32,8 @@ scripts/ppt_screenshots/
 
 # Claude Code (personal settings - don't commit)
 .claude/settings.local.json
+.claude/plans/
+.claude/projects/
 CLAUDE.local.md
 
 # MCP credentials (if any)

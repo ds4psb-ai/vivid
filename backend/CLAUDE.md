@@ -1,6 +1,6 @@
 # Backend CLAUDE.md
 
-> **Prompty.co.kr** - Dual AI 티키타카 워크플로우 가이드 플랫폼
+> **Prompty.co.kr** - Dual AI Tikitaka Workflow Guide Platform
 > FastAPI + Python 3.11 + SQLAlchemy 2.0 async
 
 ---
@@ -9,77 +9,77 @@
 
 ```bash
 source venv/bin/activate && uvicorn app.main:app --reload --port 8100
-alembic upgrade head      # DB 마이그레이션
-pytest --tb=short -q      # 테스트
-ruff check --fix .        # 린트
+alembic upgrade head      # DB migration
+pytest --tb=short -q      # Tests
+ruff check --fix .        # Lint
 ```
 
 ---
 
-## 핵심 철학
+## Core Philosophy
 
 ```
 LOCAL PROJECT FOLDER (SSoT)
 projects/{project-name}/
-├── reference/source.mp4     ← 원본 영상
-├── docs/ANALYSIS.md         ← Gemini 출력
-├── prompts/IMAGE_PROMPTS.md ← Claude 정제
-├── generated/images/        ← 생성 이미지
-└── STATE.md                 ← 진행 상태 (핵심!)
+├── reference/source.mp4     ← Source video
+├── docs/ANALYSIS.md         ← Gemini output
+├── prompts/IMAGE_PROMPTS.md ← Claude refinement
+├── generated/images/        ← Generated images
+└── STATE.md                 ← Progress state (core!)
          ↑
-     Dual AI 티키타카
+     Dual AI Tikitaka
      Gemini ↔ Claude
 ```
 
-- Prompty 백엔드 = STATE.md 동기화 + Critique 기록 저장
-- AI API 직접 호출 ❌ → 가이드만 제공 ✅
+- Prompty backend = STATE.md sync + Critique record storage
+- Direct AI API calls: NO → Provide guidance only: YES
 
 ---
 
-## Prompty 디렉토리 구조
+## Prompty Directory Structure
 
 ```
 app/
 ├── routers/prompty/           # Prompty API
-│   ├── __init__.py            # 라우터 통합
-│   ├── templates.py           # GET/POST 템플릿
-│   ├── projects.py            # 프로젝트 CRUD
-│   ├── critique.py            # Critique 저장/조회
-│   └── guide.py               # 워크플로우 가이드
-├── models_prompty.py          # 4개 테이블
+│   ├── __init__.py            # Router integration
+│   ├── templates.py           # GET/POST templates
+│   ├── projects.py            # Project CRUD
+│   ├── critique.py            # Critique save/query
+│   └── guide.py               # Workflow guide
+├── models_prompty.py          # 4 tables
 │   ├── PromptyTemplate
 │   ├── PromptyProject
 │   ├── PromptyCritique
 │   └── PromptyGuideLog
 └── scripts/
-    └── seed_prompty_templates.py  # 시드 데이터
+    └── seed_prompty_templates.py  # Seed data
 ```
 
 ---
 
-## API 엔드포인트
+## API Endpoints
 
-| Method | Path | 설명 |
-|--------|------|------|
-| GET | `/api/templates` | 템플릿 목록 |
-| GET | `/api/templates/{id}` | 템플릿 상세 |
-| POST | `/api/projects` | 프로젝트 생성 |
-| GET | `/api/guide/{project_id}` | 현재 워크플로우 상태 |
-| POST | `/api/guide/{project_id}/advance` | 다음 스텝 진행 |
-| POST | `/api/critique` | Critique 저장 |
-| GET | `/api/critique/{project_id}` | Critique 이력 |
-| GET | `/api/critique/{project_id}/{step_id}` | 특정 스텝 Critique |
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/templates` | Template list |
+| GET | `/api/templates/{id}` | Template detail |
+| POST | `/api/projects` | Create project |
+| GET | `/api/guide/{project_id}` | Current workflow state |
+| POST | `/api/guide/{project_id}/advance` | Advance to next step |
+| POST | `/api/critique` | Save critique |
+| GET | `/api/critique/{project_id}` | Critique history |
+| GET | `/api/critique/{project_id}/{step_id}` | Specific step critique |
 
 ---
 
-## Critique 판정 기준
+## Critique Scoring Criteria
 
 ```python
 PASSING_SCORE = 85  # PASS
 REVISE_MIN = 60     # REVISE (60-84)
 # < 60 = REJECT
 
-# 판정 로직
+# Scoring logic
 def get_verdict(score: int) -> str:
     if score >= 85:
         return "PASS"
@@ -90,7 +90,7 @@ def get_verdict(score: int) -> str:
 
 ---
 
-## 4-Stage 워크플로우
+## 4-Stage Workflow
 
 ```python
 STAGES = [
@@ -103,43 +103,43 @@ STAGES = [
 
 ---
 
-## 새 기능 추가 체크리스트
+## New Feature Checklist
 
-### Prompty 라우터 추가
-1. `routers/prompty/my_feature.py` 생성
-2. `routers/prompty/__init__.py`에 포함
-3. 인증: `Depends(get_current_user)`
-4. 테스트 작성
+### Adding a Prompty Router
+1. Create `routers/prompty/my_feature.py`
+2. Include in `routers/prompty/__init__.py`
+3. Auth: `Depends(get_current_user)`
+4. Write tests
 
-### STATE.md 동기화 (Phase 4)
+### STATE.md Sync (Phase 4)
 ```python
 @router.post("/{project_id}/sync")
 async def sync_state_from_local(
     project_id: UUID,
-    state_md_content: str,  # STATE.md 파일 내용
+    state_md_content: str,  # STATE.md file content
 ):
-    """로컬 STATE.md → DB 동기화"""
+    """Sync local STATE.md to DB"""
     parsed = parse_state_md(state_md_content)
     return {"synced": True}
 ```
 
 ---
 
-## SSoT 참조
+## SSoT References
 
 ```
 viral-video-automation/templates/
-├── CRITIQUE_IMAGE.md    # 이미지 5가지 평가 기준
-├── CRITIQUE_VIDEO.md    # 영상 5가지 평가 기준
-├── CRITIQUE_SELFLOOP.md # Self-Loop 티키타카 흐름
-└── MODE_TIKITAKA.md     # 98% 품질까지 반복
+├── CRITIQUE_IMAGE.md    # Image evaluation criteria (5 dimensions)
+├── CRITIQUE_VIDEO.md    # Video evaluation criteria (5 dimensions)
+├── CRITIQUE_SELFLOOP.md # Self-Loop tikitaka flow
+└── MODE_TIKITAKA.md     # Iterate until 98% quality
 ```
 
 ---
 
-## 마이그레이션 현황
+## Migration Status
 
 ```
-042_add_prompty_tables.py  → 4개 테이블
-043_add_jsonb_indexes.py   → JSONB GIN 인덱스
+042_add_prompty_tables.py  → 4 tables
+043_add_jsonb_indexes.py   → JSONB GIN indexes
 ```

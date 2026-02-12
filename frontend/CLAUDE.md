@@ -1,6 +1,6 @@
 # Frontend CLAUDE.md
 
-> **Prompty.co.kr** - Dual AI 티키타카 워크플로우 가이드 플랫폼
+> **Prompty.co.kr** - Dual AI Tikitaka Workflow Guide Platform
 > Next.js 16 + React 19 + TypeScript
 
 ---
@@ -9,71 +9,71 @@
 
 ```bash
 npm run dev      # localhost:3100
-npm run build    # 프로덕션 빌드
-npm run lint     # 린트
+npm run build    # Production build
+npm run lint     # Lint
 ```
 
 ---
 
-## 핵심 철학
+## Core Philosophy
 
 ```
-Gemini CLI (영상 @언급) ←→ Claude Antigravity
-         │                         │
-         └───── projects/{name}/ ──────┘
-                      ↓
-               STATE.md (공유 상태)
+Gemini CLI (video @mention) <-> Claude Antigravity
+         |                         |
+         +------ projects/{name}/ ------+
+                      |
+               STATE.md (shared state)
 ```
 
-- **NOT**: AI가 대신 호출/생성
-- **YES**: Dual AI 티키타카의 "길잡이" + Critique 기록 추적
+- **NOT**: AI calls/generates on your behalf
+- **YES**: "Guide" for Dual AI Tikitaka + Critique record tracking
 
 ---
 
-## Prompty 디렉토리 구조
+## Prompty Directory Structure
 
 ```
 src/
-├── app/                            # Prompty 라우트 (루트 레벨)
-│   ├── page.tsx                    # 랜딩/대시보드
-│   ├── templates/                  # 템플릿 목록/상세
-│   ├── projects/                   # 프로젝트 가이드
+├── app/                            # Prompty routes (root level)
+│   ├── page.tsx                    # Landing/dashboard
+│   ├── templates/                  # Template list/detail
+│   ├── projects/                   # Project guide
 │   │   └── [id]/
-│   │       ├── page.tsx            # 워크플로우 가이드
-│   │       └── critique/page.tsx   # Critique 입력
-│   └── community/                  # 커뮤니티
-├── components/prompty/             # Prompty UI 컴포넌트
-│   ├── CopyPromptButton.tsx        # 프롬프트 복사
-│   ├── GuideWorkflow.tsx           # 4-Stage 진행바
-│   ├── CritiqueChecklist.tsx       # 평가 체크리스트
-│   └── ExternalToolLinks.tsx       # 외부 도구 링크
-└── lib/api.ts                      # API 클라이언트
+│   │       ├── page.tsx            # Workflow guide
+│   │       └── critique/page.tsx   # Critique input
+│   └── community/                  # Community
+├── components/prompty/             # Prompty UI components
+│   ├── CopyPromptButton.tsx        # Prompt copy
+│   ├── GuideWorkflow.tsx           # 4-Stage progress bar
+│   ├── CritiqueChecklist.tsx       # Evaluation checklist
+│   └── ExternalToolLinks.tsx       # External tool links
+└── lib/api.ts                      # API client
 ```
 
 ---
 
-## 4-Stage 워크플로우
+## 4-Stage Workflow
 
-| Stage | 도구 | 출력 |
-|-------|------|------|
+| Stage | Tool | Output |
+|-------|------|--------|
 | ANALYZE | Gemini CLI | ANALYSIS.md, PROFILES.md |
-| IMAGE | NanoBanana, MJ | ANCHOR + 씬 이미지 |
+| IMAGE | NanoBanana, MJ | ANCHOR + scene images |
 | VIDEO | Kling, Veo | Image-to-Video |
-| ASSEMBLY | CapCut | 최종 편집 |
+| ASSEMBLY | CapCut | Final edit |
 
 ---
 
-## Critique 판정 기준
+## Critique Scoring Criteria
 
 ```
-PASS   (85+)   → 다음 단계
-REVISE (60-84) → 수정 후 재생성 (티키타카)
-REJECT (<60)   → 프롬프트 재검토
+PASS   (85+)   -> Proceed to next stage
+REVISE (60-84) -> Revise and regenerate (tikitaka)
+REJECT (<60)   -> Review prompts
 ```
 
 ---
 
-## 컴포넌트 사용 예시
+## Component Usage Examples
 
 ```tsx
 import { 
@@ -82,20 +82,20 @@ import {
   CritiqueChecklist 
 } from '@/components/prompty';
 
-// 프롬프트 복사
+// Prompt copy
 <CopyPromptButton 
   promptText={step.prompt_text} 
   onCopy={handleCopyAnalytics} 
 />
 
-// 4-Stage 진행바
+// 4-Stage progress bar
 <GuideWorkflow 
   stages={guide.stages}
   currentStage="stage2"
   progressPercent={60}
 />
 
-// Critique 체크리스트
+// Critique checklist
 <CritiqueChecklist
   items={template.critique_config.items}
   scores={scores}
@@ -106,27 +106,27 @@ import {
 
 ---
 
-## API 클라이언트
+## API Client
 
 ```typescript
 import { api } from '@/lib/api';
 
-// 템플릿 목록
+// Template list
 const templates = await api.getPromptyTemplates();
 
-// 프로젝트 Guide
+// Project Guide
 const guide = await api.getPromptyGuide(projectId);
 
-// Critique 제출
+// Submit Critique
 await api.submitPromptyCritique(projectId, stage, stepId, scores);
 
-// 액션 로그
+// Action log
 await api.logPromptyAction(projectId, 'copy_prompt', stage, step);
 ```
 
 ---
 
-## 환경 변수
+## Environment Variables
 
 ```bash
 NEXT_PUBLIC_API_URL=http://127.0.0.1:8100
@@ -134,12 +134,12 @@ NEXT_PUBLIC_API_URL=http://127.0.0.1:8100
 
 ---
 
-## SSoT 참조
+## SSoT References
 
 ```
 viral-video-automation/templates/
-├── CRITIQUE_IMAGE.md    # 이미지 평가 기준
-├── CRITIQUE_VIDEO.md    # 영상 평가 기준
-├── CRITIQUE_SELFLOOP.md # Self-Loop 흐름
-└── MODE_TIKITAKA.md     # 티키타카 UX
+├── CRITIQUE_IMAGE.md    # Image evaluation criteria
+├── CRITIQUE_VIDEO.md    # Video evaluation criteria
+├── CRITIQUE_SELFLOOP.md # Self-Loop flow
+└── MODE_TIKITAKA.md     # Tikitaka UX
 ```
