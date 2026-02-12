@@ -11,7 +11,7 @@
  * @see docs/PANEL_DESIGN_UNITY_SPEC.md
  */
 
-import { useState, useCallback, useEffect, useTransition, useOptimistic } from "react";
+import { useState, useCallback, useEffect, useMemo, useTransition, useOptimistic } from "react";
 import { DimensionPanel, useDimensionPanel } from "./panel";
 import { useAsyncOperation, useResultExport } from "./DimensionPanelLayout";
 import { useCreditContextOptional } from "@/contexts/CreditContext";
@@ -39,6 +39,19 @@ const MODEL_OPTIONS = [
   { value: "gemini-2.5-flash-preview-05-20", label: "Gemini 2.5 Flash (Fast)" },
   { value: "gemini-2.5-pro-preview-05-06", label: "Gemini 2.5 Pro" },
 ];
+
+const STYLE_PRESETS = [
+  { id: "dark-moody",     label: "Dark & Moody" },
+  { id: "bright-pop",     label: "Bright Pop" },
+  { id: "neo-noir",       label: "Neo-Noir" },
+  { id: "film-grain",     label: "Film Grain" },
+  { id: "neon-cyberpunk", label: "Neon Cyberpunk" },
+  { id: "warm-vintage",   label: "Warm Vintage" },
+  { id: "cold-blue",      label: "Cold Blue" },
+  { id: "high-contrast",  label: "High Contrast" },
+  { id: "soft-dreamy",    label: "Soft Dreamy" },
+  { id: "gritty-doc",     label: "Gritty Documentary" },
+] as const;
 
 // =============================================================================
 // TYPES
@@ -160,7 +173,8 @@ function ADStudioContent() {
 
   // Scenario tab state
   const [scenario, setScenario] = useState("");
-  const [styleHint, setStyleHint] = useState("");
+  const [selectedStyles, setSelectedStyles] = useState<Set<string>>(new Set());
+  const [customStyleHint, setCustomStyleHint] = useState("");
   const [enableKling, setEnableKling] = useState(true);
   const [enableSeedance, setEnableSeedance] = useState(true);
   const [enableVeo, setEnableVeo] = useState(true);
@@ -180,6 +194,24 @@ function ADStudioContent() {
   // React 19
   const [isTransitionPending, startTransition] = useTransition();
   const [optimisticResult, setOptimisticResult] = useOptimistic<ADStudioResult | null>(null);
+
+  // Derived style hint — combines selected tags + custom input
+  const styleHint = useMemo(() => {
+    const tags = STYLE_PRESETS
+      .filter((p) => selectedStyles.has(p.id))
+      .map((p) => p.label.toLowerCase());
+    const custom = customStyleHint.trim();
+    return [...tags, ...(custom ? [custom] : [])].join(", ");
+  }, [selectedStyles, customStyleHint]);
+
+  const toggleStyle = useCallback((id: string) => {
+    setSelectedStyles((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
 
   // BYOK
   const { byokKey } = useBYOK();
@@ -404,6 +436,7 @@ function ADStudioContent() {
         title="AD Studio"
         titleKo="조감독 AI"
         creditCost={CREDIT_COST}
+        showBackButton={false}
       />
 
       {/* Sidebar */}
@@ -426,6 +459,9 @@ function ADStudioContent() {
             </div>
           </div>
         )}
+
+        {/* --- Divider --- */}
+        <div className="border-t border-slate-200/50 dark:border-white/5" />
 
         {/* Tab Selector */}
         <div className="space-y-2">
@@ -505,14 +541,45 @@ function ADStudioContent() {
           </>
         )}
 
-        {/* Style Hint */}
-        <DimensionPanel.Input
-          label="스타일 힌트 (선택)"
-          value={styleHint}
-          onChange={(e) => setStyleHint(e.target.value)}
-          placeholder="dark and moody, bright pop, neo-noir..."
-          disabled={combinedLoading}
-        />
+        {/* --- Divider --- */}
+        <div className="border-t border-slate-200/50 dark:border-white/5" />
+
+        {/* Style Tags */}
+        <div className="space-y-2">
+          <label className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 uppercase tracking-widest ml-1">
+            스타일 힌트
+          </label>
+          <div className="flex flex-wrap gap-1.5">
+            {STYLE_PRESETS.map((preset) => {
+              const active = selectedStyles.has(preset.id);
+              return (
+                <button
+                  key={preset.id}
+                  onClick={() => toggleStyle(preset.id)}
+                  disabled={combinedLoading}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all ${
+                    active
+                      ? `${classes.bg} text-white shadow-sm`
+                      : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-white/10"
+                  } disabled:opacity-50`}
+                >
+                  {preset.label}
+                </button>
+              );
+            })}
+          </div>
+          <input
+            type="text"
+            value={customStyleHint}
+            onChange={(e) => setCustomStyleHint(e.target.value)}
+            placeholder="커스텀 스타일 입력..."
+            disabled={combinedLoading}
+            className="w-full px-3 py-1.5 text-xs rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-amber-500/50 disabled:opacity-50"
+          />
+        </div>
+
+        {/* --- Divider --- */}
+        <div className="border-t border-slate-200/50 dark:border-white/5" />
 
         {/* AI Model */}
         <DimensionPanel.Select
@@ -534,7 +601,7 @@ function ADStudioContent() {
               disabled={combinedLoading}
               className={`py-2 px-3 rounded-lg text-xs font-medium transition-all ${
                 enableKling
-                  ? `${classes.bg} text-white`
+                  ? "bg-emerald-500 text-white shadow-sm shadow-emerald-500/20"
                   : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-white/10"
               } disabled:opacity-50`}
             >
@@ -545,7 +612,7 @@ function ADStudioContent() {
               disabled={combinedLoading}
               className={`py-2 px-3 rounded-lg text-xs font-medium transition-all ${
                 enableSeedance
-                  ? `${classes.bg} text-white`
+                  ? "bg-violet-500 text-white shadow-sm shadow-violet-500/20"
                   : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-white/10"
               } disabled:opacity-50`}
             >
@@ -556,7 +623,7 @@ function ADStudioContent() {
               disabled={combinedLoading}
               className={`py-2 px-3 rounded-lg text-xs font-medium transition-all ${
                 enableVeo
-                  ? `${classes.bg} text-white`
+                  ? "bg-sky-500 text-white shadow-sm shadow-sky-500/20"
                   : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-white/10"
               } disabled:opacity-50`}
             >
@@ -713,6 +780,22 @@ function ADStudioContent() {
                   연속성
                 </span>
               </div>
+
+              {/* 3-step guide */}
+              <ol className="text-left max-w-xs mx-auto pt-6 space-y-3">
+                {[
+                  "사이드바에 시나리오를 입력하거나 영상 레퍼런스를 등록하세요",
+                  "스타일 태그를 선택하고 타겟 엔진을 고르세요",
+                  "분석 시작을 누르면 장면별 시네마틱 프롬프트가 생성됩니다",
+                ].map((text, i) => (
+                  <li key={i} className="flex items-start gap-2.5 text-xs text-slate-400 dark:text-zinc-500 leading-relaxed">
+                    <span className={`flex-shrink-0 w-5 h-5 rounded-full ${classes.bg}/20 ${classes.text} text-[10px] font-bold flex items-center justify-center mt-0.5`}>
+                      {i + 1}
+                    </span>
+                    {text}
+                  </li>
+                ))}
+              </ol>
             </div>
           </div>
         )}
