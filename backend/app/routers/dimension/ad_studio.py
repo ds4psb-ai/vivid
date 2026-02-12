@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import time
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
@@ -48,6 +49,24 @@ from app.utils.sse_utils import sse_progress, sse_complete, sse_error, sse_event
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/ad-studio", tags=["AD Studio"])
+
+
+def _is_quota_error(exc: Exception) -> bool:
+    """Detect Gemini API quota/rate-limit errors from exception message."""
+    msg = str(exc).lower()
+    return any(kw in msg for kw in ("resource_exhausted", "quota exceeded", "429", "rate limit"))
+
+
+def _quota_detail(exc: Exception) -> str:
+    """Build user-facing error detail for quota errors."""
+    msg = str(exc)
+    # Extract model name if present
+    model_match = re.search(r"model:\s*([\w\-\.]+)", msg)
+    model_hint = f" (모델: {model_match.group(1)})" if model_match else ""
+    return (
+        f"API 키의 호출 할당량이 초과되었습니다{model_hint}. "
+        "다른 모델을 선택하거나 잠시 후 다시 시도하세요."
+    )
 
 
 # ============================================================================
@@ -328,6 +347,11 @@ async def analyze_scenario(
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
+        if _is_quota_error(e):
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=_quota_detail(e),
+            )
         logger.error(f"[ad-studio] analyze_scenario error: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -377,7 +401,10 @@ async def analyze_scenario_stream(
 
         except Exception as e:
             logger.error(f"[ad-studio] stream error: {e}", exc_info=True)
-            yield sse_error(str(e))
+            if _is_quota_error(e):
+                yield sse_error(_quota_detail(e))
+            else:
+                yield sse_error(str(e))
 
     return StreamingResponse(
         event_generator(),
@@ -430,6 +457,11 @@ async def analyze_video(
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
+        if _is_quota_error(e):
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=_quota_detail(e),
+            )
         logger.error(f"[ad-studio] analyze_video error: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
