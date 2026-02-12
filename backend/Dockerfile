@@ -68,7 +68,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 # Application environment
 ENV ENVIRONMENT=production \
     LOG_LEVEL=INFO \
-    PORT=8080
+    PORT=8080 \
+    OTEL_ENABLED=false \
+    TRACELOOP_TELEMETRY=false \
+    OTEL_SDK_DISABLED=true
 
 # Working directory
 WORKDIR /app
