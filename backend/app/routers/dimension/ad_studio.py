@@ -223,6 +223,7 @@ class SequenceAnalysis(BaseModel):
     color_progression: List[ColorBeat] = Field(default_factory=list)
     continuity_anchors: Optional[ContinuityAnchors] = None
     five_domains: Optional[FiveDomains] = None
+    continuity_score: float = Field(default=0.0, ge=0.0, le=1.0)
 
 
 class SequenceContext(BaseModel):

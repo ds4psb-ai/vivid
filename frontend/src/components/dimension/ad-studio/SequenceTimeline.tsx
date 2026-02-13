@@ -10,6 +10,7 @@ import type { SceneAnalysisResult, EmotionalBeat } from "../ADStudioPanel";
 interface SequenceTimelineProps {
   scenes: SceneAnalysisResult[];
   emotionalArc: EmotionalBeat[];
+  continuityScore?: number;
   onSceneClick: (index: number) => void;
 }
 
@@ -20,6 +21,7 @@ interface SequenceTimelineProps {
 export default function SequenceTimeline({
   scenes,
   emotionalArc,
+  continuityScore,
   onSceneClick,
 }: SequenceTimelineProps) {
   // Build SVG path for emotional intensity curve
@@ -56,6 +58,17 @@ export default function SequenceTimeline({
   if (scenes.length === 0) return null;
 
   const svgWidth = scenes.length * 120;
+  const continuityPercent = typeof continuityScore === "number"
+    ? Math.round(Math.max(0, Math.min(continuityScore, 1)) * 100)
+    : null;
+  const continuityToneClass =
+    continuityPercent === null
+      ? ""
+      : continuityPercent >= 80
+        ? "text-emerald-500"
+        : continuityPercent >= 60
+          ? "text-amber-500"
+          : "text-rose-500";
 
   return (
     <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-2xl p-4 overflow-hidden">
@@ -66,6 +79,11 @@ export default function SequenceTimeline({
         {emotionalArc.length > 0 && (
           <span className="text-[10px] text-amber-500 font-medium">
             감정 강도 커브
+          </span>
+        )}
+        {continuityPercent !== null && (
+          <span className={`text-[10px] font-semibold ${continuityToneClass}`}>
+            연속성 점수 {continuityPercent}%
           </span>
         )}
       </div>

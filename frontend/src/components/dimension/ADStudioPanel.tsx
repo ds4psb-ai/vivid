@@ -133,6 +133,7 @@ interface SequenceAnalysisResult {
   visual_rhythm: VisualRhythm;
   color_progression: ColorBeat[];
   continuity_anchors: ContinuityAnchors;
+  continuity_score?: number;
 }
 
 interface ADStudioResult {
@@ -721,6 +722,7 @@ function ADStudioContent() {
               <SequenceTimeline
                 scenes={displayResult.scenes}
                 emotionalArc={displayResult.sequence.emotional_arc}
+                continuityScore={displayResult.sequence.continuity_score}
                 onSceneClick={handleSceneClick}
               />
             )}

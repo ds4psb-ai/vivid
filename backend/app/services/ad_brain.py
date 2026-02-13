@@ -664,10 +664,76 @@ class ADStudioBrain:
             lighting_evolution=five_raw.get("lighting_evolution", ""),
         ) if five_raw else None
 
+        continuity_score = self._calculate_continuity_score(
+            sequence_raw=sequence_raw,
+            scenes_count=len(scenes or []),
+        )
+
         return SequenceAnalysis(
             emotional_arc=emotional_arc,
             visual_rhythm=visual_rhythm,
             color_progression=color_progression,
             continuity_anchors=continuity,
             five_domains=five_domains,
+            continuity_score=continuity_score,
         )
+
+    def _calculate_continuity_score(
+        self,
+        sequence_raw: Dict[str, Any],
+        scenes_count: int,
+    ) -> float:
+        """Compute a normalized continuity score (0.0~1.0) for sequence quality checks."""
+        anchors_raw = sequence_raw.get("continuity_anchors", {}) or {}
+        emotional_arc = sequence_raw.get("emotional_arc", []) or []
+        rhythm_raw = sequence_raw.get("visual_rhythm", {}) or {}
+        five_raw = sequence_raw.get("five_domains", {}) or {}
+
+        def _as_non_empty_str_list(values: Any) -> List[str]:
+            if not isinstance(values, list):
+                return []
+            return [str(v).strip() for v in values if str(v).strip()]
+
+        character_anchors = _as_non_empty_str_list(anchors_raw.get("character_anchors"))
+        style_anchors = _as_non_empty_str_list(anchors_raw.get("style_anchors"))
+        lighting_anchors = _as_non_empty_str_list(anchors_raw.get("lighting_anchors"))
+        total_anchors = len(character_anchors) + len(style_anchors) + len(lighting_anchors)
+
+        anchor_baseline = max(3, scenes_count)
+        anchor_density = min(total_anchors / anchor_baseline, 1.0) if total_anchors else 0.0
+
+        if scenes_count > 0:
+            arc_coverage = min(len(emotional_arc) / scenes_count, 1.0)
+        else:
+            arc_coverage = 1.0 if emotional_arc else 0.0
+
+        camera_curve = []
+        if isinstance(rhythm_raw, dict):
+            camera_curve = _as_non_empty_str_list(rhythm_raw.get("camera_distance_curve"))
+        if scenes_count > 0:
+            curve_coverage = min(len(camera_curve) / scenes_count, 1.0)
+        else:
+            curve_coverage = 1.0 if camera_curve else 0.0
+
+        domain_fields = (
+            "character_dynamics",
+            "background_continuity",
+            "relationship_evolution",
+            "camera_evolution",
+            "lighting_evolution",
+        )
+        if isinstance(five_raw, dict):
+            filled_domains = sum(
+                1 for key in domain_fields if str(five_raw.get(key, "")).strip()
+            )
+            five_domains_score = filled_domains / len(domain_fields)
+        else:
+            five_domains_score = 0.0
+
+        score = (
+            0.35 * anchor_density
+            + 0.25 * arc_coverage
+            + 0.20 * curve_coverage
+            + 0.20 * five_domains_score
+        )
+        return round(max(0.0, min(score, 1.0)), 3)

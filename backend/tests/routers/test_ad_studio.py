@@ -650,6 +650,37 @@ class TestADBrain:
         assert len(seq.color_progression) == 1
         assert seq.continuity_anchors is not None
 
+    def test_build_sequence_analysis_continuity_score(self):
+        from app.services.ad_brain import ADStudioBrain
+
+        brain = ADStudioBrain()
+        sequence_raw = {
+            "emotional_arc": [
+                {"scene_number": 1, "emotion": "불안", "intensity": 0.4, "description": "도입"},
+                {"scene_number": 2, "emotion": "긴장", "intensity": 0.8, "description": "상승"},
+            ],
+            "visual_rhythm": {
+                "camera_distance_curve": ["MS", "CU"],
+                "edit_tempo": "점진적 가속",
+            },
+            "continuity_anchors": {
+                "character_anchors": ["검은 코트 주인공"],
+                "style_anchors": ["neo-noir"],
+                "lighting_anchors": ["역광 실루엣"],
+            },
+            "five_domains": {
+                "character_dynamics": "Character tension escalates consistently.",
+                "background_continuity": "Alley environment remains coherent.",
+                "relationship_evolution": "Distance between characters narrows.",
+                "camera_evolution": "Camera moves from medium to close-up.",
+                "lighting_evolution": "Contrast rises while staying directional.",
+            },
+        }
+
+        seq = brain._build_sequence_analysis(sequence_raw, [{}, {}])
+        assert seq.continuity_score == pytest.approx(1.0)
+        assert 0.0 <= seq.continuity_score <= 1.0
+
     def test_enrich_techniques_with_corpus(self):
         from app.services.ad_brain import ADStudioBrain
 
