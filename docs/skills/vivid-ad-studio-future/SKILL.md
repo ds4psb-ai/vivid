@@ -77,6 +77,21 @@ bash scripts/verify_ad_studio_future.sh --with-tests
 - 품질 기준을 "감"이 아닌 테스트/측정 항목으로 관리
 - 변경 전/후 비교 지표를 남긴다
 
+## North Star Priority (2026 H2)
+
+조감독 H2 릴리즈 게이트는 아래 우선순위를 고정한다.
+
+1. 1순위: `continuity_score` (시퀀스 연속성)
+- 출시/확장 판단은 먼저 연속성 점수 기준으로 한다.
+- 권장 게이트:
+  - `>= 0.80`: 확장 가능
+  - `0.60 ~ 0.79`: 제한 롤아웃 + 보정 작업
+  - `< 0.60`: 배포 보류
+
+2. 2순위: 처리 속도(턴어라운드)
+- 속도 개선은 연속성 점수 하락 없이 달성할 때만 승인한다.
+- 즉, "빠르지만 끊기는 결과"는 통과시키지 않는다.
+
 ## Workflow
 
 1. Scope 확정
@@ -123,4 +138,5 @@ cd /Users/ted/vivid/frontend && npm run test:e2e -- e2e/agent-chat.spec.ts e2e/f
 2. 영향 파일 목록
 3. 실행한 검증 명령과 통과 여부
 4. 외부 근거 링크
-5. 남은 리스크
+5. North Star 결과 (`continuity_score` 전/후 혹은 회귀 여부)
+6. 남은 리스크

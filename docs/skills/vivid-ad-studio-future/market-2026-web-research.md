@@ -61,3 +61,4 @@
 
 4. Continuity as first-class metric
 - 장면 단위 품질보다 시퀀스 단위 연속성을 우선 지표로 본다.
+- 2026-02-14 아키텍처 결정: AD Studio North Star를 `continuity_score`로 고정한다.

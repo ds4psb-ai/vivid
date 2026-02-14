@@ -1,7 +1,7 @@
 # Vivid Documentation Master Index
 
-> **Version**: 1.5
-> **Last Updated**: 2026-02-05
+> **Version**: 1.6
+> **Last Updated**: 2026-02-14
 > **Purpose**: 전체 문서 네비게이션 및 SSoT 참조
 
 ---
@@ -163,6 +163,7 @@
 | [unified_4layer_strategy.md](./strategic/unified_4layer_strategy.md) | 4-Layer 통합 전략 |
 | [story_first_architecture_roadmap.md](./strategic/story_first_architecture_roadmap.md) | Story-First 아키텍처 |
 | [pj_insights_gap_analysis.md](./strategic/pj_insights_gap_analysis.md) | PJ Insights Gap 분석 |
+| [AD_STUDIO_MASTERPIECE_PATTERN_2026_H2.md](./strategic/AD_STUDIO_MASTERPIECE_PATTERN_2026_H2.md) | AD Studio MOP (연속성 점수 우선 게이트) |
 
 ---
 
@@ -216,6 +217,7 @@
 
 | 버전 | 날짜 | 변경 |
 |------|------|------|
+| 1.6 | 2026-02-14 | AD Studio MOP(연속성 우선 게이트) 전략 문서 추가 |
 | 1.4 | 2026-02-02 | V7 Neon Red 테마 통일, DNA Lab UX 마이그레이션 문서 추가, 5,000+ lines dead code 제거 |
 | 1.3 | 2026-01-25 | 메가앱 아키텍처 문서화, 핸드오버 문서 추가 |
 | 1.2 | 2026-01-24 | 레거시 패널 11개 삭제, API 타입 모듈화, i18n 동적 로더, Deprecated Director API 제거 |

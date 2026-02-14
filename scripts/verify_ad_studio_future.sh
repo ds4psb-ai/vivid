@@ -16,7 +16,9 @@ required_files=(
   "backend/app/services/ad_brain.py"
   "backend/app/services/ad_prompt_engine.py"
   "frontend/src/components/dimension/ADStudioPanel.tsx"
+  "frontend/src/components/dimension/ad-studio/SequenceTimeline.tsx"
   "backend/tests/routers/test_ad_studio.py"
+  "frontend/src/components/dimension/ad-studio/SequenceTimeline.test.tsx"
 )
 
 for rel in "${required_files[@]}"; do
@@ -30,10 +32,16 @@ done
 checks=(
   "backend/app/routers/dimension/ad_studio.py|ALLOWED_ENGINES"
   "backend/app/routers/dimension/ad_studio.py|/analyze-video"
+  "backend/app/routers/dimension/ad_studio.py|continuity_score"
   "backend/app/services/ad_brain.py|decomposition:5-domain"
+  "backend/app/services/ad_brain.py|_calculate_continuity_score"
   "frontend/src/components/dimension/ADStudioPanel.tsx|/api/dimension/ad-studio/analyze"
   "frontend/src/components/dimension/ADStudioPanel.tsx|MAX_SCENARIO_LENGTH"
+  "frontend/src/components/dimension/ad-studio/SequenceTimeline.tsx|연속성 점수"
+  "frontend/src/components/dimension/ad-studio/SequenceTimeline.tsx|text-emerald-500"
   "backend/tests/routers/test_ad_studio.py|test_router_has_four_routes"
+  "backend/tests/routers/test_ad_studio.py|test_build_sequence_analysis_continuity_score"
+  "frontend/src/components/dimension/ad-studio/SequenceTimeline.test.tsx|shows continuity score badge when provided"
 )
 
 for item in "${checks[@]}"; do
@@ -51,7 +59,11 @@ if [[ "$WITH_TESTS" -eq 1 ]]; then
   echo "[run] pytest backend/tests/routers/test_ad_studio.py"
   (
     cd "$ROOT/backend"
-    pytest -q tests/routers/test_ad_studio.py
+    if [[ -x "venv/bin/pytest" ]]; then
+      ./venv/bin/pytest -q tests/routers/test_ad_studio.py
+    else
+      pytest -q tests/routers/test_ad_studio.py
+    fi
   )
 fi
 
