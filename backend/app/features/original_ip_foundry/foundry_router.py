@@ -23,6 +23,9 @@ from app.features.original_ip_foundry.contracts import (
     FoundryRecommendationRequest,
     FoundryRecommendationResponse,
     FoundryRetrievalRequest,
+    FoundryWorkerDispatchRequest,
+    FoundryWorkerDispatchResponse,
+    FoundryWorkerStatusResponse,
     FoundryRightsEvaluationRequest,
     FoundryRightsEvaluationResponse,
 )
@@ -39,6 +42,7 @@ from app.features.original_ip_foundry.pattern_extraction_service import PatternE
 from app.features.original_ip_foundry.recommendation_service import FoundryRecommendationService
 from app.features.original_ip_foundry.retrieval_service import FoundryRetrievalService
 from app.features.original_ip_foundry.rights_service import FoundryRightsService
+from app.features.original_ip_foundry.worker_runtime import FoundryWorkerRuntime
 
 
 logger = logging.getLogger("foundry.audit")
@@ -126,6 +130,7 @@ _recommendation_service = FoundryRecommendationService(_rights_service)
 _experiment_service = FoundryExperimentService()
 _retrieval_service = FoundryRetrievalService(_memory_store, _pattern_service)
 _c2pa_export_service = FoundryC2PAExportService()
+_worker_runtime = FoundryWorkerRuntime()
 
 
 router = APIRouter(
@@ -260,3 +265,35 @@ async def export_c2pa_manifest(payload: FoundryC2PAExportRequest) -> FoundryC2PA
         provenance_trace=[item.model_dump() for item in payload.provenance_trace],
     )
     return FoundryC2PAExportResponse(**result)
+
+
+@router.get("/workers/providers")
+async def get_worker_providers() -> dict[str, Any]:
+    return {
+        "active_provider": _worker_runtime.resolve_provider(None),
+        "providers": _worker_runtime.list_providers(),
+    }
+
+
+@router.post("/workers/dispatch", response_model=FoundryWorkerDispatchResponse)
+async def dispatch_worker_job(payload: FoundryWorkerDispatchRequest) -> FoundryWorkerDispatchResponse:
+    result = _worker_runtime.dispatch_job(
+        tenant_id=payload.tenant_id,
+        project_id=payload.project_id,
+        job_type=payload.job_type,
+        payload=payload.payload,
+        provider=payload.provider,
+    )
+    return FoundryWorkerDispatchResponse(**result)
+
+
+@router.get("/workers/jobs/{job_id}", response_model=FoundryWorkerStatusResponse)
+async def get_worker_job_status(job_id: str) -> FoundryWorkerStatusResponse:
+    status = _worker_runtime.get_job_status(job_id)
+    return FoundryWorkerStatusResponse(**status)
+
+
+@router.post("/workers/jobs/{job_id}/cancel", response_model=FoundryWorkerStatusResponse)
+async def cancel_worker_job(job_id: str) -> FoundryWorkerStatusResponse:
+    status = _worker_runtime.cancel_job(job_id)
+    return FoundryWorkerStatusResponse(**status)

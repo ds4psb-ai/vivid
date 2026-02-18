@@ -335,7 +335,9 @@ class Settings(BaseSettings):
         "/api/v1/foundry/experiments/feedback,"
         "/api/v1/foundry/memory/normalize,"
         "/api/v1/foundry/retrieval/query,"
-        "/api/v1/foundry/provenance/export-c2pa"
+        "/api/v1/foundry/provenance/export-c2pa,"
+        "/api/v1/foundry/workers/dispatch,"
+        "/api/v1/foundry/workers/jobs"
     )
 
     # ==========================================================================

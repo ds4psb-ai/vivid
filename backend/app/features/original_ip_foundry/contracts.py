@@ -206,3 +206,34 @@ class FoundryC2PAExportResponse(BaseModel):
     manifest: dict
     compliance: dict
     warnings: List[str] = Field(default_factory=list)
+
+
+class FoundryWorkerDispatchRequest(BaseModel):
+    tenant_id: str = Field(default="default", min_length=1, max_length=120)
+    project_id: str = Field(..., min_length=1, max_length=120)
+    job_type: str = Field(..., min_length=1, max_length=120)
+    payload: dict = Field(default_factory=dict)
+    provider: Optional[Literal["agent0", "taskiq", "temporal"]] = None
+    model: Optional[str] = Field(default=None, max_length=80)
+    input_type: Optional[str] = Field(default="worker_dispatch")
+
+
+class FoundryWorkerDispatchResponse(BaseModel):
+    provider: str
+    status: str
+    job_id: str
+    job_type: str
+    tenant_id: str
+    project_id: str
+    payload: dict = Field(default_factory=dict)
+
+
+class FoundryWorkerStatusResponse(BaseModel):
+    provider: str
+    job_id: str
+    status: str
+    tenant_id: Optional[str] = None
+    project_id: Optional[str] = None
+    job_type: Optional[str] = None
+    updated_at: Optional[str] = None
+    message: Optional[str] = None
