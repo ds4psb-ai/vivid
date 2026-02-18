@@ -110,7 +110,7 @@ Council을 **협력이 아닌 적대적 구조**로 배치한다. 한 모델이 
 
 ### 학술 근거
 
-- **Tool-MAD** (arXiv 2025): 다중 에이전트 디베이트에서 적대적 구조가 협력적 구조보다 환각을 45% 더 많이 검출
+- **Tool-MAD** (arXiv 2601.04742, 2026-01): 도구 활용 기반 다중 에이전트 디베이트에서 기존 MAD 대비 **평균 18.1% 팩트 검증 정확도 향상, 최대 35.0%**. 핵심은 환각 감지량 자체가 아니라, 적대적 구조가 도구(검색/코드 실행)를 활용하여 주장을 실증적으로 검증하게 만든다는 점
 - **A-HMAD** (ACL Findings 2025): 에이전트별 신뢰도 가중 debate → 표준 토론 대비 +4-6%
 
 ---
@@ -187,6 +187,10 @@ Council을 **협력이 아닌 적대적 구조**로 배치한다. 한 모델이 
 - Micro에서 완벽하지만 Macro에서 실패하는 컷 감지 (예: 기술적으로 완벽한 match cut인데 서사 흐름을 끊는 경우)
 - Macro에서 필요하지만 Micro에서 "규칙 위반"인 컷 허용 (예: 의도적 jump cut)
 
+### 전제 조건: 데이터 축적
+
+> **주의**: 시대별 영화 문법 데이터가 `pattern_atoms`에 충분히 축적되어야 Temporal Scale Council이 의미 있는 판단을 내릴 수 있다. SSOT §6.5.3의 Masterpiece ingestion v0(최소 1,000 클립)이 완료된 후에 시작해야 한다. 특히 Micro 축의 180도 룰/아이라인 매치 판단과 Macro 축의 서사 아크 판단 모두 코퍼스 통계가 뒷받침되지 않으면 모델의 일반 지식에만 의존하게 된다.
+
 ---
 
 ## Idea 5: Style Fusion Council — "봉준호 x 데니 빌뇌브"
@@ -231,6 +235,12 @@ Council을 **협력이 아닌 적대적 구조**로 배치한다. 한 모델이 
 - `pattern_atoms` 컬렉션에서 감독A/B 패턴을 각각 검색
 - Council이 두 패턴 세트의 **교집합**(호환 요소)과 **충돌점**(비호환 요소)을 식별
 - 충돌점에 대한 **해소 전략**을 생성 → 이것이 "새로운 패턴"이 됨
+
+### 레이턴시 주의: 비동기 배치 실행 필수
+
+> **SLO 경고**: Qdrant에서 감독A/B 패턴 각각 검색(2회) → Council 3모델 병렬 쿼리(1회, 내부 3 LLM 호출) → 충돌점 해소 전략 생성(Synthesizer 1회)까지 최소 **3-4 LLM 호출**이 필요하다. 추천 API p95 < 2.5s SLO(SSOT §12)에는 맞지 않는다.
+>
+> **해결**: Style Fusion은 실시간 API가 아닌 **Agent0 Worker를 통한 비동기 배치 작업**으로 분리한다. 사용자가 "봉준호 x 빌뇌브" 퓨전을 요청하면 Worker가 백그라운드에서 처리하고, 완료 시 알림 + 결과를 `pattern_atoms`에 적재한다. 이후 추천 시에는 사전 생성된 퓨전 패턴을 즉시 검색하므로 SLO를 지킨다.
 
 ### 왜 가치 있는가
 
@@ -416,6 +426,10 @@ Council 통찰:
 - **"규칙 위반"이 항상 실패가 아님**을 사용자에게 가르친다
 - 플랫폼/타겟에 따라 **다른 기준이 적용되어야 함**을 Council이 자연스럽게 보여준다
 
+### 전제 조건: 데이터 축적
+
+> **주의**: Idea 4(Temporal Scale)와 동일한 데이터 갭이 존재한다. 시대별 영화 문법은 `pattern_atoms`에 해당 시대의 레퍼런스 클립이 충분히 축적되어야 의미 있는 비교가 가능하다. 특히 클래식 할리우드(1930-60)와 뉴웨이브(1960-80) 시대의 패턴은 현재 코퍼스에 없으므로, SSOT §6.5.3의 Masterpiece ingestion이 이 시대 클립을 포함하도록 계획해야 한다. 현재 우선순위 10번 배치는 이 전제를 반영한 것이다.
+
 ---
 
 ## Idea 11: Meta-Council — Council을 모니터하는 Council
@@ -501,7 +515,7 @@ class MetaCouncilAudit:
 ## Sources
 
 ### Multi-Agent Debate & Adversarial
-- [Tool-MAD — Multi-Agent Debate for Tool-Augmented LLMs](https://arxiv.org/abs/2501.xxxxx)
+- [Tool-MAD — Multi-Agent Debate for Tool-Augmented LLMs (arXiv 2601.04742)](https://arxiv.org/abs/2601.04742)
 - [A-HMAD — ACL Findings 2025](https://aclanthology.org/2025.findings-acl.606.pdf)
 - [DebateCV — Multi-model Visual Debate](https://arxiv.org/abs/2406.xxxxx)
 
