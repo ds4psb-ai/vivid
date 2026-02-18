@@ -1,0 +1,1943 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vivid "AI 조감독" — 투자자를 위한 핵심 요약</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&display=swap');
+
+        :root {
+            --bg: #0F0F1A;
+            --surface: #1A1A2E;
+            --surface2: #222240;
+            --text: #E8E8F0;
+            --text-muted: #9999B0;
+            --accent: #7C3AED;
+            --accent2: #4F46E5;
+            --green: #10B981;
+            --yellow: #F59E0B;
+            --red: #EF4444;
+            --blue: #3B82F6;
+            --cyan: #06B6D4;
+            --pink: #EC4899;
+            --border: rgba(255, 255, 255, 0.08);
+            --glow: rgba(124, 58, 237, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.8;
+            font-size: 15px;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .hero {
+            text-align: center;
+            padding: 60px 30px;
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(79, 70, 229, 0.15), rgba(6, 182, 212, 0.1));
+            border-radius: 24px;
+            border: 1px solid var(--border);
+            margin-bottom: 50px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 50%, rgba(124, 58, 237, 0.1) 0%, transparent 50%);
+            animation: pulse 8s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+
+            50% {
+                transform: scale(1.1);
+                opacity: 1;
+            }
+        }
+
+        .hero h1 {
+            font-size: 2.2em;
+            font-weight: 900;
+            background: linear-gradient(135deg, #fff, #c4b5fd);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .hero .subtitle {
+            color: var(--text-muted);
+            font-size: 0.95em;
+            position: relative;
+        }
+
+        .hero .date {
+            display: inline-block;
+            background: rgba(124, 58, 237, 0.2);
+            color: #c4b5fd;
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin-top: 16px;
+            position: relative;
+        }
+
+        /* Section */
+        .section {
+            margin-bottom: 50px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .section-header .emoji {
+            font-size: 1.6em;
+        }
+
+        .section-header h2 {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        h3 {
+            font-size: 1.15em;
+            font-weight: 600;
+            color: #c4b5fd;
+            margin: 24px 0 12px;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+            margin-bottom: 20px;
+        }
+
+        .card.glow {
+            box-shadow: 0 0 40px var(--glow);
+        }
+
+        /* Stat Grid */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: var(--surface2);
+            border-radius: 14px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .stat-card .icon {
+            font-size: 1.5em;
+            margin-bottom: 6px;
+        }
+
+        .stat-card .label {
+            font-size: 0.82em;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .stat-card .value {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 0.92em;
+        }
+
+        th {
+            background: var(--surface2);
+            color: #c4b5fd;
+            font-weight: 600;
+            text-align: left;
+            padding: 12px 16px;
+            border-bottom: 2px solid var(--accent);
+        }
+
+        td {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        tr:hover td {
+            background: rgba(124, 58, 237, 0.05);
+        }
+
+        /* Info boxes */
+        .info-box {
+            border-radius: 12px;
+            padding: 18px 22px;
+            margin: 18px 0;
+            font-size: 0.93em;
+            line-height: 1.7;
+        }
+
+        .info-box.note {
+            background: rgba(59, 130, 246, 0.1);
+            border-left: 4px solid var(--blue);
+            color: #93c5fd;
+        }
+
+        .info-box.tip {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--green);
+            color: #6ee7b7;
+        }
+
+        .info-box.important {
+            background: rgba(124, 58, 237, 0.1);
+            border-left: 4px solid var(--accent);
+            color: #c4b5fd;
+        }
+
+        .info-box strong {
+            color: #fff;
+        }
+
+        /* Flow comparison */
+        .flow-compare {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .flow-col {
+            border-radius: 14px;
+            padding: 24px;
+        }
+
+        .flow-col.human {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05));
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .flow-col.ai {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05));
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .flow-col h4 {
+            font-size: 1.05em;
+            margin-bottom: 14px;
+            color: #fff;
+        }
+
+        .flow-col ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .flow-col li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            font-size: 0.92em;
+        }
+
+        /* Tech stack */
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .tech-card {
+            background: var(--surface2);
+            border-radius: 14px;
+            padding: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .tech-card .tech-icon {
+            font-size: 1.6em;
+            margin-bottom: 8px;
+        }
+
+        .tech-card .tech-name {
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+
+        .tech-card .tech-desc {
+            font-size: 0.85em;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        /* Score pie visual */
+        .score-visual {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 16px 0;
+        }
+
+        .score-bar {
+            border-radius: 10px;
+            padding: 12px 16px;
+            text-align: center;
+            font-size: 0.82em;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        /* Moat cards */
+        .moat-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .moat-card {
+            border-radius: 14px;
+            padding: 22px;
+            border: 1px solid var(--border);
+        }
+
+        .moat-card .moat-icon {
+            font-size: 1.8em;
+            margin-bottom: 8px;
+        }
+
+        .moat-card .moat-title {
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .moat-card .moat-desc {
+            font-size: 0.88em;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        /* Timeline */
+        .timeline {
+            margin: 20px 0;
+        }
+
+        .timeline-item {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 16px;
+            position: relative;
+        }
+
+        .timeline-dot {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85em;
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .timeline-content {
+            flex: 1;
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 18px 22px;
+            border: 1px solid var(--border);
+        }
+
+        .timeline-content .tl-title {
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .timeline-content .tl-date {
+            font-size: 0.82em;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .timeline-content .tl-desc {
+            font-size: 0.9em;
+            color: var(--text);
+        }
+
+        .timeline-content .tl-check {
+            font-size: 0.82em;
+            color: var(--green);
+            margin-top: 6px;
+        }
+
+        /* Engine comparison */
+        .engine-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .engine-card {
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .engine-card .engine-name {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 12px;
+        }
+
+        .engine-card .engine-company {
+            font-size: 0.82em;
+            color: var(--text-muted);
+            margin-bottom: 14px;
+        }
+
+        .engine-card ul {
+            list-style: none;
+            padding: 0;
+            text-align: left;
+        }
+
+        .engine-card li {
+            font-size: 0.85em;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        /* Risk table */
+        .risk-badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.82em;
+            font-weight: 600;
+        }
+
+        .risk-high {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+        }
+
+        .risk-mid {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fcd34d;
+        }
+
+        /* Why Vivid */
+        .why-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .why-card {
+            border-radius: 14px;
+            padding: 20px 14px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .why-card .why-icon {
+            font-size: 1.8em;
+            margin-bottom: 8px;
+        }
+
+        .why-card .why-title {
+            font-weight: 700;
+            color: #fff;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+        }
+
+        .why-card .why-desc {
+            font-size: 0.78em;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* Source links */
+        .source-links {
+            margin-top: 16px;
+            padding: 14px 18px;
+            background: rgba(99, 102, 241, 0.08);
+            border-radius: 10px;
+            border-left: 3px solid var(--accent2);
+            font-size: 0.82em;
+            color: var(--text-muted);
+            line-height: 1.9;
+        }
+
+        .source-links a {
+            color: #93c5fd;
+            text-decoration: none;
+            border-bottom: 1px dotted rgba(147, 197, 253, 0.4);
+            transition: color 0.2s, border-color 0.2s;
+        }
+
+        .source-links a:hover {
+            color: #bfdbfe;
+            border-bottom-color: #bfdbfe;
+        }
+
+        .source-links strong {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        /* Vision conclusion */
+        .vision-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .vision-card {
+            border-radius: 16px;
+            padding: 28px 20px;
+            text-align: center;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .vision-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--cyan));
+        }
+
+        .vision-card .vision-icon {
+            font-size: 2.2em;
+            margin-bottom: 12px;
+        }
+
+        .vision-card .vision-title {
+            font-weight: 700;
+            color: #fff;
+            font-size: 1.05em;
+            margin-bottom: 10px;
+        }
+
+        .vision-card .vision-desc {
+            font-size: 0.88em;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        /* Mermaid override */
+        .mermaid-wrap {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+            margin: 20px 0;
+            text-align: center;
+            overflow-x: auto;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 50px;
+            padding: 30px;
+            background: var(--surface);
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            font-size: 0.82em;
+            color: var(--text-muted);
+            line-height: 1.8;
+        }
+
+        .footer strong {
+            color: var(--text);
+        }
+
+        /* Print */
+        @media print {
+            body {
+                background: #fff;
+                color: #1a1a1a;
+                padding: 20px;
+            }
+
+            .hero {
+                background: #f5f3ff;
+                border-color: #ddd;
+            }
+
+            .hero h1 {
+                -webkit-text-fill-color: #4c1d95;
+            }
+
+            .card,
+            .mermaid-wrap,
+            .footer {
+                background: #f9fafb;
+                border-color: #e5e7eb;
+            }
+
+            .stat-card,
+            .tech-card,
+            .engine-card,
+            .moat-card,
+            .why-card {
+                background: #f3f4f6;
+                border-color: #e5e7eb;
+            }
+
+            th {
+                background: #f3f4f6;
+                color: #4c1d95;
+            }
+
+            td {
+                border-bottom-color: #e5e7eb;
+                color: #1a1a1a;
+            }
+
+            .info-box.note {
+                background: #eff6ff;
+                color: #1d4ed8;
+            }
+
+            .info-box.tip {
+                background: #ecfdf5;
+                color: #059669;
+            }
+
+            .info-box.important {
+                background: #f5f3ff;
+                color: #6d28d9;
+            }
+
+            .flow-col.human {
+                background: #fffbeb;
+            }
+
+            .flow-col.ai {
+                background: #eff6ff;
+            }
+
+            .section-header {
+                border-bottom-color: #e5e7eb;
+            }
+
+            h2,
+            h3,
+            .tech-name,
+            .moat-title,
+            .tl-title,
+            .engine-name,
+            .why-title {
+                color: #1a1a1a;
+            }
+
+            .flow-col h4 {
+                color: #1a1a1a;
+            }
+
+            .tech-desc,
+            .moat-desc,
+            .why-desc,
+            .tl-date,
+            .engine-company,
+            .stat-card .label {
+                color: #6b7280;
+            }
+
+            .stat-card .value {
+                color: #1a1a1a;
+            }
+
+            .timeline-content {
+                background: #f9fafb;
+                border-color: #e5e7eb;
+            }
+
+            .hero .subtitle,
+            .hero .date {
+                color: #6b7280;
+            }
+        }
+
+        @page {
+            size: A4;
+            margin: 15mm;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <!-- HERO -->
+        <div class="hero">
+            <h1>🎬 Vivid "AI 조감독"</h1>
+            <div class="subtitle">투자자를 위한 핵심 요약</div>
+            <div class="date">📅 2026년 2월 14일 기준 · 원본: AD Co-Director OS SSOT</div>
+        </div>
+
+        <!-- 1. 시장 -->
+        <div class="section">
+            <div class="section-header">
+                <span class="emoji">🌍</span>
+                <h2>1. 시장은 지금 어디에 있는가?</h2>
+            </div>
+
+            <h3>AI 영상 생성 시장 — 폭발적 성장 중</h3>
+            <p>2025~2026년, AI로 영상을 만드는 시장은 <strong>전 세계적으로 가장 빠르게 성장하는 기술 분야</strong> 중 하나입니다.</p>
+
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <div class="icon">🌐</div>
+                    <div class="label">2025년 시장 규모</div>
+                    <div class="value">약 7~20억 달러</div>
+                </div>
+                <div class="stat-card">
+                    <div class="icon">📈</div>
+                    <div class="label">연평균 성장률 (CAGR)</div>
+                    <div class="value">20~35%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="icon">🎯</div>
+                    <div class="label">2033년 전망</div>
+                    <div class="value">약 93억 달러</div>
+                </div>
+                <div class="stat-card">
+                    <div class="icon">💰</div>
+                    <div class="label">2025년 업계 투자 총액</div>
+                    <div class="value">5억 달러 이상</div>
+                </div>
+            </div>
+
+            <div class="info-box note">
+                <strong>왜 이렇게 빠르게 성장하는가?</strong><br>
+                ① 틱톡·릴스·쇼츠 등 숏폼 영상 폭발 → 콘텐츠 수요 급증<br>
+                ② AI 기술 발전으로 <strong>제작 비용·시간이 1/10 수준</strong>으로 감소<br>
+                ③ 기업 마케팅에서 영상이 텍스트를 대체하는 메가 트렌드<br>
+                ④ AI 숏폼 드라마 시장만 2026년 <strong>$78억</strong> 규모로 전망 (Deloitte)
+            </div>
+
+            <div class="source-links">
+                <strong>📎 출처:</strong><br>
+                • <a href="https://www.fortunebusinessinsights.com" target="_blank">Fortune Business Insights</a> — AI
+                영상 생성 시장 2025 $7.17억 → 2030 $19.6억<br>
+                • <a href="https://www.grandviewresearch.com" target="_blank">Grand View Research</a> — 2025 $7.89억,
+                CAGR 20%+<br>
+                • <a href="https://www.researchandmarkets.com" target="_blank">Research and Markets</a> — 2025 $10.7억 →
+                2030 $19.7억<br>
+                • <a href="https://start.io" target="_blank">Start.io / Deloitte</a> — AI 마이크로 드라마 2026년 $78억 매출 전망<br>
+                • <a href="https://www.hootsuite.com" target="_blank">Hootsuite</a> — 2026 숏폼 콘텐츠 트렌드 리포트
+            </div>
+        </div>
+
+        <!-- 2. 경쟁 환경 -->
+        <div class="section">
+            <div class="section-header">
+                <span class="emoji">🏆</span>
+                <h2>2. 경쟁 환경 — AI 영상 생성 "빅3" 엔진</h2>
+            </div>
+
+            <p>현재 AI로 영상을 만드는 핵심 엔진은 크게 3개입니다.<br>
+                Vivid는 이 3개 엔진을 <strong>모두 지원</strong>하여 최적의 결과를 자동 선택합니다.</p>
+
+            <div class="engine-grid">
+                <div class="engine-card"
+                    style="background: linear-gradient(135deg, rgba(255,107,107,0.15), rgba(255,107,107,0.05));">
+                    <div class="engine-name">🎥 Kling 3.0</div>
+                    <div class="engine-company">쾌수 (Kuaishou) · 중국 · 2026.02</div>
+                    <ul>
+                        <li>✅ <strong>6샷 멀티샷</strong> — 단일 프롬프트로 6개 연속 샷 생성</li>
+                        <li>✅ 4K 해상도, 최대 15초</li>
+                        <li>✅ Identity Lock — 캐릭터 일관성 유지</li>
+                        <li>✅ 네이티브 대사 + 립싱크 + 다국어</li>
+                        <li>✅ AI 감독 모드 — 시네마틱 언어 이해</li>
+                    </ul>
+                </div>
+                <div class="engine-card"
+                    style="background: linear-gradient(135deg, rgba(78,205,196,0.15), rgba(78,205,196,0.05));">
+                    <div class="engine-name">🎬 Sora 2.5 Pro</div>
+                    <div class="engine-company">OpenAI · 미국 · Sora 3 예고</div>
+                    <ul>
+                        <li>✅ 사실감 최강 — 중력·운동량·충돌 재현</li>
+                        <li>✅ 1080p, 최대 25초 (Extensions로 연장)</li>
+                        <li>✅ 다국어 대화 + 자동 음향 동기화</li>
+                        <li>✅ 스토리보드 도구 + Character Cameos</li>
+                        <li>✅ 워터마크 없는 상업용 출력</li>
+                    </ul>
+                </div>
+                <div class="engine-card"
+                    style="background: linear-gradient(135deg, rgba(69,183,209,0.15), rgba(69,183,209,0.05));">
+                    <div class="engine-name">🎞️ Veo 3.1</div>
+                    <div class="engine-company">Google · 미국 · Veo 4 예고</div>
+                    <ul>
+                        <li>✅ 4K 업스케일 + 세로형(9:16) 지원</li>
+                        <li>✅ 네이티브 대사·음향·효과음 생성</li>
+                        <li>✅ 이미지→영상 레퍼런스 기반 생성</li>
+                        <li>✅ 캐릭터·배경 일관성 우수</li>
+                        <li>✅ YouTube Shorts + Gemini API 통합</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="info-box note" style="margin-bottom: 16px;">
+                <strong>🔥 2026 돌파구: 멀티샷 연속 생성 시대</strong><br>
+                <strong>Kling 3.0</strong>은 텍스트 타임프레임만으로 6샷 멀티샷을 자동 분할하며, <strong>Seedance 2.0</strong>(ByteDance,
+                2026.02)은
+                멀티렌즈 스토리텔링으로 2K 시네마틱 연속 시퀀스를 60초 이내에 생성합니다.
+                이제 15초 이내 멀티샷은 <strong>단일 프롬프트로 해결</strong>되는 시대이며,
+                Vivid는 이 위에 <strong>장편 시퀀스(30초~수분)의 연속성 보장 레이어</strong>를 얹습니다.
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>비교 항목</th>
+                        <th>Kling 3.0</th>
+                        <th>Sora 2.5 Pro</th>
+                        <th>Veo 3.1</th>
+                        <th>Seedance 2.0</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>최대 해상도</strong></td>
+                        <td>4K</td>
+                        <td>1080p</td>
+                        <td>4K</td>
+                        <td>2K</td>
+                    </tr>
+                    <tr>
+                        <td><strong>최대 길이</strong></td>
+                        <td>15초</td>
+                        <td>25초 (+Extensions)</td>
+                        <td>8초(단일)</td>
+                        <td>4~15초</td>
+                    </tr>
+                    <tr>
+                        <td><strong>멀티샷 지원</strong></td>
+                        <td>✅ 최대 6샷</td>
+                        <td>⚠️ Extensions로 연결</td>
+                        <td>❌ 단일 클립</td>
+                        <td>✅ 멀티렌즈</td>
+                    </tr>
+                    <tr>
+                        <td><strong>핵심 강점</strong></td>
+                        <td>속도·멀티샷·AI감독</td>
+                        <td>사실감·물리·스토리보드</td>
+                        <td>시네마틱·4K·생태계</td>
+                        <td>물리정확성·캐릭터일관</td>
+                    </tr>
+                    <tr>
+                        <td><strong>내장 오디오</strong></td>
+                        <td>✅ 대사+립싱크</td>
+                        <td>✅ 대사+음악+효과음</td>
+                        <td>✅ 대사+효과음</td>
+                        <td>✅ 멀티모달 입력</td>
+                    </tr>
+                    <tr>
+                        <td><strong>캐릭터 일관성</strong></td>
+                        <td>✅ Identity Lock</td>
+                        <td>✅ Character Cameos</td>
+                        <td>✅ 우수</td>
+                        <td>✅ 씬 간 유지</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-box important">
+                <strong>Vivid의 차별점</strong>: 하나의 엔진에 종속되지 않고, <strong>프롬프트 컴파일러</strong>가 씬(장면)의 성격에 맞춰 최적의 엔진을 자동
+                선택합니다. Kling 3.0/Seedance 2.0의 멀티샷 기능 위에 <strong>장편 연속성 보장 레이어</strong>를 얹어,
+                15초를 넘어 수 분짜리 시퀀스까지 자연스럽게 이어줍니다.
+            </div>
+
+            <div class="source-links">
+                <strong>📎 출처:</strong><br>
+                • <a href="https://fal.ai" target="_blank">fal.ai</a> — Kling 3.0: 6샷 멀티샷, Identity Lock, AI Director
+                모드<br>
+                • <a href="https://aifire.co" target="_blank">AIFire</a> — Kling 3.0 Omni: 멀티 캐릭터 코레퍼런스, 시네마틱 언어 이해<br>
+                • <a href="https://openai.com" target="_blank">OpenAI 공식</a> — Sora 2 Pro: Extensions(2026.02.09),
+                Character Cameos, Storyboard<br>
+                • <a href="https://blog.google" target="_blank">Google Blog</a> — Veo 3.1: 4K 업스케일, 세로형, 이미지→영상
+                (2026.01)<br>
+                • <a href="https://socialmediatoday.com" target="_blank">Social Media Today</a> — Veo 3.1 전체 기능 분석<br>
+                • <a href="https://eweek.com" target="_blank">eWeek</a> — Seedance 2.0: 멀티렌즈 스토리텔링, 2K 시네마틱
+                (2026.02)<br>
+                • <a href="https://bytedance.com" target="_blank">ByteDance 공식</a> — Seedance 2.0 멀티샷 기술 사양
+            </div>
+        </div>
+
+        <!-- 3. 무엇을 만드는가 -->
+        <div class="section">
+            <div class="section-header">
+                <span class="emoji">💡</span>
+                <h2>3. Vivid는 무엇을 만드는가? — "AI 조감독 OS"</h2>
+            </div>
+
+            <div class="card glow" style="text-align:center; font-size: 1.1em;">
+                <strong>"감독이 머릿속에 떠올린 영감을 던지면,<br>AI가 영화를 설계해주는 조감독 시스템"</strong>
+            </div>
+
+            <p>영화·드라마·광고를 만들 때 감독 옆에는 항상 <strong>조감독(Assistant Director)</strong>이 있습니다.
+                조감독은 감독의 의도를 파악하고, 촬영 순서를 짜고, 스태프에게 지시를 내리는 사람입니다.
+                Vivid는 이 역할을 <strong>AI가 대신하도록</strong> 만드는 제품입니다.</p>
+
+            <div class="flow-compare">
+                <div class="flow-col human">
+                    <h4>🧑 감독 (사람)</h4>
+                    <ul>
+                        <li>💭 영감이 떠오름</li>
+                        <li>📱 텔레그램에 사진·영상 전송</li>
+                        <li>📝 노션에 씬 메모 작성</li>
+                        <li>👍 AI 제안을 승인/수정/기각</li>
+                    </ul>
+                </div>
+                <div class="flow-col ai">
+                    <h4>🤖 AI 조감독 (Vivid)</h4>
+                    <ul>
+                        <li>📥 입력 수집 및 통합</li>
+                        <li>🧠 씬 분석 + 감정선 파악</li>
+                        <li>🎯 최적 샷 추천</li>
+                        <li>📋 엔진별 프롬프트 자동 작성</li>
+                        <li>🎬 프리뷰 영상 생성</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="info-box tip">
+                <strong>쉬운 비유</strong>: 카카오택시가 기사를 AI로 대체한 게 아니라, <strong>"내비게이션"이라는 AI 조감독</strong>을 줘서 누구나 길을 잘 찾게 해준
+                것과 같습니다. Vivid는 영상 제작의 내비게이션입니다.
+            </div>
+        </div>
+
+        <!-- 4. 핵심 기술 -->
+        <div class="section">
+            <div class="section-header">
+                <span class="emoji">🧠</span>
+                <h2>4. 핵심 기술 구조 — 비개발자를 위한 설명</h2>
+            </div>
+
+            <p>Vivid의 기술을 <strong>음식점에 비유</strong>하면 이렇습니다:</p>
+
+            <div class="tech-grid">
+                <div class="tech-card">
+                    <div class="tech-icon">📥</div>
+                    <div class="tech-name">주문 접수 (입력 수집)</div>
+                    <div class="tech-desc">텔레그램·노션·웹에서 감독의 영감을 받아 하나로 통합. 카톡·메일·메모 등 여기저기 흩어진 아이디어를 한 곳으로.</div>
+                </div>
+                <div class="tech-card">
+                    <div class="tech-icon">📒</div>
+                    <div class="tech-name">레시피북 (메모리 시스템)</div>
+                    <div class="tech-desc">감독의 취향·과거 작업·선호 스타일을 기억. AI가 감독을 오래 알수록 더 정확하게 추천 (넷플릭스 추천과 유사).</div>
+                </div>
+                <div class="tech-card">
+                    <div class="tech-icon">🔬</div>
+                    <div class="tech-name">맛 분석가 (Gemini 3 Pro)</div>
+                    <div class="tech-desc">구글의 최신 AI가 장면의 구조·감정·전후 맥락을 이해. "이 장면은 슬픈 분위기니까 다음은 이렇게" 판단.</div>
+                </div>
+                <div class="tech-card">
+                    <div class="tech-icon">📚</div>
+                    <div class="tech-name">재료 창고 (TwelveLabs + Qdrant)</div>
+                    <div class="tech-desc">수천 개의 레퍼런스 영상에서 딱 맞는 장면을 찾아줌. "비 오는 카페 씬" 같은 검색어로 즉시 검색.</div>
+                </div>
+                <div class="tech-card">
+                    <div class="tech-icon">⭐</div>
+                    <div class="tech-name">평점 시스템 (추천·랭킹 엔진)</div>
+                    <div class="tech-desc">연속성·스타일·실행가능성 등을 종합 점수로 매겨 최고만 추천. 품질 기준 미달이면 자동 탈락.</div>
+                </div>
+                <div class="tech-card">
+                    <div class="tech-icon">📜</div>
+                    <div class="tech-name">조리법 변환기 (프롬프트 컴파일러)</div>
+                    <div class="tech-desc">Kling·Sora·Veo·Seedance 각각에 맞는 영상 생성 명령어를 자동 작성. 같은 장면도 엔진별로 최적화.</div>
+                </div>
+            </div>
+
+            <div class="source-links">
+                <strong>📎 출처:</strong><br>
+                • <a href="https://twelvelabs.io" target="_blank">TwelveLabs</a> — Marengo 3.0 멀티모달 임베딩 API<br>
+                • <a href="https://qdrant.tech" target="_blank">Qdrant</a> — Rust 기반 벡터 DB, 하이브리드 검색<br>
+                • <a href="https://deepmind.google" target="_blank">Google DeepMind</a> — Gemini 3 Pro 멀티모달 추론
+            </div>
+        </div>
+
+        <!-- 5. 연속성 점수 -->
+        <div class="section">
+            <div class="section-header">
+                <span class="emoji">📊</span>
+                <h2>5. "연속성 점수" — Vivid의 북극성 지표</h2>
+            </div>
+
+            <div class="card" style="text-align: center; margin-bottom: 20px;">
+                <em style="font-size: 1.05em; color: #c4b5fd;">"개별 샷이 아무리 예뻐도, 이어 붙이면 어색하면 의미 없다."</em>
+            </div>
+
+            <p>Vivid의 모든 추천은 <strong>연속성 점수(Continuity Score)</strong>를 최우선으로 합니다.
+                이것은 앞뒤 장면이 자연스럽게 이어지는지를 AI가 측정하는 점수입니다.</p>
+
+            <h3>추천 점수 구성 비율</h3>
+            <div class="score-visual">
+                <div class="score-bar" style="background: linear-gradient(135deg, #7C3AED, #6D28D9); flex: 4.5;">연속성 45%
+                </div>
+                <div class="score-bar" style="background: linear-gradient(135deg, #3B82F6, #2563EB); flex: 2;">미장센 20%
+                </div>
+                <div class="score-bar" style="background: linear-gradient(135deg, #10B981, #059669); flex: 1.5;">스토리 15%
+                </div>
+                <div class="score-bar" style="background: linear-gradient(135deg, #F59E0B, #D97706); flex: 1;">감독 10%
+                </div>
+                <div class="score-bar" style="background: linear-gradient(135deg, #EC4899, #DB2777); flex: 1;">실행 10%
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>연속성 점수</th>
+                        <th>의미</th>
+                        <th>처리 방식</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>🔴 <strong>0.60 미만</strong></td>
+                        <td>앞뒤가 어색</td>
+                        <td>❌ <strong>자동 탈락</strong> — 감독에게 보여주지 않음</td>
+                    </tr>
+                    <tr>
+                        <td>🟡 <strong>0.60~0.79</strong></td>
+                        <td>약간 어색</td>
+                        <td>⚠️ <strong>제한 배포</strong> — "주의" 라벨 부착</td>
+                    </tr>
+                    <tr>
+                        <td>🟢 <strong>0.80 이상</strong></td>
+                        <td>자연스러움</td>
+                        <td>✅ <strong>기본 추천</strong> — 상단 노출</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-box important">
+                <strong>왜 이것이 중요한가?</strong><br>
+                2026년 Kling 3.0, Seedance 2.0 등이 15초 이내 멀티샷 연속성은 자체 해결하기 시작했지만,
+                <strong>30초 이상의 장편 시퀀스</strong>에서는 여전히 캐릭터·배경·분위기가 들쭉날쭉합니다.
+                Vivid는 이 문제를 <strong>모델 독립적 연속성 점수로 자동 검증</strong>하여, 진짜 "영화"처럼 보이는 장편 결과물을 만듭니다.
+            </div>
+
+            <div class="source-links">
+                <strong>📎 출처:</strong><br>
+                • <a href="https://fal.ai" target="_blank">fal.ai</a> — Kling 3.0 멀티샷 연속성: 6샷 자동 분할 + Identity Lock<br>
+                • <a href="https://evrimagaci.org" target="_blank">Evrim Ağacı</a> — Seedance 2.0 멀티렌즈 캐릭터 일관성 분석<br>
+                • <a href="https://pandaily.com" target="_blank">Pandaily</a> — Seedance 2.0 vs Sora 2 vs Veo 3.1 시네마틱
+                비교
+            </div>
+        </div>
+
+        <!-- 6. A/B 실험 -->
+        <div class="section">
+            <div class="section-header">
+                <span class="emoji">🔬</span>
+                <h2>6. A/B 실험 엔진 — 추천이 점점 똑똑해지는 이유</h2>
+            </div>
+
+            <p>Vivid는 넷플릭스처럼 <strong>자동 실험(A/B 테스트)</strong>을 합니다.</p>
+
+            <div class="mermaid-wrap">
+                <pre class="mermaid">
+flowchart LR
+    subgraph "실험 대상"
+        Q1["시놉시스 A vs B"]
+        Q2["씬 진행 A vs B vs 혼합"]
+        Q3["샷 시퀀스 A vs B"]
+    end
+
+    subgraph "보상 측정"
+        R1["채택률 40%"]
+        R2["수정 적었는지 20%"]
+        R3["빠른 결정 20%"]
+        R4["만족도 20%"]
+    end
+
+    Q1 --> R1
+    Q2 --> R2
+    Q3 --> R3
+    Q3 --> R4
+
+    R1 & R2 & R3 & R4 --> LEARN["🧠 학습 → 다음 추천 반영"]
+    </pre>
+            </div>
+
+            <div class="info-box tip">
+                <strong>쉬운 설명</strong>: "감독이 A안과 B안 중 어느 것을 더 자주 선택하는지"를 관찰하고,
+                다음에는 <strong>감독이 좋아할 가능성이 높은 안을 먼저 보여줍니다</strong>.
+                쓸수록 똑똑해지는 시스템 = <strong>데이터 해자(moat)</strong>.
+            </div>
+
+            <div class="source-links">
+                <strong>📎 출처:</strong><br>
+                • <a href="https://www.towardsdatascience.com" target="_blank">Towards Data Science</a> — Thompson
+                Sampling: 추천 시스템의 핵심 알고리즘<br>
+                • <a href="https://milvus.io" target="_blank">Milvus</a> — Thompson Sampling과 A/B 테스팅의 통합 전략<br>
+                • <a href="https://researchgate.net" target="_blank">ResearchGate</a> — Trend-aware Thompson Sampling:
+                비정상 환경 적응형 추천 (2025~2026)<br>
+                • <a href="https://monetate.com" target="_blank">Monetate</a> — 2026 A/B 테스팅 트렌드: AI 주도 실험의 미래
+            </div>
+        </div>
+
+        <!-- 7. 아키텍처 딥다이브: OpenClaw 메모리 허브 -->
+        <div class="section">
+            <div class="section-header">
+                <span class="emoji">🏗️</span>
+                <h2>7. 아키텍처 딥다이브 — OpenClaw 메모리 허브</h2>
+            </div>
+
+            <div class="card glow" style="text-align:center; font-size: 1.05em;">
+                <strong>"AI 조감독의 뇌는 OpenClaw다.<br>모든 기억·판단·학습이 이곳을 중심으로 흐른다."</strong>
+            </div>
+
+            <p>OpenClaw는 2025년 말 등장한 오픈소스 에이전트 프레임워크로, 2026년 현재 <strong>가장 주목받는 자율 AI 인프라</strong>입니다.
+                Vivid는 OpenClaw를 단순한 챗봇 도구가 아니라, <strong>AI 조감독의 "중앙 신경계"</strong>로 활용합니다.</p>
+
+            <h3>OpenClaw가 Vivid에서 하는 역할</h3>
+            <div class="tech-grid">
+                <div class="tech-card">
+                    <div class="tech-icon">📥</div>
+                    <div class="tech-name">입력 통합 허브</div>
+                    <div class="tech-desc">텔레그램·노션·웹 등 여러 채널의 감독 입력을 하나로 모으고, 정규화(표준 형식 변환)합니다. OpenClaw의 멀티채널 통합 기능을
+                        그대로 활용.</div>
+                </div>
+                <div class="tech-card">
+                    <div class="tech-icon">🧠</div>
+                    <div class="tech-name">프로젝트 메모리</div>
+                    <div class="tech-desc">감독의 취향·과거 피드백·프로젝트별 맥락을 <strong>영구 기억</strong>합니다. OpenClaw의 로컬 파일 기반 구조화
+                        메모리(Markdown)를 활용하여 세션 간 맥락을 유지.</div>
+                </div>
+                <div class="tech-card">
+                    <div class="tech-icon">🤖</div>
+                    <div class="tech-name">서브에이전트 위임</div>
+                    <div class="tech-desc">복잡한 작업(긴 영상 분석, 대규모 레퍼런스 검색)을 <strong>전문 서브에이전트에 비동기 위임</strong>합니다. 메인 에이전트는
+                        감독과 대화를 계속하면서 백그라운드 작업 진행.</div>
+                </div>
+                <div class="tech-card">
+                    <div class="tech-icon">🔧</div>
+                    <div class="tech-name">스킬 시스템 (Tool Calling)</div>
+                    <div class="tech-desc">Gemini·TwelveLabs·Qdrant·렌더 엔진 등 외부 도구를 <strong>모듈형 플러그인</strong>으로 연결합니다.
+                        LLM이 필요한 도구를 자율적으로 선택·조합하는 에이전틱 루프.</div>
+                </div>
+            </div>
+
+            <h3>3단 메모리 설계</h3>
+            <div class="mermaid-wrap">
+                <pre class="mermaid">
+flowchart TB
+    subgraph "Layer 1: 작업 기억"
+        WM["현재 대화 컨텍스트"]
+    end
+
+    subgraph "Layer 2: 프로젝트 기억"
+        PM["프로젝트별 씬/샷 히스토리
+        감독 스타일 프로필
+        피드백 이벤트 로그"]
+    end
+
+    subgraph "Layer 3: 장기 기억"
+        LM["크로스 프로젝트 패턴
+        장르별 통계 데이터
+        Qdrant 벡터 저장소"]
+    end
+
+    WM --> PM
+    PM --> LM
+    LM -.->|"유사 패턴 회수"| WM
+                </pre>
+            </div>
+
+            <div class="info-box important">
+                <strong>투자 관점 핵심</strong>: OpenClaw를 메모리 허브로 쓴다는 것은, 감독이 Vivid를 오래 쓸수록
+                <strong>AI가 그 감독만의 "조감독"으로 진화</strong>한다는 뜻입니다. 이것이 경쟁사가 따라잡기 어려운
+                <strong>네트워크 효과의 핵심</strong>입니다.
+            </div>
+
+            <div class="source-links">
+                <strong>📎 출처:</strong><br>
+                • <a href="https://investing.com" target="_blank">Investing.com</a> — OpenClaw: 2026년 가장 주목받는 오픈소스 AI
+                에이전트 프레임워크<br>
+                • <a href="https://medium.com" target="_blank">Medium</a> — OpenClaw 메모리 시스템: 작업/프로젝트/장기 기억 3단 구조<br>
+                • <a href="https://codecademy.com" target="_blank">Codecademy</a> — OpenClaw 에이전트: 멀티채널 통합,
+                WhatsApp·Telegram·Slack<br>
+                • <a href="https://bitdefender.com" target="_blank">Bitdefender</a> — OpenClaw Tool Calling: 모듈형 스킬 시스템
+                분석<br>
+                • <a href="https://brightdata.com" target="_blank">Bright Data</a> — OpenClaw 서브에이전트: 독립 워크스페이스·모델 선택
+            </div>
+        </div>
+
+        <!-- 8. 아키텍처 딥다이브: 영상 검색·임베딩 파이프라인 -->
+        <div class="section">
+            <div class="section-header">
+                <span class="emoji">🔍</span>
+                <h2>8. 아키텍처 딥다이브 — 영상 검색·임베딩 파이프라인</h2>
+            </div>
+
+            <p>Vivid의 핵심 능력 중 하나는 <strong>"이 장면에 어울리는 레퍼런스를 즉시 찾아주는 것"</strong>입니다.
+                이를 위해 2026년 최신 멀티모달 AI 기술을 결합한 3단 파이프라인을 구축합니다.</p>
+
+            <h3>파이프라인 전체 흐름</h3>
+            <div class="mermaid-wrap">
+                <pre class="mermaid">
+flowchart LR
+    V["레퍼런스 영상"] --> TL["TwelveLabs Marengo 3.0
+    세그먼트 임베딩"]
+
+    TL --> VEC["벡터 변환
+    시각+오디오+텍스트"]
+
+    VEC --> QD["Qdrant
+    벡터 데이터베이스"]
+
+    DIR["감독 검색 요청"] --> GEM["Gemini 3 Pro
+    의도 분석"]
+
+    GEM --> QD
+    QD --> RES["상위 5개
+    레퍼런스 + 점수"]
+                </pre>
+            </div>
+
+            <h3>핵심 기술 컴포넌트</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>컴포넌트</th>
+                        <th>역할</th>
+                        <th>2026 최신 기술</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>TwelveLabs Marengo 3.0</strong></td>
+                        <td>영상을 "의미 벡터"로 변환</td>
+                        <td>시각·오디오·텍스트를 하나의 의미 공간에 통합. 크로스모달 검색 가능</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Qdrant</strong></td>
+                        <td>벡터 유사도 고속 검색</td>
+                        <td>하이브리드 검색(BM25 + 벡터) 지원. 수백만 세그먼트에서 <strong>0.9초 이내</strong> 검색</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Gemini 3 Pro</strong></td>
+                        <td>맥락 이해 + 쿼리 생성</td>
+                        <td>감독의 모호한 요청을 구체적 검색 쿼리로 변환</td>
+                    </tr>
+                    <tr>
+                        <td><strong>VideoRAG</strong></td>
+                        <td>검색 증강 생성</td>
+                        <td>검색된 레퍼런스를 기반으로 새 프롬프트 생성. 2026년 멀티모달 RAG의 핵심 패러다임</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-box note">
+                <strong>기술 전략: Vespa 대비 설계</strong><br>
+                현재는 Qdrant를 사용하지만, 대규모 확장 시 Vespa로 교체할 수 있도록 <strong>벤더 중립적 추상화 계층</strong>을 설계합니다.
+            </div>
+
+            <div class="source-links">
+                <strong>📎 출처:</strong><br>
+                • <a href="https://twelvelabs.io" target="_blank">TwelveLabs 공식</a> — Marengo 3.0: 멀티벡터 아키텍처, 스포츠/시네마
+                이해, 다국어 지원<br>
+                • <a href="https://twelvelabs.io" target="_blank">TwelveLabs Embed API</a> — any-to-any 검색: 텍스트→영상,
+                이미지→영상, 오디오→영상<br>
+                • <a href="https://aws.amazon.com/bedrock" target="_blank">Amazon Bedrock</a> — TwelveLabs Marengo 2.7
+                관리형 서비스<br>
+                • <a href="https://qdrant.tech" target="_blank">Qdrant 공식</a> — 하이브리드 검색(BM25+벡터): 순수 벡터 대비 정밀도 30%↑<br>
+                • <a href="https://github.com/qdrant/qdrant" target="_blank">Qdrant GitHub</a> — Rust 기반, 스칼라 양자화로 메모리
+                75% 절감, 10ms 미만 쿼리<br>
+                • <a href="https://databricks.com" target="_blank">Databricks</a> — TwelveLabs + Mosaic AI: 영상 임베딩 통합
+                RAG 파이프라인
+            </div>
+        </div>
+
+        <!-- 9. 아키텍처 딥다이브: 시네마틱 연속성 & 프롬프트 컴파일러 -->
+        <div class="section">
+            <div class="section-header">
+                <span class="emoji">🎬</span>
+                <h2>9. 아키텍처 딥다이브 — 시네마틱 연속성 & 프롬프트 컴파일러</h2>
+            </div>
+
+            <p>Vivid의 최종 출력은 <strong>"영화처럼 자연스러운 멀티샷 시퀀스"</strong>입니다.
+                이를 위해 두 가지 핵심 시스템이 협력합니다.</p>
+
+            <h3>① 시네마틱 연속성 엔진</h3>
+            <p>2026년 2월 기준, <strong>Kling 3.0은 6샷 멀티샷을 단일 프롬프트</strong>로, <strong>Seedance 2.0은 멀티렌즈 스토리텔링</strong>으로
+                15초 이내 연속 영상을 이미 잘 생성합니다. 그러나 <strong>30초~수 분의 장편 시퀀스</strong>에서는 여전히
+                캐릭터·배경·감정선이 흐트러집니다. <strong>Vivid는 모델에 의존하지 않고, 자체 연속성 검증 레이어</strong>로
+                장편 멀티샷의 품질을 보장합니다.
+            </p>
+
+            <div class="mermaid-wrap">
+                <pre class="mermaid">
+flowchart LR
+    S1["샷 1: 카페 내부
+    클로즈업"] --> EDGE["ShotGraph Edge"]
+
+    S2["샷 2: 카페 창밖
+    미디엄 샷"] --> EDGE
+
+    EDGE --> SCORE["연속성 점수 계산
+    외모 일관성 x0.3
+    배경 일관성 x0.25
+    감정선 연결 x0.25
+    카메라 워크 x0.2"]
+
+    SCORE -->|"0.80+"| PASS["추천 목록 포함"]
+    SCORE -->|"0.60~0.79"| WARN["주의 라벨"]
+    SCORE -->|"0.60 미만"| FAIL["자동 탈락"]
+                </pre>
+            </div>
+
+            <h3>② 프롬프트 컴파일러 — 엔진별 최적화 번역기</h3>
+            <p>같은 장면이라도 Kling·Sora·Veo 각각에 최적화된 프롬프트가 다릅니다.
+                프롬프트 컴파일러는 마치 <strong>번역기</strong>처럼 하나의 장면 설계를 각 엔진의 "언어"로 변환합니다.</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>요소</th>
+                        <th>Kling 최적화</th>
+                        <th>Sora 최적화</th>
+                        <th>Veo 최적화</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>강점 활용</strong></td>
+                        <td>속도·멀티샷·AI감독</td>
+                        <td>사실적 물리·스토리보드</td>
+                        <td>시네마틱 품질·4K</td>
+                    </tr>
+                    <tr>
+                        <td><strong>프롬프트 스타일</strong></td>
+                        <td>간결·키워드 중심</td>
+                        <td>상세 내러티브·물리 묘사</td>
+                        <td>영화적 톤·조명 디테일</td>
+                    </tr>
+                    <tr>
+                        <td><strong>특수 파라미터</strong></td>
+                        <td>립싱크 옵션, 속도 모드</td>
+                        <td>카메라 궤적, 피직스 힌트</td>
+                        <td>색 보정 톤, HDR 설정</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-box tip">
+                <strong>실전 효과</strong>: 감독이 "비 오는 도쿄 옥상에서 싸우는 장면, 봉준호 스타일"이라고 한 마디 하면,
+                <strong>AI가 4개 엔진(Kling/Sora/Veo/Seedance)에 각각 최적화된 프롬프트를 자동 생성</strong>하고,
+                연속성 점수가 가장 높은 결과물만 감독에게 보여줍니다.
+            </div>
+
+            <div class="source-links">
+                <strong>📎 출처:</strong><br>
+                • <a href="https://fal.ai" target="_blank">fal.ai</a> — Kling 3.0 멀티샷: 텍스트 타임프레임으로 샷별 카메라·내러티브 제어<br>
+                • <a href="https://basedlabs.ai" target="_blank">BasedLabs</a> — Kling 3.0 Identity Lock: 캐릭터·배경 크로스샷
+                일관성<br>
+                • <a href="https://evrimagaci.org" target="_blank">Evrim Ağacı</a> — Seedance 2.0 멀티렌즈: 2K 시네마틱, 캐릭터
+                일관성, Director Controls<br>
+                • <a href="https://forbes.com" target="_blank">Forbes</a> — Seedance 2.0: 물리 정확성, 멀티모달 입력, 감독급 제어<br>
+                • <a href="https://openai.com" target="_blank">OpenAI 공식</a> — Sora Extensions: 기존 영상 이어붙이기, 캐릭터·분위기 유지
+                (2026.02)
+            </div>
+        </div>
+
+        <!-- 10. 전체 아키텍처 통합 다이어그램 -->
+        <div class="section">
+            <div class="section-header">
+                <span class="emoji">🔄</span>
+                <h2>10. 전체 아키텍처 — 시스템 통합도</h2>
+            </div>
+
+            <p>지금까지 설명한 모든 컴포넌트가 어떻게 하나의 시스템으로 연결되는지 보여주는 통합 아키텍처입니다.</p>
+
+            <div class="mermaid-wrap">
+                <pre class="mermaid">
+flowchart LR
+    U["감독"] --> TG["Telegram"]
+    U --> NT["Notion"]
+    U --> OW["OpenClaw Web"]
+
+    TG --> IH["입력 통합 허브"]
+    NT --> IH
+    OW --> IH
+
+    IH --> MM["메모리 모델
+    프로젝트/씬/ShotGraph"]
+
+    MM --> GX["Gemini 3 Pro
+    맥락 분석"]
+    MM --> TL["TwelveLabs
+    영상 임베딩"]
+
+    TL --> VS["Qdrant
+    벡터 저장소"]
+    GX --> RK["랭킹 엔진"]
+    VS --> RK
+    MM --> RK
+
+    RK --> AD["AD 추천기"]
+    AD --> PC["프롬프트 컴파일러
+    Kling/Sora/Veo"]
+    PC --> RND["렌더링"]
+    RND --> UI["조감독 Studio"]
+
+    UI --> FB["피드백 이벤트"]
+    FB --> EXP["A/B + Thompson"]
+    EXP --> RK
+    FB --> MM
+                </pre>
+            </div>
+
+            <div class="info-box important">
+                <strong>핵심 설계 원칙</strong>: 데이터는 항상 <strong>순환(루프)</strong>합니다. 감독의 피드백 → 메모리 업데이트 → 다음 추천 개선.
+                이 순환이 빨라질수록 AI 조감독이 더 똑똑해지며, 이것이 Vivid의 <strong>데이터 플라이휠</strong>입니다.
+            </div>
+
+            <div class="source-links">
+                <strong>📎 출처:</strong><br>
+                본 아키텍처는 위 섹션(7~9)의 기술을 통합한 Vivid 자체 설계이며, 각 컴포넌트의 출처는 해당 섹션 참조.
+            </div>
+        </div>
+
+        <!-- 11. 경쟁 스타트업 -->
+        <div class="section">
+            <div class="section-header">
+                <span class="emoji">🏢</span>
+                <h2>11. 경쟁 스타트업 — Vivid는 어디에 위치하는가?</h2>
+            </div>
+
+            <h3>2025~2026년 AI 영상 관련 스타트업 투자 현황</h3>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>회사명</th>
+                        <th>투자 규모</th>
+                        <th>핵심 제품</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Runway</strong></td>
+                        <td>3억 800만 달러</td>
+                        <td>범용 AI 영상 생성</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Synthesia</strong></td>
+                        <td>1억 8천만 달러</td>
+                        <td>AI 아바타 영상</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Opus Clip</strong></td>
+                        <td>기업가치 2.15억 달러</td>
+                        <td>바이럴 숏폼 자동 편집</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Hedra</strong></td>
+                        <td>4,300만 달러 (a16z)</td>
+                        <td>AI 캐릭터 영상</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cardboard</strong> (YC W2026)</td>
+                        <td>시드</td>
+                        <td>마케팅용 AI 영상 편집기</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="mermaid-wrap">
+                <pre class="mermaid">
+quadrantChart
+    title "AI 영상 스타트업 포지셔닝"
+    x-axis "단순 편집 도구" --> "통합 감독 시스템"
+    y-axis "단일 영상 생성" --> "멀티샷 시퀀스 제작"
+    quadrant-1 "Vivid가 노리는 위치"
+    quadrant-2 "전문 영화 제작 도구"
+    quadrant-3 "범용 편집 도구"
+    quadrant-4 "단일 클립 생성"
+    Runway: [0.35, 0.4]
+    Opus Clip: [0.25, 0.2]
+    Synthesia: [0.2, 0.3]
+    LTX Studio: [0.6, 0.5]
+    Vivid: [0.85, 0.85]
+    </pre>
+            </div>
+
+            <div class="info-box tip">
+                <strong>Vivid의 포지션</strong>: 단순히 "영상 하나 만들어주는 도구"가 아니라,
+                <strong>감독의 의도를 이해하고 → 여러 장면을 구성하고 → 연속성을 보장하는 "통합 감독 시스템"</strong>입니다.
+                이것은 현재 시장에서 <strong>거의 공백 지대</strong>에 해당합니다.
+            </div>
+
+            <div class="source-links">
+                <strong>📎 출처:</strong><br>
+                • 투자 데이터: 각 회사 공식 발표 및 Crunchbase 기준 (2025~2026)<br>
+                • <a href="https://ycombinator.com" target="_blank">Y Combinator</a> — W2026 배치 AI 영상 스타트업 분석
+            </div>
+        </div>
+
+        <!-- 8. 해자 -->
+        <div class="section">
+            <div class="section-header">
+                <span class="emoji">🛡️</span>
+                <h2>12. 기술적 해자 (경쟁 우위)</h2>
+            </div>
+
+            <p>왜 다른 회사가 Vivid를 쉽게 따라 할 수 없는가?</p>
+
+            <div class="moat-grid">
+                <div class="moat-card"
+                    style="background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(139,92,246,0.05));">
+                    <div class="moat-icon">🧠</div>
+                    <div class="moat-title">감독 메모리</div>
+                    <div class="moat-desc">감독의 취향·피드백이 쌓일수록 추천 정확도가 올라갑니다. 넷플릭스처럼 데이터가 축적되는 구조.</div>
+                </div>
+                <div class="moat-card"
+                    style="background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(59,130,246,0.05));">
+                    <div class="moat-icon">🔗</div>
+                    <div class="moat-title">연속성 엔진</div>
+                    <div class="moat-desc">앞뒤 장면의 자연스러움을 점수로 자동 검증하는 기술. 업계에서 유일하게 시도하는 영역.</div>
+                </div>
+                <div class="moat-card"
+                    style="background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(16,185,129,0.05));">
+                    <div class="moat-icon">🔄</div>
+                    <div class="moat-title">A/B 실험 학습</div>
+                    <div class="moat-desc">감독 선택 데이터가 쌓이면 추천이 자동 개선됩니다. 사용량이 곧 경쟁력이 되는 선순환.</div>
+                </div>
+                <div class="moat-card"
+                    style="background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(245,158,11,0.05));">
+                    <div class="moat-icon">🔌</div>
+                    <div class="moat-title">엔진 독립성</div>
+                    <div class="moat-desc">Kling·Sora·Veo 중 최적 엔진을 자동 전환. 특정 회사에 종속되지 않는 유연한 구조.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 9. 로드맵 -->
+        <div class="section">
+            <div class="section-header">
+                <span class="emoji">🗓️</span>
+                <h2>13. 실행 로드맵 — 언제 무엇이 나오는가?</h2>
+            </div>
+
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-dot" style="background: linear-gradient(135deg, #6366F1, #4F46E5);">P0</div>
+                    <div class="timeline-content">
+                        <div class="tl-title">🏗️ 기초 공사 — 계약 확정 + 레거시 정리</div>
+                        <div class="tl-date">2026년 3월</div>
+                        <div class="tl-desc">기술 계약 확정, 불필요한 코드 정리, 핵심 지표(연속성 점수) 기반 마련</div>
+                        <div class="tl-check">✅ 체크포인트: 기술 부채 정리 완료</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot" style="background: linear-gradient(135deg, #8B5CF6, #7C3AED);">P1</div>
+                    <div class="timeline-content">
+                        <div class="tl-title">📥 메모리 허브 — 감독 입력 통합 시스템</div>
+                        <div class="tl-date">2026년 4~5월</div>
+                        <div class="tl-desc">텔레그램·노션 입력 통합, 영감·피드백 저장 계층, 씬 메모리 타임라인 UI</div>
+                        <div class="tl-check">✅ 체크포인트: 첫 번째 감독 사용 시작</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot" style="background: linear-gradient(135deg, #3B82F6, #2563EB);">P2</div>
+                    <div class="timeline-content">
+                        <div class="tl-title">🔍 영상 검색 — 레퍼런스 검색 엔진 구축</div>
+                        <div class="tl-date">2026년 5~7월</div>
+                        <div class="tl-desc">TwelveLabs 기반 세그먼트 임베딩, Qdrant 정식 운영, 영상 속 장면 검색 가능</div>
+                        <div class="tl-check">✅ 체크포인트: 레퍼런스 영상 검색 기능 출시</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot" style="background: linear-gradient(135deg, #10B981, #059669);">P3</div>
+                    <div class="timeline-content">
+                        <div class="tl-title">🎯 추천 엔진 — 연속성 랭킹 + A/B 실험</div>
+                        <div class="tl-date">2026년 7~9월</div>
+                        <div class="tl-desc">연속성 중심 재랭킹, Thompson Sampling 기반 실험 엔진, 채택률 대시보드</div>
+                        <div class="tl-check">✅ 체크포인트: 추천 채택률 월 15% 개선</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot" style="background: linear-gradient(135deg, #F59E0B, #D97706);">P4</div>
+                    <div class="timeline-content">
+                        <div class="tl-title">🎬 멀티샷 고도화 — 30초/60초 시퀀스 생성</div>
+                        <div class="tl-date">2026년 9~11월</div>
+                        <div class="tl-desc">시퀀스 분할 생성 체인화, ShotGraph 자동 동기화, 릴리즈 게이트 자동화</div>
+                        <div class="tl-check">✅ 체크포인트: 멀티샷 시퀀스 자동 생성 출시</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot" style="background: linear-gradient(135deg, #EF4444, #DC2626);">P5</div>
+                    <div class="timeline-content">
+                        <div class="tl-title">🚀 스케일 — 엔진 독립성 + 대규모 운영</div>
+                        <div class="tl-date">2026년 11월 ~ 2027년 1월</div>
+                        <div class="tl-desc">벤더 추상화 계층 안정화, Gemini 상위 모델 대응 실험, 장편 프로젝트 런북</div>
+                        <div class="tl-check">✅ 체크포인트: 장편 프로젝트 지원 가능</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 10. SLO -->
+        <div class="section">
+            <div class="section-header">
+                <span class="emoji">⚡</span>
+                <h2>14. 성과 목표 (SLO)</h2>
+            </div>
+
+            <p>"이 제품이 잘 돌아가는지" 판단하는 핵심 수치입니다:</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>지표</th>
+                        <th>목표</th>
+                        <th>의미</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>추천 속도</td>
+                        <td><strong>2.5초 이내</strong></td>
+                        <td>감독이 기다리지 않고 바로 제안을 봄</td>
+                    </tr>
+                    <tr>
+                        <td>영상 검색 속도</td>
+                        <td><strong>0.9초 이내</strong></td>
+                        <td>레퍼런스 영상을 즉시 찾아줌</td>
+                    </tr>
+                    <tr>
+                        <td>연속성 통과율</td>
+                        <td><strong>주간 70% 이상</strong></td>
+                        <td>대부분의 추천이 "자연스러운" 수준</td>
+                    </tr>
+                    <tr>
+                        <td>추천 채택률</td>
+                        <td><strong>월 15% 개선</strong></td>
+                        <td>감독이 AI 제안을 채택하는 비율 향상</td>
+                    </tr>
+                    <tr>
+                        <td>근거 누락</td>
+                        <td><strong>0건</strong></td>
+                        <td>모든 추천에 "왜?" 설명 필수</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 11. 리스크 -->
+        <div class="section">
+            <div class="section-header">
+                <span class="emoji">⚠️</span>
+                <h2>15. 리스크와 대응 전략</h2>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>위험 요소</th>
+                        <th>영향도</th>
+                        <th>대응 방안</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>AI 엔진 회사의 갑작스러운 정책 변경</td>
+                        <td><span class="risk-badge risk-high">🔴 높음</span></td>
+                        <td>특정 엔진에 종속하지 않는 <strong>교체 가능한 설계</strong></td>
+                    </tr>
+                    <tr>
+                        <td>감독 메모리에 쓸모없는 데이터 누적</td>
+                        <td><span class="risk-badge risk-mid">🟡 보통</span></td>
+                        <td>입력 품질 점수 + 자동 태그 정리 + 사람 검수</td>
+                    </tr>
+                    <tr>
+                        <td>장편 프로젝트에서 속도 저하</td>
+                        <td><span class="risk-badge risk-mid">🟡 보통</span></td>
+                        <td>캐시(임시 저장) + 미리 준비 + 단계별 처리</td>
+                    </tr>
+                    <tr>
+                        <td>AI가 특정 감독 취향에만 편향</td>
+                        <td><span class="risk-badge risk-mid">🟡 보통</span></td>
+                        <td>강제적으로 새로운 스타일 탐색 비율 유지</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 12. 왜 Vivid? -->
+        <div class="section">
+            <div class="section-header">
+                <span class="emoji">🔑</span>
+                <h2>16. 투자 핵심 요약 — "왜 Vivid인가?"</h2>
+            </div>
+
+            <div class="why-grid">
+                <div class="why-card"
+                    style="background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(139,92,246,0.05));">
+                    <div class="why-icon">🌊</div>
+                    <div class="why-title">시장</div>
+                    <div class="why-desc">AI 영상 시장<br>CAGR 20~35%<br>2033년 93억 달러</div>
+                </div>
+                <div class="why-card"
+                    style="background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(59,130,246,0.05));">
+                    <div class="why-icon">🎯</div>
+                    <div class="why-title">포지션</div>
+                    <div class="why-desc">단순 도구가 아닌<br>통합 감독 시스템<br>= 시장 공백 지대</div>
+                </div>
+                <div class="why-card"
+                    style="background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(16,185,129,0.05));">
+                    <div class="why-icon">🧠</div>
+                    <div class="why-title">해자</div>
+                    <div class="why-desc">데이터가 쌓일수록<br>강해지는 구조<br>= 따라잡기 어려움</div>
+                </div>
+                <div class="why-card"
+                    style="background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(245,158,11,0.05));">
+                    <div class="why-icon">⚙️</div>
+                    <div class="why-title">기술</div>
+                    <div class="why-desc">연속성 자동검증<br>+ 멀티 엔진 지원<br>= 업계 유일</div>
+                </div>
+                <div class="why-card"
+                    style="background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(239,68,68,0.05));">
+                    <div class="why-icon">📋</div>
+                    <div class="why-title">실행력</div>
+                    <div class="why-desc">구체적 로드맵<br>+ 명확한 KPI<br>= 실행 가능한 계획</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 17. 결론  — AI 콘텐츠 시대의 비전 -->
+        <div class="section">
+            <div class="section-header">
+                <span class="emoji">🌅</span>
+                <h2>17. 비전 — AI가 여는 콘텐츠 민주화 시대</h2>
+            </div>
+
+            <div class="card glow" style="text-align:center; font-size: 1.1em;">
+                <strong>"2026년, 영상 제작의 진입 장벽이 사라지고 있습니다.<br>
+                    이제 스토리가 있는 사람이라면 누구나 콘텐츠 크리에이터가 될 수 있습니다."</strong>
+            </div>
+
+            <h3>🎬 초보자도 AI로 콘텐츠를 만드는 시대</h3>
+            <p>2026년 현재, AI 영상 생성은 더 이상 전문가만의 영역이 아닙니다.
+                <strong>Kling 3.0</strong>은 텍스트 한 줄로 6샷 멀티샷 시퀀스를 자동 생성하고,
+                <strong>Seedance 2.0</strong>은 멀티렌즈 스토리텔링으로 초보자도 시네마틱 연속 영상을 만들 수 있게 합니다.
+                <strong>Sora 2.5 Pro</strong>의 스토리보드 도구와 <strong>Veo 3.1</strong>의 이미지→영상 기능은
+                영상 제작 경험이 없는 사람도 전문가 수준의 결과물을 얻을 수 있게 해줍니다.
+            </p>
+
+            <div class="vision-grid">
+                <div class="vision-card"
+                    style="background: linear-gradient(135deg, rgba(124,58,237,0.15), rgba(124,58,237,0.05));">
+                    <div class="vision-icon">📱</div>
+                    <div class="vision-title">3분 AI 드라마</div>
+                    <div class="vision-desc">중국 AI 마이크로 드라마 시장<br>
+                        2026년 <strong>$78억</strong> 매출 전망<br>
+                        (Deloitte Digital Media Trends)</div>
+                </div>
+                <div class="vision-card"
+                    style="background: linear-gradient(135deg, rgba(6,182,212,0.15), rgba(6,182,212,0.05));">
+                    <div class="vision-icon">🎥</div>
+                    <div class="vision-title">AI 단편 영화</div>
+                    <div class="vision-desc">Sundance·Tribeca 등<br>
+                        주요 영화제에 <strong>AI 부문</strong> 신설<br>
+                        1인 제작 단편이 수상</div>
+                </div>
+                <div class="vision-card"
+                    style="background: linear-gradient(135deg, rgba(236,72,153,0.15), rgba(236,72,153,0.05));">
+                    <div class="vision-icon">🎞️</div>
+                    <div class="vision-title">장편 AI 프로덕션</div>
+                    <div class="vision-desc">100분 장편도<br>
+                        <strong>AI 조감독 + 멀티엔진</strong>으로<br>
+                        소규모 팀이 제작 가능
+                    </div>
+                </div>
+            </div>
+
+            <h3>📺 OTT와 AI의 만남 — 콘텐츠 대폭발</h3>
+            <p>틱톡·유튜브 쇼츠·릴스로 촉발된 숏폼 시대는 이제 <strong>AI 생성 OTT 콘텐츠</strong>로 확장되고 있습니다.
+                중국에서는 AI로 만든 <strong>3분 드라마가 2026년 $78억 매출</strong>(Deloitte)을 기록할 전망이며,
+                글로벌 OTT 시장에서도 <strong>AI 네이티브 콘텐츠</strong>가 급속히 성장하고 있습니다.</p>
+
+            <div class="info-box important">
+                <strong>Vivid가 여는 가능성</strong><br>
+                • <strong>3분 드라마</strong>: AI 조감독이 시놉시스 하나로 완성된 멀티샷 3분 드라마를 자동 설계<br>
+                • <strong>30분 시리즈</strong>: 연속성 엔진이 에피소드 간 캐릭터·세계관 일관성을 자동 유지<br>
+                • <strong>100분 장편</strong>: 데이터 플라이휠로 감독의 의도를 학습하며, 장편 프로젝트 전체를 관리<br><br>
+                영상 제작 경험이 없는 <strong>초보자</strong>도, 전문 <strong>감독</strong>도 — AI 조감독 Vivid와 함께라면<br>
+                <strong>스토리만 있으면 누구나 콘텐츠 크리에이터</strong>가 되는 시대입니다.
+            </div>
+
+            <div class="card" style="text-align: center; margin-top: 20px;">
+                <em style="font-size: 1.1em; color: #c4b5fd;">"카메라가 대중화되어 누구나 사진을 찍게 되었듯이,<br>
+                    AI 조감독이 대중화되면 누구나 영화를 만들게 됩니다.<br>
+                    <strong>Vivid는 그 시대의 카메라입니다.</strong>"</em>
+            </div>
+
+            <div class="source-links">
+                <strong>📎 출처:</strong><br>
+                • <a href="https://www.deloitte.com" target="_blank">Deloitte Digital Media Trends 2026</a> — AI 마이크로
+                드라마 2026 $78억 매출 전망<br>
+                • <a href="https://mckinsey.com" target="_blank">McKinsey</a> — Generative AI가 콘텐츠 산업에 미치는 영향
+                (2025~2026)<br>
+                • <a href="https://forbes.com" target="_blank">Forbes</a> — AI-generated short dramas OTT 시장 성장 분석<br>
+                • <a href="https://start.io" target="_blank">Start.io</a> — AI 숏폼 드라마: 중국 시장 데이터 및 글로벌 확산 전망<br>
+                • <a href="https://sundance.org" target="_blank">Sundance Film Festival</a> — AI 제작 영화 부문 신설
+                (2025~2026)<br>
+                • <a href="https://variety.com" target="_blank">Variety</a> — AI 네이티브 콘텐츠가 OTT 플랫폼에 미치는 영향
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <strong>📌 종합 출처 목록</strong><br><br>
+            <strong>시장 데이터</strong><br>
+            • <a href="https://www.fortunebusinessinsights.com" target="_blank" style="color:#93c5fd;">Fortune Business
+                Insights</a> — AI 영상 생성 시장 전망 (2025~2033)<br>
+            • <a href="https://www.grandviewresearch.com" target="_blank" style="color:#93c5fd;">Grand View Research</a>
+            — AI Video Market Size Report<br>
+            • <a href="https://www.researchandmarkets.com" target="_blank" style="color:#93c5fd;">Research and
+                Markets</a> — AI Video Generation Market Analysis<br>
+            • <a href="https://www.deloitte.com" target="_blank" style="color:#93c5fd;">Deloitte Digital Media Trends
+                2026</a> — AI 마이크로 드라마 $78억 전망<br>
+            • <a href="https://forbes.com" target="_blank" style="color:#93c5fd;">Forbes</a> — AI video generators
+            raised $500M+ in 2025<br><br>
+
+            <strong>AI 엔진 공식 발표</strong><br>
+            • <a href="https://fal.ai" target="_blank" style="color:#93c5fd;">fal.ai</a> / <a href="https://aifire.co"
+                target="_blank" style="color:#93c5fd;">AIFire</a> — Kling 3.0: 6샷 멀티샷, Identity Lock, AI Director
+            (2026.02)<br>
+            • <a href="https://openai.com" target="_blank" style="color:#93c5fd;">OpenAI</a> — Sora 2.5 Pro / Extensions
+            / Character Cameos (2026.02)<br>
+            • <a href="https://blog.google" target="_blank" style="color:#93c5fd;">Google Blog</a> / <a
+                href="https://socialmediatoday.com" target="_blank" style="color:#93c5fd;">Social Media Today</a> — Veo
+            3.1: 4K, 세로형, 네이티브 오디오 (2026.01)<br>
+            • <a href="https://eweek.com" target="_blank" style="color:#93c5fd;">eWeek</a> / <a
+                href="https://bytedance.com" target="_blank" style="color:#93c5fd;">ByteDance</a> — Seedance 2.0: 멀티렌즈,
+            2K 시네마틱 (2026.02)<br><br>
+
+            <strong>기술 인프라</strong><br>
+            • <a href="https://twelvelabs.io" target="_blank" style="color:#93c5fd;">TwelveLabs</a> — Marengo 3.0 멀티모달
+            임베딩 API<br>
+            • <a href="https://qdrant.tech" target="_blank" style="color:#93c5fd;">Qdrant</a> — 벡터 DB, 하이브리드 검색, 스칼라
+            양자화<br>
+            • <a href="https://investing.com" target="_blank" style="color:#93c5fd;">Investing.com</a> / <a
+                href="https://medium.com" target="_blank" style="color:#93c5fd;">Medium</a> — OpenClaw 에이전트 프레임워크<br>
+            • <a href="https://towardsdatascience.com" target="_blank" style="color:#93c5fd;">Towards Data Science</a> /
+            <a href="https://milvus.io" target="_blank" style="color:#93c5fd;">Milvus</a> — Thompson Sampling 추천
+            알고리즘<br><br>
+
+            <strong>업데이트</strong>: 2026년 2월 14일 기준 · 원본: AD Co-Director OS SSOT
+        </div>
+
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            themeVariables: {
+                primaryColor: '#7C3AED',
+                primaryTextColor: '#fff',
+                primaryBorderColor: '#6D28D9',
+                lineColor: '#6366F1',
+                secondaryColor: '#4F46E5',
+                tertiaryColor: '#1A1A2E',
+                background: '#1A1A2E',
+                mainBkg: '#222240',
+                nodeBkg: '#222240',
+                nodeTextColor: '#E8E8F0',
+                clusterBkg: '#1A1A2E',
+                clusterBorder: '#6366F1',
+                titleColor: '#E8E8F0',
+                edgeLabelBackground: '#1A1A2E',
+                quadrant1Fill: 'rgba(16,185,129,0.2)',
+                quadrant2Fill: 'rgba(59,130,246,0.15)',
+                quadrant3Fill: 'rgba(107,114,128,0.15)',
+                quadrant4Fill: 'rgba(245,158,11,0.15)',
+                quadrant1TextFill: '#6ee7b7',
+                quadrant2TextFill: '#93c5fd',
+                quadrant3TextFill: '#9ca3af',
+                quadrant4TextFill: '#fcd34d',
+                quadrantPointFill: '#c4b5fd',
+                quadrantPointTextFill: '#fff',
+                quadrantXAxisTextFill: '#9999B0',
+                quadrantYAxisTextFill: '#9999B0',
+                quadrantTitleFill: '#E8E8F0'
+            },
+            flowchart: { curve: 'basis', padding: 20 },
+            fontFamily: 'Noto Sans KR, sans-serif'
+        });
+    </script>
+</body>
+
+</html>

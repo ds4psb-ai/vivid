@@ -1,0 +1,302 @@
+# Vivid Agent Architecture (Hardened v2)
+
+> **Updated**: 2026-01-08
+> **Version**: 2.0 (Hardened)
+
+## 1. Overview
+
+Vivid Agent ("Chokki") is a robust, event-driven AI agent designed for chat-based video production workflows. It orchestrates 15+ "Dimension" tools (miniapps) through a unified natural language interface.
+
+### Core Philosophy
+- **Explicit over Implicit**: All state changes and tool executions produce explicit events.
+- **Resilience**: The system is designed to recover from network failures, tool timeouts, and LLM hallucinations.
+- **Safety**: Thread safety (`RLock`), bounded buffers, and rate limiting.
+
+### System Overview Diagram
+
+```mermaid
+graph TB
+    subgraph Frontend["Frontend (Next.js :3100)"]
+        UI[AgentChatAccordion]
+        EH[Event Handlers]
+        DP[Dimension Panels]
+    end
+
+    subgraph Backend["Backend (FastAPI :8100)"]
+        Agent[VividAgent]
+        TR[ToolRegistry]
+        EL[Evidence Loop]
+        DT[Dimension Tools]
+        WT[Workflow Tools]
+    end
+
+    subgraph AI["AI Services"]
+        Gemini[Gemini 3 Pro/Flash]
+        Veo[Veo 3.1]
+    end
+
+    subgraph Storage["Storage Layer"]
+        PG[(PostgreSQL)]
+        Redis[(Redis Cache)]
+        Qdrant[(Qdrant Vector)]
+        BM25[(BM25 Index)]
+    end
+
+    UI -->|SSE Stream| Agent
+    Agent -->|LLM Call| Gemini
+    Agent -->|Tool Execute| TR
+    TR --> DT
+    TR --> WT
+    DT -->|Video Gen| Veo
+    DT -->|RAG Query| Qdrant
+    DT -->|Keyword Search| BM25
+    Agent -->|Telemetry| EL
+    EL -->|Persist| PG
+    Agent -->|Session| Redis
+    EH -->|UI Update| DP
+```
+
+
+---
+
+## 2. Event & Evidence Loop
+
+The agent operates on two primary loops:
+
+### 2.1 Agent Event Loop
+
+Handles real-time interaction with the user and the LLM.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant User
+    participant Frontend
+    participant Agent
+    participant LLM
+    participant Tool
+
+    User->>Frontend: Send Message
+    Frontend->>Agent: POST /api/v1/agent/chat (SSE)
+    Agent->>LLM: Generate Response
+    
+    loop Streaming
+        LLM-->>Agent: Token
+        Agent-->>Frontend: agent.delta
+        Frontend-->>User: Update UI
+    end
+
+    alt Tool Call Required
+        LLM->>Agent: tool_calls
+        Agent-->>Frontend: agent.tool_calls
+        Agent->>Tool: Execute
+        Tool-->>Agent: Result
+        Agent-->>Frontend: agent.tool_result
+    end
+
+    Agent-->>Frontend: agent.message (final)
+```
+
+**Event Types**:
+| Event | Description | Frontend Handler |
+|-------|-------------|------------------|
+| `agent.delta` | Text token streaming | `handleDelta()` |
+| `agent.tool_calls` | Tool invocation request | `handleToolCalls()` |
+| `agent.tool_result` | Tool execution result | `handleToolResult()` |
+| `agent.teaching_*` | Dimension tool events | `handleWorkflowStep()` |
+| `agent.workflow_*` | Workflow orchestration | `handleWorkflow*()` |
+
+### 2.2 Evidence Loop (`evidence_loop.py`)
+
+A telemetry system that "observes" the agent to gather data for future RL/GA optimization.
+
+```mermaid
+flowchart LR
+    subgraph Collection["Evidence Collection"]
+        TS[Tool Start]
+        TC[Tool Complete]
+        TF[Tool Failure]
+        QS[Quality Score]
+    end
+
+    subgraph Buffer["Bounded Buffer"]
+        EB[(Event Deque<br/>max=10K)]
+    end
+
+    subgraph Metrics["Aggregation"]
+        SM[Session Metrics]
+        TM[Tool Metrics]
+    end
+
+    TS --> EB
+    TC --> EB
+    TF --> EB
+    QS --> EB
+    EB --> SM
+    EB --> TM
+```
+
+- **Non-blocking**: Runs in background threads to avoid impacting user latency.
+- **Thread Safe**: Protected by `RLock` to handle concurrent tool executions.
+- **Bounded Buffer**: Stores only the last N events to prevent memory leaks.
+
+---
+
+## 3. Tool System Architecture
+
+The agent does not execute code directly; it invokes "Tools" which are wrappers around business logic.
+
+### 3.1 Registry Pattern
+
+```mermaid
+classDiagram
+    class ToolRegistry {
+        +Dict~str, ToolSpec~ _specs
+        +Dict~str, Handler~ _handlers
+        +register(spec, handler)
+        +execute(call, context)
+    }
+
+    class ToolSpec {
+        +str name
+        +str description
+        +Dict input_schema
+    }
+
+    class DimensionTools {
+        +generate_veo_prompt()
+        +create_storyboard()
+        +analyze_reference()
+        ...10 tools
+    }
+
+    class WorkflowTools {
+        +create_workflow()
+        +execute_workflow()
+    }
+
+    class HumanCloudTools {
+        +search_creators()
+        +search_requests()
+    }
+
+    ToolRegistry --> ToolSpec
+    ToolRegistry --> DimensionTools
+    ToolRegistry --> WorkflowTools
+    ToolRegistry --> HumanCloudTools
+```
+
+### 3.2 Dimension Tool Mapping
+
+| Dimension | Tool Name | Capsule Key | Description |
+|-----------|-----------|-------------|-------------|
+| 1D | `generate_veo_prompt` | `teaching.prompt.generate` | Veo 프롬프트 생성 |
+| 2D | `create_storyboard` | `teaching.storyboard.create` | 스토리보드 생성 |
+| 3D | `generate_image_prompt` | `teaching.image.generate` | 이미지 프롬프트 |
+| 4D | `analyze_reference` | `teaching.reference.analyze` | 레퍼런스 분석 |
+| QC | `quality_check` | `dimension.quality.check` | 품질 검수 |
+| AD | `aesthetic_direct` | `dimension.aesthetic.direct` | 미학 디렉터 |
+| AI | `persona_analyze` | `dimension.persona.analyze` | 심연 해석 |
+| VEO | `veo_generate` | `veo.video.generate` | 비디오 생성 |
+| STORY | `story_architect` | `dimension.story.architect` | 시나리오 설계 |
+| SOUND | `sound_crafter` | `dimension.sound.craft` | 사운드 프롬프트 |
+
+### 3.3 Frontend Integration (AG-UI Transition)
+
+- **현재 런타임 경로**: `frontend/src/components/AgentChatAccordion.tsx` + `frontend/src/lib/agent-event-handlers.ts`가 `agent.*` SSE 이벤트를 직접 처리합니다.
+- **직처리 화면 경계**: 채팅 메인 UI와 `frontend/src/app/flow/page.tsx`(Train Workflow)에서 동일 이벤트 체인을 사용합니다.
+- **AG-UI 매퍼 상태**: `frontend/src/lib/agui/eventMapper.ts`가 존재하지만 `mapToAgui()`를 사용하는 프로덕션 경로가 아직 없습니다.
+- **A2UI 스택 상태**: `frontend/src/lib/a2ui/validator.ts`, `frontend/src/lib/a2ui/renderer.tsx`는 준비되어 있으나 SSE 이벤트와 미연결입니다.
+
+### 3.4 Intent → Capsule Resolver
+
+> **Status**: VEO, SOUND, 1D 구현 완료. AD는 Router 직접 통합.
+
+각 Dimension Tool은 `resolve_from_intent()` 함수를 통해 Intent를 해석합니다:
+
+```mermaid
+flowchart LR
+    Template["Template<br/>(Intent Only)"]
+    Intent["CreativeIntent<br/>(mood, pace, target)"]
+    Resolver["Dimension Resolver"]
+    RAG["RAG Sources<br/>(NotebookLM, Papers, 사주)"]
+    Params["Resolved Params"]
+    Capsule["Capsule Execution"]
+    
+    Template --> Intent
+    Intent --> Resolver
+    RAG --> Resolver
+    Resolver --> Params
+    Params --> Capsule
+```
+
+**Per-Dimension Resolver Mapping**:
+| Dimension | Resolver Class | Intent → Params Example |
+|-----------|----------------|-------------------------|
+| 1D | `PromptResolver` | mood=cinematic → tone=dramatic |
+| VEO | `VEOResolver` | mood=cinematic → lens=anamorphic, fps=24 |
+| SOUND | `SoundResolver` | mood=cinematic → genre=orchestral |
+| AD | Router 직접 통합 | `aesthetic.py`에서 Intent 처리 |
+
+**Benefits**:
+- 템플릿은 앱 파라미터를 몰라도 됨 (결합도 감소)
+- 집단지성 활용: 비개발자가 RAG 소스에 지식 축적 → 시스템 자동 활용
+- 새 앱 추가 시 Resolver만 구현
+
+---
+
+
+## 4. Workflow Execution Flow
+
+```mermaid
+flowchart TD
+    Start([User: "영상 만들어줘"]) --> Intent[IntentRouter]
+    Intent -->|WORKFLOW_REQUEST| Compose[compose_smart_workflow]
+    Compose --> Lock{Session Lock?}
+    Lock -->|Locked| Reject[Return Error]
+    Lock -->|Free| Acquire[Acquire Lock]
+    Acquire --> Loop[For each Dimension]
+    
+    subgraph Execution["Sequential Execution"]
+        Loop --> Execute[execute_tool_by_key]
+        Execute --> QC{Quality Check?}
+        QC -->|Score < 70| Retry[Retry with Feedback]
+        QC -->|Score >= 70| Next[Next Dimension]
+        Next --> Loop
+    end
+
+    Loop -->|Complete| Release[Release Lock]
+    Release --> Result([Return Workflow Result])
+```
+
+---
+
+## 5. Hardening Measures (2026-01)
+
+### 5.1 Memory Management
+- **Bounded Buffers**: EvidenceCollector uses maxlen buffers to cap memory growth.
+- **TTL/Cleanup Helpers**: Workflow execution locks use TTLCache; rate limiter cleanup helpers exist (periodic scheduling TBD).
+
+### 5.2 Concurrency Control
+- **Session Locking**: Critical sections (like Workflow Execution) acquire per-session locks to prevent race conditions.
+- **Thread Safety**: All shared state in `EvidenceCollector` and `MemoryManager` is mutex-protected.
+
+### 5.3 UX Safety
+- **Timeout Handling**: Frontend enforces a 30s timeout on "Pending" tools to prevent UI freezes.
+- **Intent Routing**: Improved regex/keyword matching for "Trend" and English queries to prevent fallback failures.
+- **Hallucination Control**: System prompts explicitly forbid "Ghost Buttons" and enforce direct Tool usage.
+
+---
+
+## 6. File Reference
+
+| Layer | Key Files | Description |
+|-------|-----------|-------------|
+| **Agent Core** | `agents/vivid_agent.py` | Main agent logic, LLM integration |
+| **Tools** | `agents/dimension_tools.py` | 10 Dimension tool wrappers |
+| **Tools** | `agents/workflow_tools.py` | Workflow orchestration |
+| **Tools** | `agents/humancloud_tools.py` | Marketplace tools |
+| **Telemetry** | `agents/evidence_loop.py` | Metrics collection |
+| **Intent** | `agents/intent_router.py` | User intent classification |
+| **Frontend** | `lib/agent-event-handlers.ts` | SSE event processing |
+| **Frontend** | `components/AgentChatAccordion.tsx` | Chat UI component |
