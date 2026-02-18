@@ -194,6 +194,7 @@ async def recommend_next_scene(payload: FoundryRecommendationRequest) -> Foundry
 @router.post("/experiments/assign", response_model=FoundryExperimentAssignResponse)
 async def assign_experiment(payload: FoundryExperimentAssignRequest) -> FoundryExperimentAssignResponse:
     result = _experiment_service.assign(
+        tenant_id=payload.tenant_id,
         experiment_key=payload.experiment_key,
         user_key=payload.user_key,
         scene_id=payload.scene_id,
@@ -205,6 +206,7 @@ async def assign_experiment(payload: FoundryExperimentAssignRequest) -> FoundryE
 @router.post("/experiments/feedback")
 async def record_experiment_feedback(payload: FoundryExperimentFeedbackRequest) -> dict[str, Any]:
     return _experiment_service.record_feedback(
+        tenant_id=payload.tenant_id,
         experiment_key=payload.experiment_key,
         user_key=payload.user_key,
         variant=payload.variant,
@@ -214,13 +216,14 @@ async def record_experiment_feedback(payload: FoundryExperimentFeedbackRequest) 
 
 
 @router.get("/experiments/{experiment_key}/summary")
-async def experiment_summary(experiment_key: str) -> dict[str, Any]:
-    return _experiment_service.summary(experiment_key)
+async def experiment_summary(experiment_key: str, tenant_id: str = "default") -> dict[str, Any]:
+    return _experiment_service.summary(tenant_id=tenant_id, experiment_key=experiment_key)
 
 
 @router.post("/memory/normalize")
 async def normalize_memory(payload: FoundryMemoryNormalizeRequest) -> dict[str, Any]:
     normalized = _memory_adapter.normalize(
+        tenant_id=payload.tenant_id,
         project_id=payload.project_id,
         scene_id=payload.scene_id,
         source_channel=payload.source_channel,
@@ -236,6 +239,7 @@ async def retrieval_query(payload: FoundryRetrievalRequest) -> dict[str, Any]:
     if payload.query_type not in {"director_context", "shot_reference"}:
         raise HTTPException(status_code=400, detail="Unsupported query_type")
     return _retrieval_service.query(
+        tenant_id=payload.tenant_id,
         project_id=payload.project_id,
         query_type=payload.query_type,
         query=payload.query,

@@ -28,6 +28,7 @@ _MISE_KEYWORDS = {
 
 @dataclass
 class MemoryEntry:
+    tenant_id: str
     project_id: str
     scene_id: str | None
     source_channel: str
@@ -40,6 +41,7 @@ class MemoryEntry:
 
     def to_dict(self) -> dict:
         return {
+            "tenant_id": self.tenant_id,
             "project_id": self.project_id,
             "scene_id": self.scene_id,
             "source_channel": self.source_channel,
@@ -58,6 +60,7 @@ class OpenClawMemoryAdapter:
     def normalize(
         self,
         *,
+        tenant_id: str,
         project_id: str,
         scene_id: str | None,
         source_channel: str,
@@ -82,6 +85,7 @@ class OpenClawMemoryAdapter:
             intents = self._infer_intent_tags(lower)
 
         return MemoryEntry(
+            tenant_id=tenant_id,
             project_id=project_id,
             scene_id=scene_id,
             source_channel=source_channel,
@@ -109,14 +113,15 @@ class InMemoryDirectorMemoryStore:
     """Simple project memory store used by Foundry dual-retrieval path."""
 
     def __init__(self):
-        self._items: Dict[str, List[MemoryEntry]] = {}
+        self._items: Dict[tuple[str, str], List[MemoryEntry]] = {}
 
     def put(self, entry: MemoryEntry) -> None:
-        self._items.setdefault(entry.project_id, []).append(entry)
+        key = (entry.tenant_id, entry.project_id)
+        self._items.setdefault(key, []).append(entry)
 
-    def search(self, project_id: str, query: str, limit: int = 5) -> List[dict]:
+    def search(self, tenant_id: str, project_id: str, query: str, limit: int = 5) -> List[dict]:
         query_terms = [term for term in query.lower().split() if term]
-        items = self._items.get(project_id, [])
+        items = self._items.get((tenant_id, project_id), [])
         if not items:
             return []
 
@@ -143,4 +148,3 @@ class InMemoryDirectorMemoryStore:
 
         scored.sort(key=lambda x: x[0], reverse=True)
         return [entry.to_dict() for _, entry in scored[:limit]]
-

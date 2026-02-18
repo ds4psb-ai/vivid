@@ -3319,6 +3319,7 @@ export interface FoundryRecommendationResponse {
 }
 
 export interface FoundryExperimentAssignRequest {
+  tenant_id?: string;
   experiment_key: string;
   user_key: string;
   scene_id?: string;
@@ -3328,12 +3329,14 @@ export interface FoundryExperimentAssignRequest {
 }
 
 export interface FoundryExperimentAssignResponse {
+  tenant_id?: string;
   experiment_key: string;
   assigned_variant: string;
   hash_slot: number;
 }
 
 export interface FoundryExperimentFeedbackRequest {
+  tenant_id?: string;
   experiment_key: string;
   user_key: string;
   variant: string;
@@ -3344,6 +3347,7 @@ export interface FoundryExperimentFeedbackRequest {
 }
 
 export interface FoundryExperimentSummaryResponse {
+  tenant_id?: string;
   experiment_key: string;
   total_events: number;
   variants: Record<
@@ -3362,6 +3366,7 @@ export interface FoundryExperimentSummaryResponse {
 }
 
 export interface FoundryMemoryNormalizeRequest {
+  tenant_id?: string;
   project_id: string;
   scene_id?: string;
   source_channel: "telegram" | "web" | "notion" | "other";
@@ -3386,6 +3391,7 @@ export interface FoundryMemoryNormalizeResponse {
 }
 
 export interface FoundryRetrievalRequest {
+  tenant_id?: string;
   project_id: string;
   query_type: "director_context" | "shot_reference";
   query: string;

@@ -128,6 +128,7 @@ class FoundryRecommendationResponse(BaseModel):
 
 
 class FoundryExperimentAssignRequest(BaseModel):
+    tenant_id: str = Field(default="default", min_length=1, max_length=120)
     experiment_key: str = Field(..., min_length=1, max_length=120)
     user_key: str = Field(..., min_length=1, max_length=120)
     scene_id: Optional[str] = Field(default=None, max_length=120)
@@ -137,12 +138,14 @@ class FoundryExperimentAssignRequest(BaseModel):
 
 
 class FoundryExperimentAssignResponse(BaseModel):
+    tenant_id: str = "default"
     experiment_key: str
     assigned_variant: str
     hash_slot: int
 
 
 class FoundryExperimentFeedbackRequest(BaseModel):
+    tenant_id: str = Field(default="default", min_length=1, max_length=120)
     experiment_key: str = Field(..., min_length=1, max_length=120)
     user_key: str = Field(..., min_length=1, max_length=120)
     variant: str = Field(..., min_length=1, max_length=60)
@@ -153,6 +156,7 @@ class FoundryExperimentFeedbackRequest(BaseModel):
 
 
 class FoundryMemoryNormalizeRequest(BaseModel):
+    tenant_id: str = Field(default="default", min_length=1, max_length=120)
     project_id: str = Field(..., min_length=1, max_length=120)
     scene_id: Optional[str] = Field(default=None, max_length=120)
     source_channel: Literal["telegram", "web", "notion", "other"] = "other"
@@ -163,6 +167,7 @@ class FoundryMemoryNormalizeRequest(BaseModel):
 
 
 class FoundryRetrievalRequest(BaseModel):
+    tenant_id: str = Field(default="default", min_length=1, max_length=120)
     project_id: str = Field(..., min_length=1, max_length=120)
     query_type: Literal["director_context", "shot_reference"]
     query: str = Field(..., min_length=1, max_length=500)

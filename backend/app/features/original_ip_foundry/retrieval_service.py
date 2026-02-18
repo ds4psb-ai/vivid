@@ -19,13 +19,19 @@ class FoundryRetrievalService:
     def query(
         self,
         *,
+        tenant_id: str,
         project_id: str,
         query_type: str,
         query: str,
         limit: int = 5,
     ) -> dict:
         if query_type == "director_context":
-            items = self._memory_store.search(project_id=project_id, query=query, limit=limit)
+            items = self._memory_store.search(
+                tenant_id=tenant_id,
+                project_id=project_id,
+                query=query,
+                limit=limit,
+            )
             return {
                 "source": "openclaw_memory",
                 "query_type": query_type,
@@ -38,4 +44,3 @@ class FoundryRetrievalService:
             "query_type": query_type,
             "items": items,
         }
-
