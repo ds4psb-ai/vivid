@@ -8,8 +8,10 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.routing import APIRoute
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
+from app.database import get_db
 from app.features.original_ip_foundry.c2pa_export_service import FoundryC2PAExportService
 from app.features.original_ip_foundry.contracts import (
     FoundryC2PAExportRequest,
@@ -34,10 +36,8 @@ from app.features.original_ip_foundry.foundry_auth import (
     foundry_write_guard,
     require_foundry_access,
 )
-from app.features.original_ip_foundry.memory_adapter import (
-    InMemoryDirectorMemoryStore,
-    OpenClawMemoryAdapter,
-)
+from app.features.original_ip_foundry.memory_adapter import OpenClawMemoryAdapter
+from app.features.original_ip_foundry.qdrant_memory_store import QdrantDirectorMemoryStore
 from app.features.original_ip_foundry.pattern_extraction_service import PatternExtractionService
 from app.features.original_ip_foundry.recommendation_service import FoundryRecommendationService
 from app.features.original_ip_foundry.retrieval_service import FoundryRetrievalService
@@ -126,7 +126,7 @@ class FoundryAuditRoute(APIRoute):
 
 
 _memory_adapter = OpenClawMemoryAdapter()
-_memory_store = InMemoryDirectorMemoryStore()
+_memory_store = QdrantDirectorMemoryStore()
 _pattern_service = PatternExtractionService()
 _rights_service = FoundryRightsService()
 _recommendation_service = FoundryRecommendationService(_rights_service)
@@ -168,12 +168,17 @@ async def foundry_status() -> dict[str, Any]:
 
 
 @router.post("/rights/evaluate-assets", response_model=FoundryRightsEvaluationResponse)
-async def evaluate_rights(payload: FoundryRightsEvaluationRequest) -> FoundryRightsEvaluationResponse:
-    result = _rights_service.evaluate_assets(
+async def evaluate_rights(
+    payload: FoundryRightsEvaluationRequest,
+    db: AsyncSession = Depends(get_db),
+) -> FoundryRightsEvaluationResponse:
+    result = await _rights_service.evaluate_assets(
         action=payload.action,
         assets=[asset.model_dump() for asset in payload.assets],
         requested_elements=payload.requested_elements,
         evidence_refs=payload.evidence_refs,
+        db=db,
+        project_id="unknown",
     )
     return FoundryRightsEvaluationResponse(**result)
 
@@ -190,7 +195,7 @@ async def extract_patterns(payload: FoundryPatternExtractionRequest) -> FoundryP
 
 @router.post("/recommendations/next-scene", response_model=FoundryRecommendationResponse)
 async def recommend_next_scene(payload: FoundryRecommendationRequest) -> FoundryRecommendationResponse:
-    result = _recommendation_service.recommend(
+    result = await _recommendation_service.recommend(
         scene_context=payload.scene_context.model_dump(),
         candidates=[candidate.model_dump() for candidate in payload.candidates],
         rights_action=payload.rights_action,

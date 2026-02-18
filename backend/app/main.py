@@ -204,6 +204,15 @@ async def lifespan(app: FastAPI):
         logger.error(f"[STARTUP] Database initialization failed: {e}")
         raise  # DB failure is fatal
 
+    # Initialize Foundry Qdrant Collections (non-fatal)
+    try:
+        logger.info("[STARTUP] Initializing Foundry Qdrant collections...")
+        from app.features.original_ip_foundry.qdrant_collections import ensure_all_foundry_collections
+        await ensure_all_foundry_collections()
+        logger.info("[STARTUP] Foundry Qdrant collections initialized")
+    except Exception as e:
+        logger.warning(f"[STARTUP] Foundry Qdrant collection init failed (non-fatal): {e}")
+
     # Initialize Redis client (opt-in via REDIS_ENABLED)
     from app.redis_client import init_redis, close_redis
     redis_available = False

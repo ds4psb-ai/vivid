@@ -1,10 +1,13 @@
+import pytest
+
 from app.features.original_ip_foundry.recommendation_service import FoundryRecommendationService
 from app.features.original_ip_foundry.rights_service import FoundryRightsService
 
 
-def test_recommendation_blocks_when_rights_fail():
+@pytest.mark.asyncio
+async def test_recommendation_blocks_when_rights_fail():
     service = FoundryRecommendationService(FoundryRightsService())
-    result = service.recommend(
+    result = await service.recommend(
         scene_context={
             "scene_id": "scene-10",
             "characters": ["hero"],
@@ -51,9 +54,10 @@ def test_recommendation_blocks_when_rights_fail():
     assert "RIGHTS_BLOCKED" in top["reason_codes"]
 
 
-def test_recommendation_holds_when_continuity_below_gate():
+@pytest.mark.asyncio
+async def test_recommendation_holds_when_continuity_below_gate():
     service = FoundryRecommendationService(FoundryRightsService())
-    result = service.recommend(
+    result = await service.recommend(
         scene_context={
             "scene_id": "scene-11",
             "characters": ["hero", "villain"],

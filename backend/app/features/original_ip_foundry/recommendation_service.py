@@ -12,7 +12,7 @@ class FoundryRecommendationService:
     def __init__(self, rights_service: FoundryRightsService | None = None):
         self._rights_service = rights_service or FoundryRightsService()
 
-    def recommend(
+    async def recommend(
         self,
         *,
         scene_context: dict,
@@ -38,7 +38,7 @@ class FoundryRecommendationService:
                 shots=shots,
             )
 
-            rights = self._rights_service.evaluate_assets(
+            rights = await self._rights_service.evaluate_assets(
                 action=rights_action,
                 assets=candidate.get("rights_assets") or [],
                 requested_elements=candidate.get("pattern_tags") or [],

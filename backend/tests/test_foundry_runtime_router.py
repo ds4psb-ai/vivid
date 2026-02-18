@@ -1,10 +1,18 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
+from app.database import get_db
 from app.features.original_ip_foundry.foundry_router import router
+
+
+async def _fake_db():
+    """Yield a mock AsyncSession for tests that don't need real DB."""
+    mock = AsyncMock()
+    mock.execute = AsyncMock(return_value=MagicMock(scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[])))))
+    yield mock
 
 
 def _token_payload(email: str = "ted.taeeun.kim@gmail.com") -> dict:
@@ -15,6 +23,7 @@ def _token_payload(email: str = "ted.taeeun.kim@gmail.com") -> dict:
 async def test_rights_evaluate_assets_endpoint_returns_decision():
     app = FastAPI()
     app.include_router(router, prefix="/api/v1/foundry")
+    app.dependency_overrides[get_db] = _fake_db
 
     safe_paths = {
         "/api/v1/foundry/rights/evaluate-assets",
