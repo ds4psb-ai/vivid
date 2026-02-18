@@ -237,3 +237,30 @@ class FoundryWorkerStatusResponse(BaseModel):
     job_type: Optional[str] = None
     updated_at: Optional[str] = None
     message: Optional[str] = None
+
+
+class FoundryEnginePromptResult(BaseModel):
+    engine: str
+    prompt_text: str
+    negative_prompt: str = ""
+    metadata: dict = Field(default_factory=dict)
+
+
+class FoundryPromptCompileRequest(BaseModel):
+    project_id: str = Field(..., min_length=1, max_length=120)
+    scene_id: str = Field(..., min_length=1, max_length=120)
+    shots: List[FoundryShotInput] = Field(default_factory=list)
+    engines: Optional[List[str]] = Field(default=None)
+    model: Optional[str] = Field(default=None, max_length=80)
+    input_type: Optional[str] = Field(default="prompt_compile")
+
+
+class FoundryCompiledShot(BaseModel):
+    shot_id: str
+    engines: dict[str, FoundryEnginePromptResult] = Field(default_factory=dict)
+
+
+class FoundryPromptCompileResponse(BaseModel):
+    project_id: str
+    scene_id: str
+    compiled_shots: List[FoundryCompiledShot] = Field(default_factory=list)

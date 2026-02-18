@@ -1,9 +1,15 @@
 """Shot-level pattern extraction for Original-IP Foundry."""
 from __future__ import annotations
 
+import logging
 from collections import Counter, defaultdict
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import TYPE_CHECKING, Dict, List, Optional
+
+if TYPE_CHECKING:
+    from app.features.original_ip_foundry.qdrant_pattern_store import QdrantPatternAtomStore
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -29,9 +35,10 @@ class PatternKey:
 class PatternExtractionService:
     """Extract and index pattern atoms from shot sequences."""
 
-    def __init__(self):
+    def __init__(self, qdrant_store: Optional["QdrantPatternAtomStore"] = None):
         self._atoms_by_project: Dict[str, List[dict]] = defaultdict(list)
         self._atoms_by_project_scene: Dict[tuple[str, str], List[dict]] = {}
+        self._qdrant_store = qdrant_store
 
     def extract(
         self,
@@ -90,9 +97,30 @@ class PatternExtractionService:
         }
         self._atoms_by_project[project_id].extend(atoms)
         self._atoms_by_project_scene[(project_id, scene_id)] = atoms
+
+        if self._qdrant_store and atoms:
+            try:
+                self._qdrant_store.upsert_batch(
+                    project_id=project_id, scene_id=scene_id, atoms=atoms,
+                )
+            except Exception as e:
+                logger.warning(f"[PatternExtraction] Qdrant persistence failed (non-fatal): {e}")
+
         return result
 
     def search_atoms(self, project_id: str, query: str, limit: int = 5) -> List[dict]:
+        # Try Qdrant first if available
+        if self._qdrant_store:
+            try:
+                qdrant_results = self._qdrant_store.search_atoms(
+                    project_id=project_id, query=query, limit=limit,
+                )
+                if qdrant_results:
+                    return qdrant_results
+            except Exception as e:
+                logger.warning(f"[PatternExtraction] Qdrant search failed, falling back to in-memory: {e}")
+
+        # In-memory fallback
         haystack = self._atoms_by_project.get(project_id, [])
         if not haystack:
             return []

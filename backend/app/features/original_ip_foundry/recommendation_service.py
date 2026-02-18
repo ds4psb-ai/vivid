@@ -9,8 +9,9 @@ from app.features.original_ip_foundry.rights_service import FoundryRightsService
 class FoundryRecommendationService:
     """Rank candidate scene variants with continuity as the first gate."""
 
-    def __init__(self, rights_service: FoundryRightsService | None = None):
+    def __init__(self, rights_service: FoundryRightsService | None = None, clone_risk_service=None):
         self._rights_service = rights_service or FoundryRightsService()
+        self._clone_risk_service = clone_risk_service
 
     async def recommend(
         self,
@@ -50,6 +51,18 @@ class FoundryRecommendationService:
                 candidate_tags={str(tag).lower() for tag in (candidate.get("pattern_tags") or [])},
             )
             clone_risk = float(candidate.get("clone_risk", 0.0))
+            if clone_risk == 0.0 and self._clone_risk_service is not None:
+                try:
+                    clone_risk = self._clone_risk_service.compute(
+                        candidate_tags=candidate.get("pattern_tags", []),
+                        project_id=scene_context.get("project_id", ""),
+                        reference_licenses=[
+                            a.get("source_license", "")
+                            for a in (candidate.get("rights_assets") or [])
+                        ],
+                    )
+                except Exception:
+                    clone_risk = 0.0
 
             final_score = (
                 0.40 * continuity

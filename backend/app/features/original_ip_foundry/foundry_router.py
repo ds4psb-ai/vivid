@@ -16,12 +16,16 @@ from app.features.original_ip_foundry.c2pa_export_service import FoundryC2PAExpo
 from app.features.original_ip_foundry.contracts import (
     FoundryC2PAExportRequest,
     FoundryC2PAExportResponse,
+    FoundryCompiledShot,
+    FoundryEnginePromptResult,
     FoundryExperimentAssignRequest,
     FoundryExperimentAssignResponse,
     FoundryExperimentFeedbackRequest,
     FoundryMemoryNormalizeRequest,
     FoundryPatternExtractionRequest,
     FoundryPatternExtractionResponse,
+    FoundryPromptCompileRequest,
+    FoundryPromptCompileResponse,
     FoundryRecommendationRequest,
     FoundryRecommendationResponse,
     FoundryRetrievalRequest,
@@ -31,13 +35,16 @@ from app.features.original_ip_foundry.contracts import (
     FoundryRightsEvaluationRequest,
     FoundryRightsEvaluationResponse,
 )
+from app.features.original_ip_foundry.clone_risk_service import CloneRiskService
 from app.features.original_ip_foundry.experiment_service import FoundryExperimentService
 from app.features.original_ip_foundry.foundry_auth import (
     foundry_write_guard,
     require_foundry_access,
 )
 from app.features.original_ip_foundry.memory_adapter import OpenClawMemoryAdapter
+from app.features.original_ip_foundry.prompt_compiler import FoundryPromptCompiler
 from app.features.original_ip_foundry.qdrant_memory_store import QdrantDirectorMemoryStore
+from app.features.original_ip_foundry.qdrant_pattern_store import QdrantPatternAtomStore
 from app.features.original_ip_foundry.pattern_extraction_service import PatternExtractionService
 from app.features.original_ip_foundry.recommendation_service import FoundryRecommendationService
 from app.features.original_ip_foundry.retrieval_service import FoundryRetrievalService
@@ -127,12 +134,15 @@ class FoundryAuditRoute(APIRoute):
 
 _memory_adapter = OpenClawMemoryAdapter()
 _memory_store = QdrantDirectorMemoryStore()
-_pattern_service = PatternExtractionService()
+_qdrant_pattern_store = QdrantPatternAtomStore()
+_pattern_service = PatternExtractionService(qdrant_store=_qdrant_pattern_store)
 _rights_service = FoundryRightsService()
-_recommendation_service = FoundryRecommendationService(_rights_service)
+_clone_risk_service = CloneRiskService(qdrant_pattern_store=_qdrant_pattern_store)
+_recommendation_service = FoundryRecommendationService(_rights_service, clone_risk_service=_clone_risk_service)
 _experiment_service = FoundryExperimentService()
 _retrieval_service = FoundryRetrievalService(_memory_store, _pattern_service)
 _c2pa_export_service = FoundryC2PAExportService()
+_prompt_compiler = FoundryPromptCompiler()
 _worker_runtime = FoundryWorkerRuntime()
 
 
@@ -218,7 +228,7 @@ async def assign_experiment(payload: FoundryExperimentAssignRequest) -> FoundryE
 
 @router.post("/experiments/feedback")
 async def record_experiment_feedback(payload: FoundryExperimentFeedbackRequest) -> dict[str, Any]:
-    return _experiment_service.record_feedback(
+    return await _experiment_service.record_feedback(
         tenant_id=payload.tenant_id,
         experiment_key=payload.experiment_key,
         user_key=payload.user_key,
@@ -327,3 +337,28 @@ async def cancel_worker_job(
     except JobScopeMismatchError as exc:
         raise HTTPException(status_code=403, detail=str(exc)) from exc
     return FoundryWorkerStatusResponse(**status)
+
+
+@router.post("/prompts/compile", response_model=FoundryPromptCompileResponse)
+async def compile_prompts(payload: FoundryPromptCompileRequest) -> FoundryPromptCompileResponse:
+    compiled = _prompt_compiler.compile_scene(
+        [shot.model_dump() for shot in payload.shots],
+        engines=payload.engines,
+    )
+    compiled_shots = []
+    for shot_input, engine_results in zip(payload.shots, compiled):
+        engines_out = {
+            engine: FoundryEnginePromptResult(
+                engine=result.engine,
+                prompt_text=result.prompt_text,
+                negative_prompt=result.negative_prompt,
+                metadata=result.metadata,
+            )
+            for engine, result in engine_results.items()
+        }
+        compiled_shots.append(FoundryCompiledShot(shot_id=shot_input.shot_id, engines=engines_out))
+    return FoundryPromptCompileResponse(
+        project_id=payload.project_id,
+        scene_id=payload.scene_id,
+        compiled_shots=compiled_shots,
+    )
