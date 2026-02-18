@@ -343,6 +343,9 @@ class Settings(BaseSettings):
         "/api/v1/foundry/workers/dispatch,"
         "/api/v1/foundry/workers/jobs"
     )
+    AD_FOUNDRY_CONTINUITY_FLOOR: float = 0.6
+    AD_FOUNDRY_CLONE_BLOCK_THRESHOLD: float = 0.7
+    AD_FOUNDRY_CLONE_REVIEW_THRESHOLD: float = 0.4
 
     # ==========================================================================
     # MCP (Model Context Protocol) Configuration - Phase 4 2026

@@ -1,0 +1,407 @@
+[
+  {
+    "test_id": "high_001",
+    "category": "high",
+    "first_shot": {"shot_size": "wide", "camera_angle": "eye_level", "camera_movement": "static", "emotion_tone": "neutral", "location": "hotel_lobby", "characters": ["jack", "wendy"], "transition_to_next": "cut"},
+    "scene_context": {"characters": ["jack", "wendy"], "location": "hotel_lobby", "desired_camera_rhythm": "balanced", "intent_tags": ["tension"]},
+    "candidate": {"shots": [{"shot_size": "wide", "camera_angle": "eye_level", "camera_movement": "static", "emotion_tone": "neutral", "location": "hotel_lobby", "characters": ["jack", "wendy"], "transition_to_next": "cut"}]},
+    "expected": 0.925,
+    "tolerance": 0.1
+  },
+  {
+    "test_id": "high_002",
+    "category": "high",
+    "first_shot": {"shot_size": "medium", "camera_angle": "eye_level", "camera_movement": "dolly", "emotion_tone": "tension", "location": "corridor", "characters": ["danny"], "transition_to_next": "dissolve"},
+    "scene_context": {"characters": ["danny"], "location": "corridor", "desired_camera_rhythm": "dynamic", "intent_tags": ["anxiety"]},
+    "candidate": {"shots": [{"shot_size": "medium", "camera_angle": "eye_level", "camera_movement": "dolly", "emotion_tone": "tension", "location": "corridor", "characters": ["danny"], "transition_to_next": "dissolve"}]},
+    "expected": 0.867,
+    "tolerance": 0.1
+  },
+  {
+    "test_id": "high_003",
+    "category": "high",
+    "first_shot": {"shot_size": "close_up", "camera_angle": "low_angle", "camera_movement": "static", "emotion_tone": "neutral", "location": "office", "characters": ["boss"], "transition_to_next": "cut"},
+    "scene_context": {"characters": ["boss"], "location": "office", "desired_camera_rhythm": "calm", "intent_tags": []},
+    "candidate": {"shots": [{"shot_size": "close_up", "camera_angle": "low_angle", "camera_movement": "static", "emotion_tone": "neutral", "location": "office", "characters": ["boss"], "transition_to_next": "cut"}]},
+    "expected": 1.0,
+    "tolerance": 0.1
+  },
+  {
+    "test_id": "high_004",
+    "category": "high",
+    "first_shot": {"shot_size": "wide", "camera_angle": "eye_level", "camera_movement": "tracking", "emotion_tone": "joy", "location": "garden", "characters": ["mija", "okja"], "transition_to_next": "dissolve"},
+    "scene_context": {"characters": ["mija", "okja"], "location": "garden", "desired_camera_rhythm": "dynamic", "intent_tags": ["joy"]},
+    "candidate": {"shots": [{"shot_size": "wide", "camera_angle": "eye_level", "camera_movement": "tracking", "emotion_tone": "joy", "location": "garden", "characters": ["mija", "okja"], "transition_to_next": "dissolve"}]},
+    "expected": 0.867,
+    "tolerance": 0.1
+  },
+  {
+    "test_id": "high_005",
+    "category": "high",
+    "first_shot": {"shot_size": "medium", "camera_angle": "eye_level", "camera_movement": "handheld", "emotion_tone": "neutral", "location": "diner", "characters": ["jules", "vincent"], "transition_to_next": "cut"},
+    "scene_context": {"characters": ["jules", "vincent"], "location": "diner", "desired_camera_rhythm": "dynamic", "intent_tags": []},
+    "candidate": {"shots": [{"shot_size": "medium", "camera_angle": "eye_level", "camera_movement": "handheld", "emotion_tone": "neutral", "location": "diner", "characters": ["jules", "vincent"], "transition_to_next": "cut"}]},
+    "expected": 0.9,
+    "tolerance": 0.1
+  },
+  {
+    "test_id": "high_006",
+    "category": "high",
+    "first_shot": {"shot_size": "extreme_wide", "camera_angle": "birds_eye", "camera_movement": "crane", "emotion_tone": "awe", "location": "space", "characters": [], "transition_to_next": "match_cut"},
+    "scene_context": {"characters": [], "location": "space", "desired_camera_rhythm": "balanced", "intent_tags": ["awe"]},
+    "candidate": {"shots": [{"shot_size": "extreme_wide", "camera_angle": "birds_eye", "camera_movement": "crane", "emotion_tone": "awe", "location": "space", "characters": [], "transition_to_next": "match_cut"}]},
+    "expected": 0.817,
+    "tolerance": 0.1
+  },
+  {
+    "test_id": "high_007",
+    "category": "high",
+    "first_shot": {"shot_size": "medium_close_up", "camera_angle": "eye_level", "camera_movement": "static", "emotion_tone": "melancholy", "location": "cafe", "characters": ["su_li_zhen"], "transition_to_next": "dissolve"},
+    "scene_context": {"characters": ["su_li_zhen"], "location": "cafe", "desired_camera_rhythm": "calm", "intent_tags": []},
+    "candidate": {"shots": [{"shot_size": "medium_close_up", "camera_angle": "eye_level", "camera_movement": "static", "emotion_tone": "melancholy", "location": "cafe", "characters": ["su_li_zhen"], "transition_to_next": "dissolve"}]},
+    "expected": 0.867,
+    "tolerance": 0.1
+  },
+  {
+    "test_id": "high_008",
+    "category": "high",
+    "first_shot": {"shot_size": "wide", "camera_angle": "high_angle", "camera_movement": "crane", "emotion_tone": "tension", "location": "mansion", "characters": ["ki_woo", "ki_taek"], "transition_to_next": "cut"},
+    "scene_context": {"characters": ["ki_woo", "ki_taek"], "location": "mansion", "desired_camera_rhythm": "balanced", "intent_tags": []},
+    "candidate": {"shots": [{"shot_size": "wide", "camera_angle": "high_angle", "camera_movement": "crane", "emotion_tone": "tension", "location": "mansion", "characters": ["ki_woo", "ki_taek"], "transition_to_next": "cut"}]},
+    "expected": 0.767,
+    "tolerance": 0.1
+  },
+  {
+    "test_id": "high_009",
+    "category": "high",
+    "first_shot": {"shot_size": "close_up", "camera_angle": "eye_level", "camera_movement": "static", "emotion_tone": "neutral", "location": "bedroom", "characters": ["cobb"], "transition_to_next": "cut"},
+    "scene_context": {"characters": ["cobb"], "location": "bedroom", "desired_camera_rhythm": "calm", "intent_tags": []},
+    "candidate": {"shots": [{"shot_size": "close_up", "camera_angle": "eye_level", "camera_movement": "static", "emotion_tone": "neutral", "location": "bedroom", "characters": ["cobb"], "transition_to_next": "cut"}]},
+    "expected": 1.0,
+    "tolerance": 0.1
+  },
+  {
+    "test_id": "high_010",
+    "category": "high",
+    "first_shot": {"shot_size": "medium", "camera_angle": "eye_level", "camera_movement": "steadicam", "emotion_tone": "tension", "location": "hallway", "characters": ["alex"], "transition_to_next": "cut"},
+    "scene_context": {"characters": ["alex"], "location": "hallway", "desired_camera_rhythm": "dynamic", "intent_tags": ["power"]},
+    "candidate": {"shots": [{"shot_size": "medium", "camera_angle": "eye_level", "camera_movement": "steadicam", "emotion_tone": "tension", "location": "hallway", "characters": ["alex"], "transition_to_next": "cut"}]},
+    "expected": 0.867,
+    "tolerance": 0.1
+  },
+  {
+    "test_id": "medium_001",
+    "category": "medium",
+    "first_shot": {"shot_size": "wide", "camera_angle": "eye_level", "camera_movement": "static", "emotion_tone": "tension", "location": "street", "characters": ["detective"], "transition_to_next": "cut"},
+    "scene_context": {"characters": ["detective", "suspect"], "location": "street", "desired_camera_rhythm": "balanced", "intent_tags": []},
+    "candidate": {"shots": [{"shot_size": "wide", "camera_angle": "eye_level", "camera_movement": "static", "emotion_tone": "tension", "location": "street", "characters": ["detective"], "transition_to_next": "cut"}]},
+    "expected": 0.617,
+    "tolerance": 0.12
+  },
+  {
+    "test_id": "medium_002",
+    "category": "medium",
+    "first_shot": {"shot_size": "medium", "camera_angle": "eye_level", "camera_movement": "handheld", "emotion_tone": "melancholy", "location": "park", "characters": ["hero"], "transition_to_next": "dissolve"},
+    "scene_context": {"characters": ["hero"], "location": "beach", "desired_camera_rhythm": "dynamic", "intent_tags": []},
+    "candidate": {"shots": [{"shot_size": "medium", "camera_angle": "eye_level", "camera_movement": "handheld", "emotion_tone": "melancholy", "location": "park", "characters": ["hero"], "transition_to_next": "dissolve"}]},
+    "expected": 0.805,
+    "tolerance": 0.12
+  },
+  {
+    "test_id": "medium_003",
+    "category": "medium",
+    "first_shot": {"shot_size": "close_up", "camera_angle": "low_angle", "camera_movement": "static", "emotion_tone": "power", "location": "office", "characters": ["boss", "assistant"], "transition_to_next": "cut"},
+    "scene_context": {"characters": ["boss"], "location": "office", "desired_camera_rhythm": "calm", "intent_tags": []},
+    "candidate": {"shots": [{"shot_size": "close_up", "camera_angle": "low_angle", "camera_movement": "static", "emotion_tone": "power", "location": "office", "characters": ["boss", "assistant"], "transition_to_next": "cut"}]},
+    "expected": 0.684,
+    "tolerance": 0.12
+  },
+  {
+    "test_id": "medium_004",
+    "category": "medium",
+    "first_shot": {"shot_size": "wide", "camera_angle": "high_angle", "camera_movement": "crane", "emotion_tone": "awe", "location": "mountain", "characters": [], "transition_to_next": "dissolve"},
+    "scene_context": {"characters": ["hiker"], "location": "mountain", "desired_camera_rhythm": "balanced", "intent_tags": []},
+    "candidate": {"shots": [{"shot_size": "wide", "camera_angle": "high_angle", "camera_movement": "crane", "emotion_tone": "awe", "location": "mountain", "characters": [], "transition_to_next": "dissolve"}]},
+    "expected": 0.567,
+    "tolerance": 0.12
+  },
+  {
+    "test_id": "medium_005",
+    "category": "medium",
+    "first_shot": {"shot_size": "medium", "camera_angle": "eye_level", "camera_movement": "tracking", "emotion_tone": "tension", "location": "warehouse", "characters": ["mr_white", "mr_orange"], "transition_to_next": "cut"},
+    "scene_context": {"characters": ["mr_white"], "location": "warehouse", "desired_camera_rhythm": "dynamic", "intent_tags": []},
+    "candidate": {"shots": [{"shot_size": "medium", "camera_angle": "eye_level", "camera_movement": "tracking", "emotion_tone": "tension", "location": "warehouse", "characters": ["mr_white", "mr_orange"], "transition_to_next": "cut"}]},
+    "expected": 0.734,
+    "tolerance": 0.12
+  },
+  {
+    "test_id": "medium_006",
+    "category": "medium",
+    "first_shot": {"shot_size": "close_up", "camera_angle": "eye_level", "camera_movement": "handheld", "emotion_tone": "intimacy", "location": "apartment", "characters": ["su_li_zhen", "chow_mo_wan"], "transition_to_next": "dissolve"},
+    "scene_context": {"characters": ["su_li_zhen"], "location": "apartment", "desired_camera_rhythm": "calm", "intent_tags": []},
+    "candidate": {"shots": [{"shot_size": "close_up", "camera_angle": "eye_level", "camera_movement": "handheld", "emotion_tone": "intimacy", "location": "apartment", "characters": ["su_li_zhen", "chow_mo_wan"], "transition_to_next": "dissolve"}]},
+    "expected": 0.517,
+    "tolerance": 0.12
+  },
+  {
+    "test_id": "medium_007",
+    "category": "medium",
+    "first_shot": {"shot_size": "wide", "camera_angle": "eye_level", "camera_movement": "dolly", "emotion_tone": "neutral", "location": "casino", "characters": ["protagonist"], "transition_to_next": "match_cut"},
+    "scene_context": {"characters": ["protagonist", "dealer"], "location": "casino", "desired_camera_rhythm": "balanced", "intent_tags": []},
+    "candidate": {"shots": [{"shot_size": "wide", "camera_angle": "eye_level", "camera_movement": "dolly", "emotion_tone": "neutral", "location": "casino", "characters": ["protagonist"], "transition_to_next": "match_cut"}]},
+    "expected": 0.717,
+    "tolerance": 0.12
+  },
+  {
+    "test_id": "medium_008",
+    "category": "medium",
+    "first_shot": {"shot_size": "extreme_wide", "camera_angle": "birds_eye", "camera_movement": "crane", "emotion_tone": "melancholy", "location": "city", "characters": [], "transition_to_next": "fade"},
+    "scene_context": {"characters": ["wanderer"], "location": "city", "desired_camera_rhythm": "calm", "intent_tags": []},
+    "candidate": {"shots": [{"shot_size": "extreme_wide", "camera_angle": "birds_eye", "camera_movement": "crane", "emotion_tone": "melancholy", "location": "city", "characters": [], "transition_to_next": "fade"}]},
+    "expected": 0.567,
+    "tolerance": 0.12
+  },
+  {
+    "test_id": "medium_009",
+    "category": "medium",
+    "first_shot": {"shot_size": "medium", "camera_angle": "eye_level", "camera_movement": "static", "emotion_tone": "fear", "location": "basement", "characters": ["victim"], "transition_to_next": "cut"},
+    "scene_context": {"characters": ["victim", "captor"], "location": "basement", "desired_camera_rhythm": "calm", "intent_tags": ["fear"]},
+    "candidate": {"shots": [{"shot_size": "medium", "camera_angle": "eye_level", "camera_movement": "static", "emotion_tone": "fear", "location": "basement", "characters": ["victim"], "transition_to_next": "cut"}]},
+    "expected": 0.71,
+    "tolerance": 0.15
+  },
+  {
+    "test_id": "medium_010",
+    "category": "medium",
+    "first_shot": {"shot_size": "medium_wide", "camera_angle": "eye_level", "camera_movement": "tracking", "emotion_tone": "tension", "location": "train", "characters": ["curtis"], "transition_to_next": "cut"},
+    "scene_context": {"characters": ["curtis", "mason"], "location": "train", "desired_camera_rhythm": "aggressive", "intent_tags": []},
+    "candidate": {"shots": [{"shot_size": "medium_wide", "camera_angle": "eye_level", "camera_movement": "tracking", "emotion_tone": "tension", "location": "train", "characters": ["curtis"], "transition_to_next": "cut"}]},
+    "expected": 0.734,
+    "tolerance": 0.12
+  },
+  {
+    "test_id": "low_001",
+    "category": "low",
+    "first_shot": {"shot_size": "wide", "camera_angle": "eye_level", "camera_movement": "static", "emotion_tone": "joy", "location": "beach", "characters": ["stranger"], "transition_to_next": "cut"},
+    "scene_context": {"characters": ["jack", "wendy"], "location": "hotel", "desired_camera_rhythm": "calm", "intent_tags": []},
+    "candidate": {"shots": [{"shot_size": "wide", "camera_angle": "eye_level", "camera_movement": "static", "emotion_tone": "joy", "location": "beach", "characters": ["stranger"], "transition_to_next": "cut"}]},
+    "expected": 0.302,
+    "tolerance": 0.12
+  },
+  {
+    "test_id": "low_002",
+    "category": "low",
+    "first_shot": {"shot_size": "close_up", "camera_angle": "dutch_angle", "camera_movement": "whip_pan", "emotion_tone": "rage", "location": "alley", "characters": ["thug_a"], "transition_to_next": "jump_cut"},
+    "scene_context": {"characters": ["detective", "partner"], "location": "office", "desired_camera_rhythm": "calm", "intent_tags": ["investigation"]},
+    "candidate": {"shots": [{"shot_size": "close_up", "camera_angle": "dutch_angle", "camera_movement": "whip_pan", "emotion_tone": "rage", "location": "alley", "characters": ["thug_a"], "transition_to_next": "jump_cut"}]},
+    "expected": 0.15,
+    "tolerance": 0.12
+  },
+  {
+    "test_id": "low_003",
+    "category": "low",
+    "first_shot": {"shot_size": "extreme_wide", "camera_angle": "birds_eye", "camera_movement": "crane", "emotion_tone": "awe", "location": "desert", "characters": [], "transition_to_next": "dissolve"},
+    "scene_context": {"characters": ["hero", "villain"], "location": "city", "desired_camera_rhythm": "aggressive", "intent_tags": []},
+    "candidate": {"shots": [{"shot_size": "extreme_wide", "camera_angle": "birds_eye", "camera_movement": "crane", "emotion_tone": "awe", "location": "desert", "characters": [], "transition_to_next": "dissolve"}]},
+    "expected": 0.22,
+    "tolerance": 0.12
+  },
+  {
+    "test_id": "low_004",
+    "category": "low",
+    "first_shot": {"shot_size": "medium", "camera_angle": "eye_level", "camera_movement": "handheld", "emotion_tone": "fear", "location": "forest", "characters": ["child_a", "child_b"], "transition_to_next": "cut"},
+    "scene_context": {"characters": ["soldier"], "location": "trench", "desired_camera_rhythm": "calm", "intent_tags": ["war"]},
+    "candidate": {"shots": [{"shot_size": "medium", "camera_angle": "eye_level", "camera_movement": "handheld", "emotion_tone": "fear", "location": "forest", "characters": ["child_a", "child_b"], "transition_to_next": "cut"}]},
+    "expected": 0.15,
+    "tolerance": 0.12
+  },
+  {
+    "test_id": "low_005",
+    "category": "low",
+    "first_shot": {"shot_size": "wide", "camera_angle": "low_angle", "camera_movement": "dolly", "emotion_tone": "power", "location": "throne_room", "characters": ["king"], "transition_to_next": "match_cut"},
+    "scene_context": {"characters": ["peasant_a", "peasant_b"], "location": "village", "desired_camera_rhythm": "calm", "intent_tags": []},
+    "candidate": {"shots": [{"shot_size": "wide", "camera_angle": "low_angle", "camera_movement": "dolly", "emotion_tone": "power", "location": "throne_room", "characters": ["king"], "transition_to_next": "match_cut"}]},
+    "expected": 0.187,
+    "tolerance": 0.12
+  },
+  {
+    "test_id": "low_006",
+    "category": "low",
+    "first_shot": {"shot_size": "close_up", "camera_angle": "eye_level", "camera_movement": "static", "emotion_tone": "intimacy", "location": "bedroom", "characters": ["lover_a", "lover_b"], "transition_to_next": "dissolve"},
+    "scene_context": {"characters": ["soldier_a", "soldier_b"], "location": "battlefield", "desired_camera_rhythm": "aggressive", "intent_tags": ["war"]},
+    "candidate": {"shots": [{"shot_size": "close_up", "camera_angle": "eye_level", "camera_movement": "static", "emotion_tone": "intimacy", "location": "bedroom", "characters": ["lover_a", "lover_b"], "transition_to_next": "dissolve"}]},
+    "expected": 0.205,
+    "tolerance": 0.12
+  },
+  {
+    "test_id": "low_007",
+    "category": "low",
+    "first_shot": {"shot_size": "extreme_close_up", "camera_angle": "worms_eye", "camera_movement": "static", "emotion_tone": "rage", "location": "prison", "characters": ["inmate"], "transition_to_next": "cut"},
+    "scene_context": {"characters": ["teacher", "student"], "location": "classroom", "desired_camera_rhythm": "calm", "intent_tags": ["education"]},
+    "candidate": {"shots": [{"shot_size": "extreme_close_up", "camera_angle": "worms_eye", "camera_movement": "static", "emotion_tone": "rage", "location": "prison", "characters": ["inmate"], "transition_to_next": "cut"}]},
+    "expected": 0.277,
+    "tolerance": 0.12
+  },
+  {
+    "test_id": "low_008",
+    "category": "low",
+    "first_shot": {"shot_size": "medium", "camera_angle": "dutch_angle", "camera_movement": "handheld", "emotion_tone": "tension", "location": "subway", "characters": ["commuter"], "transition_to_next": "jump_cut"},
+    "scene_context": {"characters": ["ceo", "investor"], "location": "boardroom", "desired_camera_rhythm": "calm", "intent_tags": ["business"]},
+    "candidate": {"shots": [{"shot_size": "medium", "camera_angle": "dutch_angle", "camera_movement": "handheld", "emotion_tone": "tension", "location": "subway", "characters": ["commuter"], "transition_to_next": "jump_cut"}]},
+    "expected": 0.137,
+    "tolerance": 0.12
+  },
+  {
+    "test_id": "low_009",
+    "category": "low",
+    "first_shot": {"shot_size": "wide", "camera_angle": "high_angle", "camera_movement": "crane", "emotion_tone": "melancholy", "location": "graveyard", "characters": ["mourner"], "transition_to_next": "fade"},
+    "scene_context": {"characters": ["bride", "groom"], "location": "church", "desired_camera_rhythm": "balanced", "intent_tags": ["celebration"]},
+    "candidate": {"shots": [{"shot_size": "wide", "camera_angle": "high_angle", "camera_movement": "crane", "emotion_tone": "melancholy", "location": "graveyard", "characters": ["mourner"], "transition_to_next": "fade"}]},
+    "expected": 0.26,
+    "tolerance": 0.12
+  },
+  {
+    "test_id": "low_010",
+    "category": "low",
+    "first_shot": {"shot_size": "medium_wide", "camera_angle": "eye_level", "camera_movement": "tracking", "emotion_tone": "joy", "location": "playground", "characters": ["child"], "transition_to_next": "cut"},
+    "scene_context": {"characters": ["scientist"], "location": "laboratory", "desired_camera_rhythm": "calm", "intent_tags": ["research"]},
+    "candidate": {"shots": [{"shot_size": "medium_wide", "camera_angle": "eye_level", "camera_movement": "tracking", "emotion_tone": "joy", "location": "playground", "characters": ["child"], "transition_to_next": "cut"}]},
+    "expected": 0.137,
+    "tolerance": 0.12
+  },
+  {
+    "test_id": "edge_unknown_location_001",
+    "category": "edge_unknown_location",
+    "first_shot": {"shot_size": "wide", "camera_angle": "eye_level", "camera_movement": "static", "emotion_tone": "neutral", "location": "unknown", "characters": ["jack"], "transition_to_next": "cut"},
+    "scene_context": {"characters": ["jack"], "location": "hotel", "desired_camera_rhythm": "calm", "intent_tags": []},
+    "candidate": {"shots": [{"shot_size": "wide", "camera_angle": "eye_level", "camera_movement": "static", "emotion_tone": "neutral", "location": "unknown", "characters": ["jack"], "transition_to_next": "cut"}]},
+    "expected": 0.925,
+    "tolerance": 0.1
+  },
+  {
+    "test_id": "edge_unknown_location_002",
+    "category": "edge_unknown_location",
+    "first_shot": {"shot_size": "medium", "camera_angle": "eye_level", "camera_movement": "dolly", "emotion_tone": "tension", "characters": ["hero"], "transition_to_next": "cut"},
+    "scene_context": {"characters": ["hero"], "location": "unknown", "desired_camera_rhythm": "dynamic", "intent_tags": []},
+    "candidate": {"shots": [{"shot_size": "medium", "camera_angle": "eye_level", "camera_movement": "dolly", "emotion_tone": "tension", "characters": ["hero"], "transition_to_next": "cut"}]},
+    "expected": 0.842,
+    "tolerance": 0.1
+  },
+  {
+    "test_id": "edge_unknown_location_003",
+    "category": "edge_unknown_location",
+    "first_shot": {"shot_size": "close_up", "camera_angle": "eye_level", "camera_movement": "static", "emotion_tone": "neutral", "characters": ["unknown_figure"], "transition_to_next": "dissolve"},
+    "scene_context": {"characters": ["unknown_figure"], "location": "unknown", "desired_camera_rhythm": "balanced", "intent_tags": []},
+    "candidate": {"shots": [{"shot_size": "close_up", "camera_angle": "eye_level", "camera_movement": "static", "emotion_tone": "neutral", "characters": ["unknown_figure"], "transition_to_next": "dissolve"}]},
+    "expected": 0.825,
+    "tolerance": 0.1
+  },
+  {
+    "test_id": "edge_unknown_location_004",
+    "category": "edge_unknown_location",
+    "first_shot": {"shot_size": "wide", "camera_angle": "eye_level", "camera_movement": "static", "emotion_tone": "neutral", "characters": [], "transition_to_next": "cut"},
+    "scene_context": {"characters": [], "location": "unknown", "desired_camera_rhythm": "calm", "intent_tags": []},
+    "candidate": {"shots": [{"shot_size": "wide", "camera_angle": "eye_level", "camera_movement": "static", "emotion_tone": "neutral", "characters": [], "transition_to_next": "cut"}]},
+    "expected": 1.0,
+    "tolerance": 0.1
+  },
+  {
+    "test_id": "edge_unknown_location_005",
+    "category": "edge_unknown_location",
+    "first_shot": {"shot_size": "medium", "camera_angle": "low_angle", "camera_movement": "handheld", "emotion_tone": "melancholy", "location": "unknown", "characters": ["wanderer"], "transition_to_next": "fade"},
+    "scene_context": {"characters": ["wanderer"], "location": "unknown", "desired_camera_rhythm": "calm", "intent_tags": []},
+    "candidate": {"shots": [{"shot_size": "medium", "camera_angle": "low_angle", "camera_movement": "handheld", "emotion_tone": "melancholy", "location": "unknown", "characters": ["wanderer"], "transition_to_next": "fade"}]},
+    "expected": 0.692,
+    "tolerance": 0.12
+  },
+  {
+    "test_id": "edge_emotion_mismatch_001",
+    "category": "edge_emotion_mismatch",
+    "first_shot": {"shot_size": "medium", "camera_angle": "eye_level", "camera_movement": "static", "emotion_tone": "fear", "location": "office", "characters": ["worker"], "transition_to_next": "cut"},
+    "scene_context": {"characters": ["worker"], "location": "office", "desired_camera_rhythm": "calm", "intent_tags": ["routine"]},
+    "candidate": {"shots": [{"shot_size": "medium", "camera_angle": "eye_level", "camera_movement": "static", "emotion_tone": "fear", "location": "office", "characters": ["worker"], "transition_to_next": "cut"}]},
+    "expected": 0.91,
+    "tolerance": 0.12
+  },
+  {
+    "test_id": "edge_emotion_mismatch_002",
+    "category": "edge_emotion_mismatch",
+    "first_shot": {"shot_size": "close_up", "camera_angle": "eye_level", "camera_movement": "static", "emotion_tone": "rage", "location": "kitchen", "characters": ["chef"], "transition_to_next": "cut"},
+    "scene_context": {"characters": ["chef"], "location": "kitchen", "desired_camera_rhythm": "calm", "intent_tags": []},
+    "candidate": {"shots": [{"shot_size": "close_up", "camera_angle": "eye_level", "camera_movement": "static", "emotion_tone": "rage", "location": "kitchen", "characters": ["chef"], "transition_to_next": "cut"}]},
+    "expected": 0.91,
+    "tolerance": 0.12
+  },
+  {
+    "test_id": "edge_emotion_mismatch_003",
+    "category": "edge_emotion_mismatch",
+    "first_shot": {"shot_size": "wide", "camera_angle": "eye_level", "camera_movement": "static", "emotion_tone": "joy", "location": "hospital", "characters": ["patient"], "transition_to_next": "cut"},
+    "scene_context": {"characters": ["patient"], "location": "hospital", "desired_camera_rhythm": "calm", "intent_tags": ["recovery"]},
+    "candidate": {"shots": [{"shot_size": "wide", "camera_angle": "eye_level", "camera_movement": "static", "emotion_tone": "joy", "location": "hospital", "characters": ["patient"], "transition_to_next": "cut"}]},
+    "expected": 0.867,
+    "tolerance": 0.1
+  },
+  {
+    "test_id": "edge_emotion_mismatch_004",
+    "category": "edge_emotion_mismatch",
+    "first_shot": {"shot_size": "medium", "camera_angle": "eye_level", "camera_movement": "handheld", "emotion_tone": "panic", "location": "park", "characters": ["jogger"], "transition_to_next": "cut"},
+    "scene_context": {"characters": ["jogger"], "location": "park", "desired_camera_rhythm": "calm", "intent_tags": ["relaxation"]},
+    "candidate": {"shots": [{"shot_size": "medium", "camera_angle": "eye_level", "camera_movement": "handheld", "emotion_tone": "panic", "location": "park", "characters": ["jogger"], "transition_to_next": "cut"}]},
+    "expected": 0.66,
+    "tolerance": 0.15
+  },
+  {
+    "test_id": "edge_emotion_mismatch_005",
+    "category": "edge_emotion_mismatch",
+    "first_shot": {"shot_size": "wide", "camera_angle": "eye_level", "camera_movement": "tracking", "emotion_tone": "rage", "location": "courtroom", "characters": ["defendant"], "transition_to_next": "cut"},
+    "scene_context": {"characters": ["defendant"], "location": "courtroom", "desired_camera_rhythm": "steady", "intent_tags": []},
+    "candidate": {"shots": [{"shot_size": "wide", "camera_angle": "eye_level", "camera_movement": "tracking", "emotion_tone": "rage", "location": "courtroom", "characters": ["defendant"], "transition_to_next": "cut"}]},
+    "expected": 0.56,
+    "tolerance": 0.15
+  },
+  {
+    "test_id": "edge_emotion_mismatch_006",
+    "category": "edge_emotion_mismatch",
+    "first_shot": {"shot_size": "close_up", "camera_angle": "eye_level", "camera_movement": "handheld", "emotion_tone": "fear", "location": "library", "characters": ["student"], "transition_to_next": "cut"},
+    "scene_context": {"characters": ["student"], "location": "library", "desired_camera_rhythm": "steady", "intent_tags": ["study"]},
+    "candidate": {"shots": [{"shot_size": "close_up", "camera_angle": "eye_level", "camera_movement": "handheld", "emotion_tone": "fear", "location": "library", "characters": ["student"], "transition_to_next": "cut"}]},
+    "expected": 0.56,
+    "tolerance": 0.15
+  },
+  {
+    "test_id": "edge_emotion_mismatch_007",
+    "category": "edge_emotion_mismatch",
+    "first_shot": {"shot_size": "medium", "camera_angle": "eye_level", "camera_movement": "static", "emotion_tone": "isolation", "location": "rooftop", "characters": ["loner"], "transition_to_next": "dissolve"},
+    "scene_context": {"characters": ["loner"], "location": "rooftop", "desired_camera_rhythm": "balanced", "intent_tags": []},
+    "candidate": {"shots": [{"shot_size": "medium", "camera_angle": "eye_level", "camera_movement": "static", "emotion_tone": "isolation", "location": "rooftop", "characters": ["loner"], "transition_to_next": "dissolve"}]},
+    "expected": 0.867,
+    "tolerance": 0.1
+  },
+  {
+    "test_id": "edge_emotion_mismatch_008",
+    "category": "edge_emotion_mismatch",
+    "first_shot": {"shot_size": "wide", "camera_angle": "high_angle", "camera_movement": "crane", "emotion_tone": "tension", "location": "stadium", "characters": ["player"], "transition_to_next": "cut"},
+    "scene_context": {"characters": ["player"], "location": "stadium", "desired_camera_rhythm": "aggressive", "intent_tags": ["competition"]},
+    "candidate": {"shots": [{"shot_size": "wide", "camera_angle": "high_angle", "camera_movement": "crane", "emotion_tone": "tension", "location": "stadium", "characters": ["player"], "transition_to_next": "cut"}]},
+    "expected": 0.842,
+    "tolerance": 0.1
+  },
+  {
+    "test_id": "edge_emotion_mismatch_009",
+    "category": "edge_emotion_mismatch",
+    "first_shot": {"shot_size": "medium", "camera_angle": "eye_level", "camera_movement": "tracking", "emotion_tone": "joy", "location": "market", "characters": ["vendor"], "transition_to_next": "cut"},
+    "scene_context": {"characters": ["vendor"], "location": "market", "desired_camera_rhythm": "dynamic", "intent_tags": ["commerce"]},
+    "candidate": {"shots": [{"shot_size": "medium", "camera_angle": "eye_level", "camera_movement": "tracking", "emotion_tone": "joy", "location": "market", "characters": ["vendor"], "transition_to_next": "cut"}]},
+    "expected": 0.867,
+    "tolerance": 0.1
+  },
+  {
+    "test_id": "edge_emotion_mismatch_010",
+    "category": "edge_emotion_mismatch",
+    "first_shot": {"shot_size": "close_up", "camera_angle": "eye_level", "camera_movement": "static", "emotion_tone": "awe", "location": "museum", "characters": ["visitor"], "transition_to_next": "dissolve"},
+    "scene_context": {"characters": ["visitor"], "location": "museum", "desired_camera_rhythm": "calm", "intent_tags": ["contemplation"]},
+    "candidate": {"shots": [{"shot_size": "close_up", "camera_angle": "eye_level", "camera_movement": "static", "emotion_tone": "awe", "location": "museum", "characters": ["visitor"], "transition_to_next": "dissolve"}]},
+    "expected": 0.867,
+    "tolerance": 0.1
+  }
+]

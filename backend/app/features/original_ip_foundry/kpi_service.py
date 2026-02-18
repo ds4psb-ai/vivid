@@ -65,6 +65,25 @@ class FoundryKPIService:
         """Record whether a pattern was reused (1.0) or new (0.0)."""
         self._pattern_queries.push(1.0 if reused else 0.0)
 
+    ALERT_RULES = [
+        {"rule": "p95_latency_breach", "threshold_ms": 2500, "metric": "p95"},
+    ]
+
+    def check_alerts(self) -> list[dict]:
+        """Check all alert rules against current KPI snapshot."""
+        alerts = []
+        p95 = self._latency_window.percentile(95)
+        if p95 is not None:
+            for rule in self.ALERT_RULES:
+                if rule["metric"] == "p95" and p95 > rule["threshold_ms"]:
+                    alerts.append({
+                        "rule": rule["rule"],
+                        "threshold_ms": rule["threshold_ms"],
+                        "actual_ms": p95,
+                        "severity": "warning",
+                    })
+        return alerts
+
     def get_kpi_snapshot(self) -> dict:
         """Return current KPI snapshot with all tracked metrics."""
         mean_continuity = self._continuity_scores.mean()

@@ -30,3 +30,8 @@ class BaseEngineAdapter(ABC):
     @abstractmethod
     def compile(self, plan: FoundryShotPlan) -> EnginePromptResult:
         ...
+
+    def validate_output(self, result: EnginePromptResult, duration_sec: float = 0) -> list[str]:
+        from app.features.original_ip_foundry.adapters.engine_constraint_schemas import validate_engine_output
+
+        return validate_engine_output(self.ENGINE_NAME, result.prompt_text, duration_sec)

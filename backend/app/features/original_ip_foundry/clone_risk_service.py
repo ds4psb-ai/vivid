@@ -71,6 +71,35 @@ class CloneRiskService:
         # 10+ unique tags -> low density risk, 1-2 -> high density risk
         return max(0.0, min(1.0 - (unique / 15.0), 1.0))
 
+    def decide(
+        self,
+        *,
+        candidate_tags: list[str],
+        project_id: str,
+        reference_licenses: list[str] | None = None,
+    ) -> dict:
+        """Compute clone risk and return a structured decision."""
+        score = self.compute(
+            candidate_tags=candidate_tags,
+            project_id=project_id,
+            reference_licenses=reference_licenses,
+        )
+        from app.config import settings
+
+        block_threshold = getattr(settings, "AD_FOUNDRY_CLONE_BLOCK_THRESHOLD", 0.7)
+        review_threshold = getattr(settings, "AD_FOUNDRY_CLONE_REVIEW_THRESHOLD", 0.4)
+        if score >= block_threshold:
+            decision = "block"
+        elif score >= review_threshold:
+            decision = "review"
+        else:
+            decision = "allow"
+        return {
+            "score": score,
+            "decision": decision,
+            "thresholds": {"block": block_threshold, "review": review_threshold},
+        }
+
     def compute_batch(self, items: list[dict]) -> list[float]:
         """Bulk clone risk scoring for multiple candidates."""
         results = []

@@ -38,6 +38,7 @@ from app.features.original_ip_foundry.foundry_auth import (
     foundry_write_guard,
     require_foundry_access,
 )
+from app.features.original_ip_foundry.foundry_observability import trace_foundry_event
 from app.features.original_ip_foundry.foundry_lifespan import FoundryServices, get_foundry_services
 from app.features.original_ip_foundry.webhook_signature import WebhookSignatureError
 from app.features.original_ip_foundry.channel_router import WebhookRateLimitError
@@ -116,6 +117,13 @@ class FoundryAuditRoute(APIRoute):
                             "block_reason": block_reason,
                         }
                     },
+                )
+                trace_foundry_event(
+                    name=request.url.path,
+                    latency_ms=latency_ms,
+                    status_code=status_code,
+                    tags=["foundry", request.method.lower()],
+                    metadata={"user": user, "model": model, "input_type": input_type},
                 )
 
         return custom_handler
