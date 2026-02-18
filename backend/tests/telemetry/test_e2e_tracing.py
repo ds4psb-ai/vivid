@@ -26,9 +26,14 @@ from app.config import settings
 class TestOTELSetup:
     """Test OpenTelemetry setup and configuration."""
 
-    def test_otel_enabled_by_default(self):
-        """OTEL should be enabled by default (P8 change)."""
-        assert settings.OTEL_ENABLED is True
+    def test_otel_disabled_for_railway_stability(self):
+        """OTEL is intentionally disabled to prevent Railway server hang.
+
+        OTEL auto-instrumentation retries localhost:4317 indefinitely when no
+        collector is present, causing the server to hang. Re-enable only when
+        a proper OTLP collector is provisioned in the deployment environment.
+        """
+        assert settings.OTEL_ENABLED is False
 
     def test_otel_endpoint_configured(self):
         """OTEL endpoint should have http:// prefix."""
