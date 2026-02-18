@@ -40,6 +40,7 @@ from app.models_outbox import *  # noqa: F401, F403  # Outbox
 from app.models_logic_vector import *  # noqa: F401, F403  # Logic vector
 from app.models_pipeline import *  # noqa: F401, F403  # Pipeline
 from app.models_hitl import *  # noqa: F401, F403  # HITL
+from app.models_rights_graph import *  # noqa: F401, F403  # Rights graph
 
 # Load settings
 from app.config import settings

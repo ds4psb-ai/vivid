@@ -1,7 +1,7 @@
 # Docs Index (정본)
 
-**Updated**: 2026-01-19
-**총 문서**: 16개 (핵심), 35개 (archive)
+**Updated**: 2026-02-18
+**총 문서**: 20개 (핵심), 35개 (archive)
 
 ---
 
@@ -20,6 +20,10 @@
 | 27 | MCP_INTEGRATION_SPEC_V1.md | MCP 통합 | ✅ |
 | 30 | UNIFIED_EXECUTION_ROADMAP.md | 실행 로드맵 | ✅ |
 | **31** | **[DIMENSION_APP_DEVELOPER_GUIDE.md](docs/DIMENSION_APP_DEVELOPER_GUIDE.md)** | **앱 개발자 가이드 (SSoT)** | ✅ |
+| **32** | **[AD_CO_DIRECTOR_OS_SSOT_2026_H2.md](docs/AD_CO_DIRECTOR_OS_SSOT_2026_H2.md)** | **AD Co-Director 최상위 SSoT (PDR 상위)** | ✅ |
+| **33** | **[2026-02-18-original-ip-foundry-implementation-plan.md](docs/plans/2026-02-18-original-ip-foundry-implementation-plan.md)** | **Original-IP Foundry 구현 실행계획** | ✅ |
+| **34** | **[AD_30DAY_TIGER_RUNBOOK_2026-02.md](docs/AD_30DAY_TIGER_RUNBOOK_2026-02.md)** | **30일 타이거팀 런북 (Codex+Opus 고속개발)** | ✅ |
+| **35** | **[ORIGINAL_IP_FOUNDRY_OPERATIONS_RUNBOOK_2026-02.md](docs/ORIGINAL_IP_FOUNDRY_OPERATIONS_RUNBOOK_2026-02.md)** | **Foundry 운영/장애 대응 런북** | ✅ |
 | - | README.md | 프로젝트 소개 | ✅ |
 | - | PRIVACY_POLICY.md / TERMS_OF_SERVICE.md | 법률 문서 | ✅ |
 

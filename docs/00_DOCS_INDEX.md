@@ -1,7 +1,7 @@
 # Vivid Documentation Master Index
 
-> **Version**: 1.6
-> **Last Updated**: 2026-02-14
+> **Version**: 1.12
+> **Last Updated**: 2026-02-18
 > **Purpose**: 전체 문서 네비게이션 및 SSoT 참조
 
 ---
@@ -11,6 +11,10 @@
 | 목적 | 문서 |
 |------|------|
 | **⭐ 메가앱 아키텍처** | [MEGA_APP_ARCHITECTURE_2026.md](./MEGA_APP_ARCHITECTURE_2026.md) |
+| **⭐ AD Co-Director SSOT** | [AD_CO_DIRECTOR_OS_SSOT_2026_H2.md](./AD_CO_DIRECTOR_OS_SSOT_2026_H2.md) |
+| **⭐ Original-IP Foundry 실행계획** | [plans/2026-02-18-original-ip-foundry-implementation-plan.md](./plans/2026-02-18-original-ip-foundry-implementation-plan.md) |
+| **⭐ AD 30-Day Runbook** | [AD_30DAY_TIGER_RUNBOOK_2026-02.md](./AD_30DAY_TIGER_RUNBOOK_2026-02.md) |
+| **⭐ Foundry Ops Runbook** | [ORIGINAL_IP_FOUNDRY_OPERATIONS_RUNBOOK_2026-02.md](./ORIGINAL_IP_FOUNDRY_OPERATIONS_RUNBOOK_2026-02.md) |
 | **핸드오버** | [HANDOVER_2026_01_25.md](./HANDOVER_2026_01_25.md) |
 | 프로젝트 개요 | [README.md](./README.md) |
 | 앱 개발 시작 | [DIMENSION_APP_DEVELOPER_GUIDE.md](./DIMENSION_APP_DEVELOPER_GUIDE.md) |
@@ -31,6 +35,7 @@
 | [RAG_RELIABILITY.md](./RAG_RELIABILITY.md) | RAG 시스템 신뢰성 가이드 | ✅ Active |
 | [PANEL_DESIGN_UNITY_SPEC.md](./PANEL_DESIGN_UNITY_SPEC.md) | Compound Component System | ✅ Active |
 | [UQSL_IMPLEMENTATION_SPEC.md](./UQSL_IMPLEMENTATION_SPEC.md) | Universal Quality Selection Layer | ✅ Active |
+| [AD_CO_DIRECTOR_OS_SSOT_2026_H2.md](./AD_CO_DIRECTOR_OS_SSOT_2026_H2.md) | **AD Co-Director 최상위 SSoT (연속성 우선 + 메모리 허브)** | ✅ Active |
 | [DESIGN_SYSTEM_2026.md](./DESIGN_SYSTEM_2026.md) | **디자인 시스템 SSoT (V7 Neon Red, OKLCH, 철학)** | ✅ Active |
 | [SSOT_DECISIONS_LOG.md](./docs/SSOT_DECISIONS_LOG.md) | **IP-First 아키텍처 SSoT 결정 로그** | ✅ Active |
 
@@ -217,6 +222,10 @@
 
 | 버전 | 날짜 | 변경 |
 |------|------|------|
+| 1.10 | 2026-02-18 | AD Co-Director SSOT v2.1 법/컴플라이언스 근거 강화 (USCO/CC/Seedance 저작권 쟁점 링크 추가) |
+| 1.9 | 2026-02-18 | AD Co-Director SSOT v2.1 반영 (IP 리믹스 컴플라이언스 하드룰 + OpenClaw/Agent0 비의존 fallback 구조) |
+| 1.8 | 2026-02-14 | AD Co-Director SSOT 하드닝 (OpenClaw 코어 채택 하드룰 + 이중검색 + 소스 신뢰 등급 게이트) |
+| 1.7 | 2026-02-14 | AD Co-Director OS 최상위 SSoT 문서 추가 (PDR 상위, OpenClaw 메모리 허브/실험 레이어 포함) |
 | 1.6 | 2026-02-14 | AD Studio MOP(연속성 우선 게이트) 전략 문서 추가 |
 | 1.4 | 2026-02-02 | V7 Neon Red 테마 통일, DNA Lab UX 마이그레이션 문서 추가, 5,000+ lines dead code 제거 |
 | 1.3 | 2026-01-25 | 메가앱 아키텍처 문서화, 핸드오버 문서 추가 |

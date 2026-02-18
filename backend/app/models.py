@@ -23,6 +23,11 @@ from app.models_outlier import (
     VDGEdgeStatus,
     AnalysisStatus,
 )
+from app.models_rights_graph import (
+    RightsAsset,
+    RightsRule,
+    ProvenanceEvent,
+)
 
 
 class Canvas(Base):

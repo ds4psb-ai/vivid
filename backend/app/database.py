@@ -227,6 +227,7 @@ async def init_db(drop_all: bool = False) -> None:
         import app.models_logic_vector  # noqa: F401
         import app.models_pipeline  # noqa: F401
         import app.models_hitl  # noqa: F401
+        import app.models_rights_graph  # noqa: F401
         logger.info(f"[DB] Registered {len(Base.metadata.tables)} tables with Base.metadata")
     except ImportError as e:
         logger.warning(f"[DB] Some models failed to import: {e}")
@@ -264,4 +265,3 @@ async def init_db(drop_all: bool = False) -> None:
                     logger.info(f"[DB] Critical tables verified. Total tables: {len(existing)}")
 
             await conn.run_sync(check_tables)
-

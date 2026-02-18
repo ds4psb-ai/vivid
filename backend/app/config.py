@@ -311,6 +311,34 @@ class Settings(BaseSettings):
     ENABLE_DEV_AUTH_BYPASS: bool = False
 
     # ==========================================================================
+    # Original-IP Foundry Guardrails (2026-H2)
+    # ==========================================================================
+    # Kill switch — False = all Foundry routes return 404 (router not registered)
+    AD_FOUNDRY_ENABLED: bool = False
+    # Write guard — False = Foundry accepts GET only (read-only period)
+    AD_FOUNDRY_WRITE_ENABLED: bool = False
+    # Internal account allowlist — comma-separated emails allowed to access Foundry
+    AD_FOUNDRY_ALLOWLIST: str = "ted.taeeun.kim@gmail.com"
+    # Access scope:
+    # - internal: allowlist only
+    # - authenticated: any logged-in user
+    # - public: no login required
+    AD_FOUNDRY_ACCESS_SCOPE: str = "internal"
+    AD_FOUNDRY_WORKER_PROVIDER: str = "agent0"  # agent0 | taskiq | temporal
+    AD_FOUNDRY_TASKIQ_BROKER: str = "redis://localhost:6379"
+    # Safe POST/PATCH endpoints allowed even during read-only mode
+    AD_FOUNDRY_READONLY_SAFE_PATHS: str = (
+        "/api/v1/foundry/rights/evaluate-assets,"
+        "/api/v1/foundry/patterns/extract,"
+        "/api/v1/foundry/recommendations/next-scene,"
+        "/api/v1/foundry/experiments/assign,"
+        "/api/v1/foundry/experiments/feedback,"
+        "/api/v1/foundry/memory/normalize,"
+        "/api/v1/foundry/retrieval/query,"
+        "/api/v1/foundry/provenance/export-c2pa"
+    )
+
+    # ==========================================================================
     # MCP (Model Context Protocol) Configuration - Phase 4 2026
     # ==========================================================================
     # Core MCP Settings
@@ -437,6 +465,18 @@ class Settings(BaseSettings):
         return {email.strip().lower() for email in self.MASTER_ADMIN_EMAILS.split(",") if email.strip()}
 
     @property
+    def AD_FOUNDRY_ALLOWLIST_SET(self) -> set[str]:
+        return {e.strip().lower() for e in self.AD_FOUNDRY_ALLOWLIST.split(",") if e.strip()}
+
+    @property
+    def AD_FOUNDRY_READONLY_SAFE_PATHS_SET(self) -> set[str]:
+        return {
+            p.strip()
+            for p in self.AD_FOUNDRY_READONLY_SAFE_PATHS.split(",")
+            if p.strip()
+        }
+
+    @property
     def COOKIE_SECURE(self) -> bool:
         return self.ENVIRONMENT not in {"development", "local", "dev"}
 
@@ -484,6 +524,20 @@ class Settings(BaseSettings):
 
             # H2.1: Dev auth bypass must be disabled in production
             if self.ENABLE_DEV_AUTH_BYPASS:
+                errors.append("ENABLE_DEV_AUTH_BYPASS is True - must be False in production")
+
+            # Foundry guardrail: warn if enabled but allowlist is empty
+            if self.AD_FOUNDRY_ENABLED and not self.AD_FOUNDRY_ALLOWLIST.strip():
+                warnings.append("AD_FOUNDRY_ENABLED is True but AD_FOUNDRY_ALLOWLIST is empty")
+            if self.AD_FOUNDRY_WRITE_ENABLED and not self.AD_FOUNDRY_ENABLED:
+                warnings.append("AD_FOUNDRY_WRITE_ENABLED is True but AD_FOUNDRY_ENABLED is False — writes have no effect")
+            if self.AD_FOUNDRY_ACCESS_SCOPE not in {"internal", "authenticated", "public"}:
+                warnings.append("AD_FOUNDRY_ACCESS_SCOPE must be one of: internal|authenticated|public")
+            if self.AD_FOUNDRY_WORKER_PROVIDER not in {"agent0", "taskiq", "temporal"}:
+                warnings.append("AD_FOUNDRY_WORKER_PROVIDER must be one of: agent0|taskiq|temporal")
+
+            # (original H2.1 check continues below)
+            if False:  # placeholder to keep indentation — replaced by block above
                 errors.append("ENABLE_DEV_AUTH_BYPASS is True - must be False in production")
 
             # P0: Check for default/weak passwords in production

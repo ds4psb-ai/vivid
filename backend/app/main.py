@@ -19,6 +19,7 @@ from app.routers.health import router as health_router
 from app.routers.user_settings import router as user_settings_router
 from app.routers.dashboard import router as dashboard_router
 from app.routers.feedback import router as feedback_router
+from app.routers.rights_gate import router as rights_gate_router
 
 # [PIVOTED] Crebit (강의 판매 + 결제) - prompty에서 불필요
 # from app.routers.crebit import router as crebit_router
@@ -513,6 +514,7 @@ app.include_router(user_settings_router, prefix="")
 # Dashboard & Feedback
 app.include_router(dashboard_router, prefix="/api/v1", tags=["dashboard"])
 app.include_router(feedback_router, prefix="/api/v1", tags=["feedback"])
+app.include_router(rights_gate_router, prefix="/api/v1/rights", tags=["rights-gate"])
 
 # [PIVOTED] Crebit (강의 판매 + 결제) - prompty에서 불필요
 # app.include_router(crebit_router, prefix="/api/v1/crebit", tags=["crebit"])
@@ -665,6 +667,12 @@ if settings.ENVIRONMENT.lower() in {"production", "prod", "staging"}:
         app.include_router(graphql_router, prefix="/graphql", tags=["graphql"])
 else:
     app.include_router(graphql_router, prefix="/graphql", tags=["graphql"])
+
+# Original-IP Foundry (2026-H2) — Guardrail ①: Kill Switch
+# Only register when AD_FOUNDRY_ENABLED=true; otherwise zero Foundry code is loaded
+if settings.AD_FOUNDRY_ENABLED:
+    from app.features.original_ip_foundry.foundry_router import router as foundry_router
+    app.include_router(foundry_router, prefix="/api/v1/foundry", tags=["foundry"])
 
 # Infrastructure
 app.include_router(health_router, prefix="", tags=["health"])

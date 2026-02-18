@@ -3035,6 +3035,97 @@ class ApiClient {
   }
 
   // =========================================================================
+  // Original-IP Foundry APIs
+  // =========================================================================
+
+  async getFoundryHealth(): Promise<FoundryHealthResponse> {
+    return this.request<FoundryHealthResponse>("/api/v1/foundry/health");
+  }
+
+  async getFoundryStatus(): Promise<FoundryStatusResponse> {
+    return this.request<FoundryStatusResponse>("/api/v1/foundry/status");
+  }
+
+  async evaluateFoundryRights(
+    payload: FoundryRightsEvaluationRequest
+  ): Promise<FoundryRightsEvaluationResponse> {
+    return this.request<FoundryRightsEvaluationResponse>("/api/v1/foundry/rights/evaluate-assets", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async extractFoundryPatterns(
+    payload: FoundryPatternExtractionRequest
+  ): Promise<FoundryPatternExtractionResponse> {
+    return this.request<FoundryPatternExtractionResponse>("/api/v1/foundry/patterns/extract", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async getFoundryRecommendations(
+    payload: FoundryRecommendationRequest
+  ): Promise<FoundryRecommendationResponse> {
+    return this.request<FoundryRecommendationResponse>("/api/v1/foundry/recommendations/next-scene", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async assignFoundryExperiment(
+    payload: FoundryExperimentAssignRequest
+  ): Promise<FoundryExperimentAssignResponse> {
+    return this.request<FoundryExperimentAssignResponse>("/api/v1/foundry/experiments/assign", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async recordFoundryExperimentFeedback(
+    payload: FoundryExperimentFeedbackRequest
+  ): Promise<{ status: string; event: Record<string, unknown> }> {
+    return this.request<{ status: string; event: Record<string, unknown> }>(
+      "/api/v1/foundry/experiments/feedback",
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }
+    );
+  }
+
+  async getFoundryExperimentSummary(experimentKey: string): Promise<FoundryExperimentSummaryResponse> {
+    return this.request<FoundryExperimentSummaryResponse>(
+      `/api/v1/foundry/experiments/${encodeURIComponent(experimentKey)}/summary`
+    );
+  }
+
+  async normalizeFoundryMemory(
+    payload: FoundryMemoryNormalizeRequest
+  ): Promise<FoundryMemoryNormalizeResponse> {
+    return this.request<FoundryMemoryNormalizeResponse>("/api/v1/foundry/memory/normalize", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async queryFoundryRetrieval(payload: FoundryRetrievalRequest): Promise<FoundryRetrievalResponse> {
+    return this.request<FoundryRetrievalResponse>("/api/v1/foundry/retrieval/query", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async exportFoundryC2PAManifest(
+    payload: FoundryC2PAExportRequest
+  ): Promise<FoundryC2PAExportResponse> {
+    return this.request<FoundryC2PAExportResponse>("/api/v1/foundry/provenance/export-c2pa", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
+
+  // =========================================================================
   // DEPRECATED: Node Execution APIs - Only used by deprecated canvas
   // These will be removed in a future release
   // =========================================================================
@@ -3096,6 +3187,242 @@ class ApiClient {
       body: JSON.stringify(request),
     });
   }
+}
+
+// --- Original-IP Foundry Types ---
+
+export interface FoundryHealthResponse {
+  status: string;
+  foundry_enabled: boolean;
+  write_enabled: boolean;
+  access_scope: string;
+}
+
+export interface FoundryStatusResponse {
+  enabled: boolean;
+  write_enabled: boolean;
+  access_scope: string;
+  worker_provider?: string;
+  allowlist_count: number;
+  readonly_safe_path_count: number;
+}
+
+export interface FoundryRightsAsset {
+  asset_id: string;
+  source_license?: string;
+  derivative_allowed?: boolean;
+  allowed_actions?: string[];
+  blocked_elements?: string[];
+}
+
+export interface FoundryRightsEvaluationRequest {
+  action: string;
+  requested_elements?: string[];
+  assets: FoundryRightsAsset[];
+  evidence_refs?: string[];
+  model?: string;
+  input_type?: string;
+}
+
+export interface FoundryRightsEvaluationResponse {
+  decision: "allow" | "review" | "block";
+  reason_codes: string[];
+  per_asset: Array<{
+    asset_id: string;
+    decision: "allow" | "review" | "block";
+    reason_codes: string[];
+  }>;
+  evidence_refs: string[];
+}
+
+export interface FoundryShotInput {
+  shot_id: string;
+  shot_size?: string;
+  camera_angle?: string;
+  camera_movement?: string;
+  emotion_tone?: string;
+  transition_to_next?: string;
+  location?: string;
+  characters?: string[];
+  duration_sec?: number;
+}
+
+export interface FoundryPatternExtractionRequest {
+  project_id: string;
+  scene_id: string;
+  reference_id?: string;
+  shots: FoundryShotInput[];
+  model?: string;
+  input_type?: string;
+}
+
+export interface FoundryPatternExtractionResponse {
+  project_id: string;
+  scene_id: string;
+  pattern_atoms: Array<{
+    atom_id: string;
+    camera_angle: string;
+    camera_movement: string;
+    shot_size: string;
+    emotion_tone: string;
+    transition: string;
+    frequency: number;
+    confidence: number;
+  }>;
+  transition_rules: Array<{ rule: string; frequency: number }>;
+  total_shots: number;
+}
+
+export interface FoundryRecommendationRequest {
+  scene_context: {
+    project_id: string;
+    scene_id: string;
+    previous_scene_id?: string;
+    target_emotion?: string;
+    location?: string;
+    characters?: string[];
+    desired_camera_rhythm?: string;
+    intent_tags?: string[];
+  };
+  candidates: Array<{
+    candidate_id: string;
+    title?: string;
+    shots: FoundryShotInput[];
+    rights_assets?: FoundryRightsAsset[];
+    mise_en_scene_score?: number;
+    story_intent_fit?: number;
+    director_style_fit?: number;
+    execution_feasibility?: number;
+    clone_risk?: number;
+    pattern_tags?: string[];
+  }>;
+  rights_action?: string;
+  continuity_floor?: number;
+  model?: string;
+  input_type?: string;
+}
+
+export interface FoundryRecommendationResponse {
+  scene_id: string;
+  continuity_gate: number;
+  ranked: Array<{
+    candidate_id: string;
+    title: string;
+    decision: "allow" | "review" | "hold" | "block";
+    final_score: number;
+    continuity_score: number;
+    reason_codes: string[];
+    recommendation_rationale: string[];
+    rights_decision: "allow" | "review" | "block";
+    recommended_shots: FoundryShotInput[];
+  }>;
+}
+
+export interface FoundryExperimentAssignRequest {
+  experiment_key: string;
+  user_key: string;
+  scene_id?: string;
+  variants?: string[];
+  model?: string;
+  input_type?: string;
+}
+
+export interface FoundryExperimentAssignResponse {
+  experiment_key: string;
+  assigned_variant: string;
+  hash_slot: number;
+}
+
+export interface FoundryExperimentFeedbackRequest {
+  experiment_key: string;
+  user_key: string;
+  variant: string;
+  outcome: "accepted" | "edited" | "rejected";
+  completion_seconds?: number;
+  model?: string;
+  input_type?: string;
+}
+
+export interface FoundryExperimentSummaryResponse {
+  experiment_key: string;
+  total_events: number;
+  variants: Record<
+    string,
+    {
+      total: number;
+      accepted: number;
+      edited: number;
+      rejected: number;
+      avg_completion_seconds: number;
+      accept_rate: number;
+      edit_rate: number;
+      reject_rate: number;
+    }
+  >;
+}
+
+export interface FoundryMemoryNormalizeRequest {
+  project_id: string;
+  scene_id?: string;
+  source_channel: "telegram" | "web" | "notion" | "other";
+  note: string;
+  attachments?: string[];
+  model?: string;
+  input_type?: string;
+}
+
+export interface FoundryMemoryNormalizeResponse {
+  normalized: {
+    project_id: string;
+    scene_id?: string;
+    source_channel: string;
+    note: string;
+    attachments: string[];
+    characters: string[];
+    intent_tags: string[];
+    mise_en_scene_tags: string[];
+    created_at: string;
+  };
+}
+
+export interface FoundryRetrievalRequest {
+  project_id: string;
+  query_type: "director_context" | "shot_reference";
+  query: string;
+  limit?: number;
+  model?: string;
+  input_type?: string;
+}
+
+export interface FoundryRetrievalResponse {
+  source: "openclaw_memory" | "foundry_shot_corpus";
+  query_type: "director_context" | "shot_reference";
+  items: Array<Record<string, unknown>>;
+}
+
+export interface FoundryC2PAExportRequest {
+  project_id: string;
+  scene_id: string;
+  asset_id: string;
+  title: string;
+  generator_model: string;
+  source_license?: string;
+  actions?: Array<{ action: string; parameters?: Record<string, unknown> }>;
+  provenance_trace?: Array<{
+    asset_id: string;
+    relationship?: string;
+    title?: string;
+    source_license?: string;
+  }>;
+  model?: string;
+  input_type?: string;
+}
+
+export interface FoundryC2PAExportResponse {
+  spec_version: string;
+  manifest: Record<string, unknown>;
+  compliance: Record<string, unknown>;
+  warnings: string[];
 }
 
 // --- Academy Access Types ---
