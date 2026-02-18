@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import AppShell from "@/components/AppShell";
 import {
   api,
+  type FoundryC2PAExportResponse,
   type FoundryHealthResponse,
   type FoundryRecommendationResponse,
   type FoundryStatusResponse,
@@ -53,7 +54,9 @@ export default function FoundryPage() {
   const [health, setHealth] = useState<FoundryHealthResponse | null>(null);
   const [status, setStatus] = useState<FoundryStatusResponse | null>(null);
   const [recommendation, setRecommendation] = useState<FoundryRecommendationResponse | null>(null);
+  const [c2pa, setC2pa] = useState<FoundryC2PAExportResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [c2paLoading, setC2paLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const topResult = useMemo(() => recommendation?.ranked?.[0], [recommendation]);
@@ -82,6 +85,36 @@ export default function FoundryPage() {
       setError(err instanceof Error ? err.message : "추천 실행 실패");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const runDemoC2PAExport = async () => {
+    setC2paLoading(true);
+    setError(null);
+    try {
+      const result = await api.exportFoundryC2PAManifest({
+        project_id: "demo-project",
+        scene_id: "scene-03",
+        asset_id: "asset-demo-03",
+        title: "Demo Scene 03",
+        generator_model: "gemini-3-pro",
+        source_license: "cc-by-4.0",
+        actions: [
+          { action: "c2pa.created", parameters: { prompt: "low-angle confrontation" } },
+          { action: "c2pa.edited", parameters: { tool: "kling-3.0" } },
+        ],
+        provenance_trace: [
+          { asset_id: "source-clip-1", relationship: "componentOf", title: "Reference Clip" },
+          { asset_id: "source-image-2", relationship: "componentOf", title: "Mood Image" },
+        ],
+        model: "foundry-runtime-v1",
+        input_type: "ui_demo_provenance",
+      });
+      setC2pa(result);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "C2PA export 실패");
+    } finally {
+      setC2paLoading(false);
     }
   };
 
@@ -136,6 +169,13 @@ export default function FoundryPage() {
             >
               {loading ? "추천 실행 중..." : "데모 추천 실행"}
             </button>
+            <button
+              onClick={() => void runDemoC2PAExport()}
+              disabled={c2paLoading}
+              className="rounded-lg bg-emerald-600 px-3 py-2 text-sm text-white disabled:opacity-60"
+            >
+              {c2paLoading ? "C2PA Export 중..." : "C2PA Export 데모"}
+            </button>
           </div>
 
           <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -152,9 +192,15 @@ export default function FoundryPage() {
               </pre>
             </div>
           </div>
+
+          <div className="mt-4">
+            <h3 className="text-sm font-semibold text-[var(--fg-0)]">C2PA Manifest Export</h3>
+            <pre className="mt-2 overflow-x-auto rounded-lg bg-black/5 p-3 text-xs">
+              {JSON.stringify(c2pa, null, 2)}
+            </pre>
+          </div>
         </section>
       </div>
     </AppShell>
   );
 }
-
