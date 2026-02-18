@@ -48,3 +48,6 @@ data/source_packs/research/*.json
 # Notion export files
 notion_docs_hub_seed.csv
 .vercel
+
+# OpenClaw agent workspace (runtime data, not source code)
+openclaw-workspace/
