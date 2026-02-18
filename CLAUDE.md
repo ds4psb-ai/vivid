@@ -22,6 +22,7 @@ cd frontend && npm run build  # Frontend
 - Do not reference non-existent files/functions
 - Do not write speculative imports
 - If unsure, search with Grep first
+- If key context for a decision is missing, ask focused questions first (reverse prompting) and do not fill gaps with plausible guesses
 
 ---
 
@@ -124,6 +125,18 @@ Exceptions (execute directly without research):
 - Simple patch/fix requests
 - File reading/exploration requests
 - Git commands
+
+## Context Engineering Protocol (Non-trivial Tasks)
+Before execution, define a minimal context packet:
+- Objective + Definition of Done
+- Role stance (implementer/reviewer/critic)
+- Constraints + non-goals
+- Grounding artifacts (files/logs/issues/commits/links)
+- For style-sensitive outputs: one good example + one avoid-this example
+
+**Humanity test:** if a human teammate could not complete the task from your description alone, context is insufficient. Add missing context before execution.
+
+When reporting reasoning, provide assumptions/checklists/decision criteria summaries, not hidden chain-of-thought transcripts.
 
 ---
 

@@ -45,6 +45,18 @@
 - 파일 읽기/탐색 요청
 - git 명령어
 
+## Context Engineering Playbook (Prompting Standards)
+- 비자명한 작업 시작 전, 최소 컨텍스트 패킷을 명시한다:
+  - 목표/완료 조건(Definition of Done)
+  - 역할 스탠스(구현자/리뷰어/비판자)
+  - 제약/비목표
+  - 근거 아티팩트(관련 파일/로그/이슈/커밋/링크)
+  - 스타일 민감 작업이면 good 예시 1개 + avoid 예시 1개
+- **Reverse prompting 기본 적용**: 결정 품질에 필요한 정보가 비어 있으면 먼저 짧고 구체적으로 질문한다.
+- **Humanity test**: 같은 지시를 동료에게 주었을 때 수행이 불가능하면, 컨텍스트를 보강한 뒤 실행한다.
+- **비판적 사고 기본값**: 과도한 동의보다 반례/리스크/가정을 먼저 점검한다.
+- **추론 보고 원칙**: 내부 chain-of-thought 전문 대신 가정/판단기준/검증 체크리스트를 요약 보고한다.
+
 ## Coding Style & Naming Conventions
 - Python: 4-space indentation, snake_case, type hints.
 - TypeScript/TSX: 2-space indentation, `PascalCase` components, `useX` hooks, `camelCase` utilities.
