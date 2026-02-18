@@ -11,7 +11,7 @@ AD_FOUNDRY_ENABLED=true|false
 AD_FOUNDRY_WRITE_ENABLED=true|false
 AD_FOUNDRY_ACCESS_SCOPE=internal|authenticated|public
 AD_FOUNDRY_ALLOWLIST=comma,separated,emails
-AD_FOUNDRY_READONLY_SAFE_PATHS=/api/v1/foundry/...,/api/v1/foundry/provenance/export-c2pa
+AD_FOUNDRY_READONLY_SAFE_PATHS=/api/v1/foundry/...,/api/v1/foundry/provenance/export-c2pa,/api/v1/foundry/workers/dispatch,/api/v1/foundry/workers/jobs
 ```
 
 - **긴급 차단(권장 1순위)**: `AD_FOUNDRY_ENABLED=false`
@@ -45,14 +45,16 @@ Foundry 패턴/전이 룰 업서트는 아래 규약을 따른다.
 
 ---
 
-## 2.2 Worker Port 전환 규약 (Agent0 ↔ Taskiq)
+## 2.2 Worker Port 전환 규약 (Agent0 ↔ Taskiq ↔ Temporal)
 
 1. 기본 실행체는 `Agent0WorkerProvider`
-2. 병목/장애 시 `TaskiqWorkerProvider`로 전환 가능해야 함
+2. 병목/장애 시 `TaskiqWorkerProvider` 또는 `TemporalWorkerProvider`로 전환 가능해야 함
 3. 분기별 1회 스위치 드릴에서 아래 3개 검증:
    - dispatch_job 성공
    - status 조회 가능
    - cancel 흐름 정상
+4. status/cancel은 `tenant_id + project_id` 스코프 파라미터를 필수로 전달한다.
+5. 스코프 불일치 시 API는 403(`tenant scope mismatch` 또는 `project scope mismatch`)를 반환해야 한다.
 
 ---
 
@@ -98,6 +100,8 @@ Foundry 패턴/전이 룰 업서트는 아래 규약을 따른다.
 
 - [ ] `/api/v1/foundry/health` 정상
 - [ ] `/api/v1/foundry/status`에서 접근/쓰기 플래그 기대값 확인
+- [ ] `/api/v1/foundry/workers/providers`에서 active provider 확인
+- [ ] `/api/v1/foundry/workers/jobs/{job_id}` status 조회 시 tenant/project 스코프 강제 확인
 - [ ] 권리 평가 응답에 `decision/reason_codes/per_asset` 포함
 - [ ] 추천 응답에 `continuity_score/rights_decision/recommendation_rationale` 포함
 - [ ] A/B 이벤트 집계에서 variant별 accept/edit/reject rate 노출

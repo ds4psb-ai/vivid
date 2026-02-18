@@ -14,6 +14,10 @@ from app.features.original_ip_foundry.worker_provider import (
 )
 
 
+class JobScopeMismatchError(ValueError):
+    """Raised when caller scope does not match job registry scope."""
+
+
 @dataclass
 class FoundryWorkerRuntime:
     """Dispatch and track jobs across provider adapters."""
@@ -67,9 +71,19 @@ class FoundryWorkerRuntime:
         self._job_registry[result["job_id"]] = entry
         return entry
 
-    def get_job_status(self, job_id: str) -> dict:
+    def get_job_status(
+        self,
+        job_id: str,
+        *,
+        tenant_id: str | None = None,
+        project_id: str | None = None,
+    ) -> dict:
         if job_id in self._job_registry:
             entry = dict(self._job_registry[job_id])
+            if tenant_id and entry.get("tenant_id") != tenant_id:
+                raise JobScopeMismatchError("tenant scope mismatch")
+            if project_id and entry.get("project_id") != project_id:
+                raise JobScopeMismatchError("project scope mismatch")
             provider = str(entry.get("provider", "agent0"))
             adapter = self._providers.get(provider)
             if adapter is not None:
@@ -96,12 +110,24 @@ class FoundryWorkerRuntime:
             "provider": inferred_provider,
             "job_id": job_id,
             "status": probe.get("status", "unknown"),
+            "tenant_id": tenant_id,
+            "project_id": project_id,
             "message": probe.get("message", "Job not found in runtime registry."),
         }
 
-    def cancel_job(self, job_id: str) -> dict:
+    def cancel_job(
+        self,
+        job_id: str,
+        *,
+        tenant_id: str | None = None,
+        project_id: str | None = None,
+    ) -> dict:
         if job_id in self._job_registry:
             entry = self._job_registry[job_id]
+            if tenant_id and entry.get("tenant_id") != tenant_id:
+                raise JobScopeMismatchError("tenant scope mismatch")
+            if project_id and entry.get("project_id") != project_id:
+                raise JobScopeMismatchError("project scope mismatch")
             provider = str(entry.get("provider", "agent0"))
             adapter = self._providers[provider]
             result = adapter.cancel_job(job_id)
@@ -114,10 +140,13 @@ class FoundryWorkerRuntime:
             self._job_registry[job_id] = entry
             return entry
 
-        status = self.get_job_status(job_id)
+        status = self.get_job_status(
+            job_id,
+            tenant_id=tenant_id,
+            project_id=project_id,
+        )
         return {
             **status,
             "status": "cancel_requested",
             "updated_at": datetime.now(timezone.utc).isoformat(),
         }
-

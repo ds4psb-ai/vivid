@@ -42,7 +42,10 @@ from app.features.original_ip_foundry.pattern_extraction_service import PatternE
 from app.features.original_ip_foundry.recommendation_service import FoundryRecommendationService
 from app.features.original_ip_foundry.retrieval_service import FoundryRetrievalService
 from app.features.original_ip_foundry.rights_service import FoundryRightsService
-from app.features.original_ip_foundry.worker_runtime import FoundryWorkerRuntime
+from app.features.original_ip_foundry.worker_runtime import (
+    FoundryWorkerRuntime,
+    JobScopeMismatchError,
+)
 
 
 logger = logging.getLogger("foundry.audit")
@@ -288,12 +291,34 @@ async def dispatch_worker_job(payload: FoundryWorkerDispatchRequest) -> FoundryW
 
 
 @router.get("/workers/jobs/{job_id}", response_model=FoundryWorkerStatusResponse)
-async def get_worker_job_status(job_id: str) -> FoundryWorkerStatusResponse:
-    status = _worker_runtime.get_job_status(job_id)
+async def get_worker_job_status(
+    job_id: str,
+    tenant_id: str,
+    project_id: str,
+) -> FoundryWorkerStatusResponse:
+    try:
+        status = _worker_runtime.get_job_status(
+            job_id,
+            tenant_id=tenant_id,
+            project_id=project_id,
+        )
+    except JobScopeMismatchError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
     return FoundryWorkerStatusResponse(**status)
 
 
 @router.post("/workers/jobs/{job_id}/cancel", response_model=FoundryWorkerStatusResponse)
-async def cancel_worker_job(job_id: str) -> FoundryWorkerStatusResponse:
-    status = _worker_runtime.cancel_job(job_id)
+async def cancel_worker_job(
+    job_id: str,
+    tenant_id: str,
+    project_id: str,
+) -> FoundryWorkerStatusResponse:
+    try:
+        status = _worker_runtime.cancel_job(
+            job_id,
+            tenant_id=tenant_id,
+            project_id=project_id,
+        )
+    except JobScopeMismatchError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
     return FoundryWorkerStatusResponse(**status)

@@ -73,16 +73,21 @@ async def test_worker_provider_and_dispatch_routes():
             job_id = dispatch_json["job_id"]
 
             status = await client.get(
-                f"/api/v1/foundry/workers/jobs/{job_id}",
+                f"/api/v1/foundry/workers/jobs/{job_id}?tenant_id=tenant-a&project_id=project-a",
                 cookies={"crebit_session": "fake-token"},
             )
             assert status.status_code == 200
             assert status.json()["job_id"] == job_id
 
             cancel = await client.post(
-                f"/api/v1/foundry/workers/jobs/{job_id}/cancel",
+                f"/api/v1/foundry/workers/jobs/{job_id}/cancel?tenant_id=tenant-a&project_id=project-a",
                 cookies={"crebit_session": "fake-token"},
             )
             assert cancel.status_code == 200
             assert cancel.json()["status"] == "cancel_requested"
 
+            forbidden = await client.get(
+                f"/api/v1/foundry/workers/jobs/{job_id}?tenant_id=tenant-bad&project_id=project-a",
+                cookies={"crebit_session": "fake-token"},
+            )
+            assert forbidden.status_code == 403

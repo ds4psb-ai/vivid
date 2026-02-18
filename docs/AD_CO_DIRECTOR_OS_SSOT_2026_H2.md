@@ -151,6 +151,12 @@ flowchart LR
 6. **메모리/이중검색 1차**
    - `POST /api/v1/foundry/memory/normalize`
    - `POST /api/v1/foundry/retrieval/query` (`director_context` vs `shot_reference`)
+7. **Worker Runtime 다중 provider + 스코프 가드**
+   - `GET /api/v1/foundry/workers/providers`
+   - `POST /api/v1/foundry/workers/dispatch`
+   - `GET /api/v1/foundry/workers/jobs/{job_id}?tenant_id=...&project_id=...`
+   - `POST /api/v1/foundry/workers/jobs/{job_id}/cancel?tenant_id=...&project_id=...`
+   - 스코프 불일치 시 `403` 반환으로 테넌트 간 상태 조회 차단
 
 ---
 
@@ -194,6 +200,7 @@ Agent0 공식 문서 기준 프로젝트/시크릿/툴/자기개선 루프를 �
 2. **Worker Port**  
    - 계약: `dispatch_job`, `get_job_status`, `cancel_job`  
    - 구현체: Agent0WorkerProvider / TaskiqWorkerProvider / TemporalWorkerProvider
+   - 보안 규약: status/cancel은 `tenant_id + project_id` 스코프 검증을 통과해야 한다.
 
 3. **Channel Port**  
    - 계약: `ingest_event`, `send_reply`, `upload_media`  
