@@ -1,204 +1,270 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
 import {
   api,
-  type FoundryC2PAExportResponse,
+  type FoundryChannelMonitoringResponse,
   type FoundryHealthResponse,
-  type FoundryRecommendationResponse,
+  type FoundryKPISnapshotResponse,
   type FoundryStatusResponse,
+  type FoundryExperimentSummaryResponse,
+  type FoundryVendorDrillResponse,
 } from "@/lib/api";
 
-const DEMO_RECOMMENDATION_PAYLOAD = {
-  scene_context: {
-    project_id: "demo-project",
-    scene_id: "scene-03",
-    target_emotion: "anxiety",
-    location: "warehouse",
-    characters: ["hero", "rival"],
-    desired_camera_rhythm: "dynamic",
-    intent_tags: ["power", "isolation"],
-  },
-  candidates: [
-    {
-      candidate_id: "cand-a",
-      title: "Low-angle confrontation",
-      shots: [
-        {
-          shot_id: "shot-1",
-          shot_size: "medium",
-          camera_angle: "low_angle",
-          camera_movement: "tracking",
-          emotion_tone: "anxiety",
-          transition_to_next: "cut",
-          location: "warehouse",
-          characters: ["hero", "rival"],
-        },
-      ],
-      pattern_tags: ["power"],
-      mise_en_scene_score: 0.82,
-      story_intent_fit: 0.78,
-      director_style_fit: 0.72,
-      execution_feasibility: 0.86,
-      clone_risk: 0.21,
-    },
-  ],
-  rights_action: "reference",
-  continuity_floor: 0.6,
-  model: "foundry-runtime-v1",
-  input_type: "ui_demo",
-} as const;
+// ---------------------------------------------------------------------------
+// Small helpers
+// ---------------------------------------------------------------------------
 
-export default function FoundryPage() {
+function Card({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-2xl border border-[var(--glass-border)] bg-[var(--surface-1)] p-4">
+      <h2 className="mb-3 text-sm font-semibold text-[var(--fg-0)]">{title}</h2>
+      {children}
+    </div>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string | number | null | undefined }) {
+  return (
+    <div className="flex items-baseline justify-between gap-2 py-1">
+      <span className="text-xs text-[var(--fg-muted)]">{label}</span>
+      <span className="font-mono text-sm text-[var(--fg-0)]">{value ?? "—"}</span>
+    </div>
+  );
+}
+
+function Badge({ ok }: { ok: boolean }) {
+  return (
+    <span
+      className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
+        ok ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"
+      }`}
+    >
+      {ok ? "OK" : "DOWN"}
+    </span>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Page
+// ---------------------------------------------------------------------------
+
+export default function FoundryAdminPage() {
   const [health, setHealth] = useState<FoundryHealthResponse | null>(null);
   const [status, setStatus] = useState<FoundryStatusResponse | null>(null);
-  const [recommendation, setRecommendation] = useState<FoundryRecommendationResponse | null>(null);
-  const [c2pa, setC2pa] = useState<FoundryC2PAExportResponse | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [c2paLoading, setC2paLoading] = useState(false);
+  const [kpi, setKpi] = useState<FoundryKPISnapshotResponse | null>(null);
+  const [channels, setChannels] = useState<FoundryChannelMonitoringResponse | null>(null);
+  const [experiment, setExperiment] = useState<FoundryExperimentSummaryResponse | null>(null);
+  const [drill, setDrill] = useState<FoundryVendorDrillResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [drillLoading, setDrillLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const topResult = useMemo(() => recommendation?.ranked?.[0], [recommendation]);
-
-  const loadFoundryStatus = async () => {
+  const loadAll = useCallback(async () => {
     setError(null);
+    setLoading(true);
     try {
-      const [healthRes, statusRes] = await Promise.all([
+      const [h, s, k, ch] = await Promise.all([
         api.getFoundryHealth(),
         api.getFoundryStatus(),
+        api.getFoundryKPISnapshot(),
+        api.getFoundryChannelMonitoring(),
       ]);
-      setHealth(healthRes);
-      setStatus(statusRes);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Foundry 상태 조회 실패");
-    }
-  };
+      setHealth(h);
+      setStatus(s);
+      setKpi(k);
+      setChannels(ch);
 
-  const runDemoRecommendation = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await api.getFoundryRecommendations(DEMO_RECOMMENDATION_PAYLOAD);
-      setRecommendation(res);
+      // Experiment summary — use default key, ignore 404
+      try {
+        const exp = await api.getFoundryExperimentSummary("default");
+        setExperiment(exp);
+      } catch {
+        /* no experiments yet */
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "추천 실행 실패");
+      setError(err instanceof Error ? err.message : "Foundry 조회 실패");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const runDemoC2PAExport = async () => {
-    setC2paLoading(true);
-    setError(null);
+  const runDrill = async () => {
+    setDrillLoading(true);
     try {
-      const result = await api.exportFoundryC2PAManifest({
-        project_id: "demo-project",
-        scene_id: "scene-03",
-        asset_id: "asset-demo-03",
-        title: "Demo Scene 03",
-        generator_model: "gemini-3-pro",
-        source_license: "cc-by-4.0",
-        actions: [
-          { action: "c2pa.created", parameters: { prompt: "low-angle confrontation" } },
-          { action: "c2pa.edited", parameters: { tool: "kling-3.0" } },
-        ],
-        provenance_trace: [
-          { asset_id: "source-clip-1", relationship: "componentOf", title: "Reference Clip" },
-          { asset_id: "source-image-2", relationship: "componentOf", title: "Mood Image" },
-        ],
-        model: "foundry-runtime-v1",
-        input_type: "ui_demo_provenance",
-      });
-      setC2pa(result);
+      const res = await api.runFoundryVendorDrill();
+      setDrill(res);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "C2PA export 실패");
+      setError(err instanceof Error ? err.message : "Vendor drill 실패");
     } finally {
-      setC2paLoading(false);
+      setDrillLoading(false);
     }
   };
 
   useEffect(() => {
-    void loadFoundryStatus();
-  }, []);
+    void loadAll();
+  }, [loadAll]);
 
   return (
     <AppShell showTopBar={false}>
-      <div className="mx-auto max-w-6xl px-6 py-8 space-y-6">
-        <header className="space-y-2">
-          <h1 className="text-2xl font-bold text-[var(--fg-0)]">Original-IP Foundry</h1>
-          <p className="text-sm text-[var(--fg-muted)]">
-            권리 게이트 + continuity 우선 추천 + 실험 레이어를 하나의 런타임으로 점검합니다.
-          </p>
+      <div className="mx-auto max-w-7xl px-6 py-8 space-y-6">
+        {/* Header */}
+        <header className="flex items-center justify-between">
+          <div className="space-y-1">
+            <h1 className="text-2xl font-bold text-[var(--fg-0)]">
+              Original-IP Foundry Dashboard
+            </h1>
+            <p className="text-sm text-[var(--fg-muted)]">
+              Runtime health, KPI metrics, experiments, channel monitoring, rights gate
+            </p>
+          </div>
+          <button
+            onClick={() => void loadAll()}
+            disabled={loading}
+            className="rounded-lg border border-[var(--glass-border)] px-3 py-2 text-sm hover:bg-black/5 disabled:opacity-50"
+          >
+            {loading ? "Loading..." : "Refresh"}
+          </button>
         </header>
 
-        {error ? (
+        {error && (
           <div className="rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
           </div>
-        ) : null}
+        )}
 
-        <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div className="rounded-2xl border border-[var(--glass-border)] bg-[var(--surface-1)] p-4">
-            <h2 className="text-sm font-semibold text-[var(--fg-0)]">Foundry Health</h2>
-            <pre className="mt-3 overflow-x-auto rounded-lg bg-black/5 p-3 text-xs">
-              {JSON.stringify(health, null, 2)}
-            </pre>
-          </div>
+        {/* Row 1: Health + KPI + Experiment */}
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          {/* Health & Status */}
+          <Card title="Health & Status">
+            <div className="flex items-center gap-2 mb-3">
+              <Badge ok={health?.status === "ok"} />
+              <span className="text-xs text-[var(--fg-muted)]">
+                {health?.access_scope ?? "—"}
+              </span>
+            </div>
+            <Stat label="Foundry Enabled" value={status?.enabled ? "Yes" : "No"} />
+            <Stat label="Write Enabled" value={status?.write_enabled ? "Yes" : "No"} />
+            <Stat label="Worker Provider" value={status?.worker_provider} />
+            <Stat label="Allowlist" value={`${status?.allowlist_count ?? 0} users`} />
+          </Card>
 
-          <div className="rounded-2xl border border-[var(--glass-border)] bg-[var(--surface-1)] p-4">
-            <h2 className="text-sm font-semibold text-[var(--fg-0)]">Foundry Status</h2>
-            <pre className="mt-3 overflow-x-auto rounded-lg bg-black/5 p-3 text-xs">
-              {JSON.stringify(status, null, 2)}
-            </pre>
-          </div>
+          {/* KPI Panel */}
+          <Card title="KPI Snapshot">
+            <Stat label="p95 Latency" value={kpi?.p95_latency_ms != null ? `${kpi.p95_latency_ms}ms` : null} />
+            <Stat label="p50 Latency" value={kpi?.p50_latency_ms != null ? `${kpi.p50_latency_ms}ms` : null} />
+            <Stat
+              label="Pattern Reuse"
+              value={kpi?.pattern_reuse_rate != null ? `${(kpi.pattern_reuse_rate * 100).toFixed(1)}%` : null}
+            />
+            <Stat
+              label="Continuity Uplift"
+              value={
+                kpi?.continuity_uplift != null
+                  ? `${kpi.continuity_uplift > 0 ? "+" : ""}${(kpi.continuity_uplift * 100).toFixed(1)}%`
+                  : null
+              }
+            />
+            <div className="mt-2 border-t border-[var(--glass-border)] pt-2">
+              <Stat label="Latency samples" value={kpi?.sample_counts?.latency} />
+              <Stat label="Continuity samples" value={kpi?.sample_counts?.continuity} />
+            </div>
+          </Card>
+
+          {/* Experiment Panel */}
+          <Card title="Experiment Summary">
+            {experiment ? (
+              <>
+                <Stat label="Experiment" value={experiment.experiment_key} />
+                <Stat label="Total Events" value={experiment.total_events} />
+                <div className="mt-2 space-y-1">
+                  {Object.entries(experiment.variants).map(([variant, stats]) => (
+                    <div
+                      key={variant}
+                      className="flex items-center justify-between rounded-lg bg-black/5 px-2 py-1"
+                    >
+                      <span className="text-xs font-medium">{variant}</span>
+                      <span className="text-xs text-[var(--fg-muted)]">
+                        accept: {(stats.accept_rate * 100).toFixed(0)}% &middot;
+                        edit: {(stats.edit_rate * 100).toFixed(0)}% &middot;
+                        n={stats.total}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <p className="text-xs text-[var(--fg-muted)]">No experiments yet</p>
+            )}
+          </Card>
         </section>
 
-        <section className="rounded-2xl border border-[var(--glass-border)] bg-[var(--surface-1)] p-4">
-          <div className="flex flex-wrap items-center gap-3">
+        {/* Row 2: Channel Monitoring + Rights Gate */}
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {/* Channel Monitoring */}
+          <Card title="Channel Monitoring">
+            {channels ? (
+              <>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  {channels.supported_channels.map((ch) => (
+                    <div key={ch} className="rounded-lg bg-black/5 px-3 py-2 text-center">
+                      <div className="text-lg font-bold text-[var(--fg-0)]">
+                        {channels.event_counts[ch] ?? 0}
+                      </div>
+                      <div className="text-xs text-[var(--fg-muted)]">{ch}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3">
+                  <Stat label="Active Dedup" value={`${channels.active_dedup_entries} entries`} />
+                </div>
+              </>
+            ) : (
+              <p className="text-xs text-[var(--fg-muted)]">Loading...</p>
+            )}
+          </Card>
+
+          {/* Vendor Switch Drill */}
+          <Card title="Vendor Switch Drill">
+            <p className="mb-3 text-xs text-[var(--fg-muted)]">
+              Run a vendor substitution rehearsal to validate port contracts.
+            </p>
             <button
-              onClick={() => void loadFoundryStatus()}
-              className="rounded-lg border border-[var(--glass-border)] px-3 py-2 text-sm hover:bg-black/5"
-            >
-              상태 새로고침
-            </button>
-            <button
-              onClick={() => void runDemoRecommendation()}
-              disabled={loading}
+              onClick={() => void runDrill()}
+              disabled={drillLoading}
               className="rounded-lg bg-[var(--color-brand-primary)] px-3 py-2 text-sm text-white disabled:opacity-60"
             >
-              {loading ? "추천 실행 중..." : "데모 추천 실행"}
+              {drillLoading ? "Running drill..." : "Run Vendor Drill"}
             </button>
-            <button
-              onClick={() => void runDemoC2PAExport()}
-              disabled={c2paLoading}
-              className="rounded-lg bg-emerald-600 px-3 py-2 text-sm text-white disabled:opacity-60"
-            >
-              {c2paLoading ? "C2PA Export 중..." : "C2PA Export 데모"}
-            </button>
-          </div>
-
-          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div>
-              <h3 className="text-sm font-semibold text-[var(--fg-0)]">Top Candidate</h3>
-              <pre className="mt-2 overflow-x-auto rounded-lg bg-black/5 p-3 text-xs">
-                {JSON.stringify(topResult, null, 2)}
-              </pre>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-[var(--fg-0)]">Raw Recommendation Payload</h3>
-              <pre className="mt-2 overflow-x-auto rounded-lg bg-black/5 p-3 text-xs">
-                {JSON.stringify(recommendation, null, 2)}
-              </pre>
-            </div>
-          </div>
-
-          <div className="mt-4">
-            <h3 className="text-sm font-semibold text-[var(--fg-0)]">C2PA Manifest Export</h3>
-            <pre className="mt-2 overflow-x-auto rounded-lg bg-black/5 p-3 text-xs">
-              {JSON.stringify(c2pa, null, 2)}
-            </pre>
-          </div>
+            {drill && (
+              <div className="mt-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Badge ok={drill.overall_status === "pass"} />
+                  <span className="text-xs">
+                    {drill.total_passed} passed, {drill.total_failed} failed
+                  </span>
+                </div>
+                {drill.drills.map((d) => (
+                  <div key={d.drill_name} className="rounded-lg bg-black/5 px-3 py-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium">{d.drill_name}</span>
+                      <span
+                        className={`text-xs font-medium ${
+                          d.status === "pass" ? "text-emerald-600" : "text-red-600"
+                        }`}
+                      >
+                        {d.status.toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="text-xs text-[var(--fg-muted)]">
+                      {d.tests_passed}/{d.tests_passed + d.tests_failed} tests
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
         </section>
       </div>
     </AppShell>

@@ -3,9 +3,11 @@ from __future__ import annotations
 
 import hashlib
 import logging
-from collections import defaultdict
+from collections import defaultdict, deque
 from datetime import datetime
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
+
+from app.features.original_ip_foundry.enhanced_reward_service import EnhancedRewardService
 
 if TYPE_CHECKING:
     from app.uqsl.thompson_sampling import ThompsonSamplingRouter
@@ -18,11 +20,15 @@ REWARD_MAP = {"accepted": 1.0, "edited": 0.5, "rejected": 0.0}
 class FoundryExperimentService:
     """Deterministic assignment + Thompson Sampling adaptive routing."""
 
+    MAX_EVENTS_PER_KEY = 10_000
+    MAX_ASSIGNMENTS = 10_000
+
     def __init__(self, use_thompson: bool = True):
         self._assignments: Dict[Tuple[str, str, str], str] = {}
-        self._events: Dict[str, List[dict]] = defaultdict(list)
+        self._events: Dict[str, deque[dict]] = defaultdict(lambda: deque(maxlen=self.MAX_EVENTS_PER_KEY))
         self._use_thompson = use_thompson
         self._thompson: Optional["ThompsonSamplingRouter"] = None
+        self._enhanced_reward = EnhancedRewardService()
 
         if use_thompson:
             try:
@@ -33,6 +39,12 @@ class FoundryExperimentService:
             except Exception as e:
                 logger.warning(f"[Experiment] Thompson init failed, using hash-only: {e}")
                 self._thompson = None
+
+    def _evict_oldest_assignment(self) -> None:
+        """Evict oldest assignment if at capacity."""
+        if len(self._assignments) >= self.MAX_ASSIGNMENTS:
+            oldest_key = next(iter(self._assignments))
+            del self._assignments[oldest_key]
 
     def _total_trials(self, tenant_id: str, experiment_key: str) -> int:
         scoped_key = f"{tenant_id}:{experiment_key}"
@@ -74,6 +86,7 @@ class FoundryExperimentService:
                 if assigned not in normalized_variants:
                     assigned = normalized_variants[0]
                 hash_slot = normalized_variants.index(assigned)
+                self._evict_oldest_assignment()
                 self._assignments[assignment_key] = assigned
                 return {
                     "tenant_id": tenant_id,
@@ -91,6 +104,7 @@ class FoundryExperimentService:
         hash_int = int(digest[:8], 16)
         hash_slot = hash_int % len(normalized_variants)
         assigned = normalized_variants[hash_slot]
+        self._evict_oldest_assignment()
         self._assignments[assignment_key] = assigned
         return {
             "tenant_id": tenant_id,
@@ -108,6 +122,8 @@ class FoundryExperimentService:
         variant: str,
         outcome: str,
         completion_seconds: int | None = None,
+        edit_distance: float = 0.0,
+        satisfaction_score: float | None = None,
     ) -> dict:
         scoped_key = f"{tenant_id}:{experiment_key}"
         event = {
@@ -124,7 +140,13 @@ class FoundryExperimentService:
         # Update Thompson arms with reward signal
         if self._thompson:
             arm_id = f"foundry:{tenant_id}:{experiment_key}:{variant}"
-            reward_value = REWARD_MAP.get(outcome, 0.0)
+            reward_result = self._enhanced_reward.compute_reward(
+                outcome=outcome,
+                completion_seconds=completion_seconds,
+                edit_distance=edit_distance,
+                satisfaction_score=satisfaction_score,
+            )
+            reward_value = reward_result["reward"]
             try:
                 await self._thompson.update(
                     db=None,

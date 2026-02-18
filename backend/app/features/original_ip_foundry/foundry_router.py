@@ -12,7 +12,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.database import get_db
-from app.features.original_ip_foundry.c2pa_export_service import FoundryC2PAExportService
 from app.features.original_ip_foundry.contracts import (
     FoundryC2PAExportRequest,
     FoundryC2PAExportResponse,
@@ -35,24 +34,14 @@ from app.features.original_ip_foundry.contracts import (
     FoundryRightsEvaluationRequest,
     FoundryRightsEvaluationResponse,
 )
-from app.features.original_ip_foundry.clone_risk_service import CloneRiskService
-from app.features.original_ip_foundry.experiment_service import FoundryExperimentService
 from app.features.original_ip_foundry.foundry_auth import (
     foundry_write_guard,
     require_foundry_access,
 )
-from app.features.original_ip_foundry.memory_adapter import OpenClawMemoryAdapter
-from app.features.original_ip_foundry.prompt_compiler import FoundryPromptCompiler
-from app.features.original_ip_foundry.qdrant_memory_store import QdrantDirectorMemoryStore
-from app.features.original_ip_foundry.qdrant_pattern_store import QdrantPatternAtomStore
-from app.features.original_ip_foundry.pattern_extraction_service import PatternExtractionService
-from app.features.original_ip_foundry.recommendation_service import FoundryRecommendationService
-from app.features.original_ip_foundry.retrieval_service import FoundryRetrievalService
-from app.features.original_ip_foundry.rights_service import FoundryRightsService
-from app.features.original_ip_foundry.worker_runtime import (
-    FoundryWorkerRuntime,
-    JobScopeMismatchError,
-)
+from app.features.original_ip_foundry.foundry_lifespan import FoundryServices, get_foundry_services
+from app.features.original_ip_foundry.webhook_signature import WebhookSignatureError
+from app.features.original_ip_foundry.channel_router import WebhookRateLimitError
+from app.features.original_ip_foundry.worker_runtime import JobScopeMismatchError
 
 
 logger = logging.getLogger("foundry.audit")
@@ -132,20 +121,6 @@ class FoundryAuditRoute(APIRoute):
         return custom_handler
 
 
-_memory_adapter = OpenClawMemoryAdapter()
-_memory_store = QdrantDirectorMemoryStore()
-_qdrant_pattern_store = QdrantPatternAtomStore()
-_pattern_service = PatternExtractionService(qdrant_store=_qdrant_pattern_store)
-_rights_service = FoundryRightsService()
-_clone_risk_service = CloneRiskService(qdrant_pattern_store=_qdrant_pattern_store)
-_recommendation_service = FoundryRecommendationService(_rights_service, clone_risk_service=_clone_risk_service)
-_experiment_service = FoundryExperimentService()
-_retrieval_service = FoundryRetrievalService(_memory_store, _pattern_service)
-_c2pa_export_service = FoundryC2PAExportService()
-_prompt_compiler = FoundryPromptCompiler()
-_worker_runtime = FoundryWorkerRuntime()
-
-
 router = APIRouter(
     route_class=FoundryAuditRoute,
     dependencies=[
@@ -154,6 +129,80 @@ router = APIRouter(
     ],
 )
 
+
+# ---------------------------------------------------------------------------
+# Channel sub-routes (webhook, reply, upload, monitoring)
+# These are defined inline because the ChannelWebhookRouter instance comes
+# from the DI container (FoundryServices) via app.state, not from a module
+# global.  We create lightweight route functions that pull the services at
+# request time.
+# ---------------------------------------------------------------------------
+
+@router.post("/channels/{channel}/webhook")
+async def channel_webhook(
+    channel: str,
+    payload: dict,
+    request: Request,
+    svc: FoundryServices = Depends(get_foundry_services),
+) -> dict[str, Any]:
+    headers = {k.lower(): v for k, v in request.headers.items()}
+    try:
+        return await svc.channel_webhook_router.handle_webhook(channel, payload, headers=headers)
+    except WebhookSignatureError as e:
+        raise HTTPException(status_code=401, detail=str(e))
+    except WebhookRateLimitError as e:
+        raise HTTPException(status_code=429, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/channels/monitoring")
+async def channel_monitoring(
+    svc: FoundryServices = Depends(get_foundry_services),
+) -> dict[str, Any]:
+    return svc.channel_webhook_router.get_monitoring()
+
+
+@router.post("/channels/{channel}/reply")
+async def channel_reply(
+    channel: str,
+    payload: dict,
+    svc: FoundryServices = Depends(get_foundry_services),
+) -> dict[str, Any]:
+    user_id = payload.get("user_id") or ""
+    text = payload.get("text") or ""
+    attachments = payload.get("attachments") or []
+    if not user_id or not text:
+        raise HTTPException(status_code=400, detail="user_id and text required")
+    try:
+        return await svc.channel_webhook_router.handle_reply(channel, user_id, text, attachments)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/channels/{channel}/upload")
+async def channel_upload(
+    channel: str,
+    payload: dict,
+    svc: FoundryServices = Depends(get_foundry_services),
+) -> dict[str, Any]:
+    user_id = payload.get("user_id") or ""
+    media_url = payload.get("media_url") or ""
+    if not user_id or not media_url:
+        raise HTTPException(status_code=400, detail="user_id and media_url required")
+    try:
+        return await svc.channel_webhook_router.handle_upload(
+            channel, user_id, media_url,
+            media_type=payload.get("media_type") or "image",
+            caption=payload.get("caption") or "",
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+# ---------------------------------------------------------------------------
+# Core Foundry endpoints
+# ---------------------------------------------------------------------------
 
 @router.get("/health")
 async def foundry_health() -> dict[str, Any]:
@@ -181,8 +230,9 @@ async def foundry_status() -> dict[str, Any]:
 async def evaluate_rights(
     payload: FoundryRightsEvaluationRequest,
     db: AsyncSession = Depends(get_db),
+    svc: FoundryServices = Depends(get_foundry_services),
 ) -> FoundryRightsEvaluationResponse:
-    result = await _rights_service.evaluate_assets(
+    result = await svc.rights_service.evaluate_assets(
         action=payload.action,
         assets=[asset.model_dump() for asset in payload.assets],
         requested_elements=payload.requested_elements,
@@ -194,8 +244,11 @@ async def evaluate_rights(
 
 
 @router.post("/patterns/extract", response_model=FoundryPatternExtractionResponse)
-async def extract_patterns(payload: FoundryPatternExtractionRequest) -> FoundryPatternExtractionResponse:
-    result = _pattern_service.extract(
+async def extract_patterns(
+    payload: FoundryPatternExtractionRequest,
+    svc: FoundryServices = Depends(get_foundry_services),
+) -> FoundryPatternExtractionResponse:
+    result = svc.pattern_service.extract(
         project_id=payload.project_id,
         scene_id=payload.scene_id,
         shots=[shot.model_dump() for shot in payload.shots],
@@ -204,8 +257,11 @@ async def extract_patterns(payload: FoundryPatternExtractionRequest) -> FoundryP
 
 
 @router.post("/recommendations/next-scene", response_model=FoundryRecommendationResponse)
-async def recommend_next_scene(payload: FoundryRecommendationRequest) -> FoundryRecommendationResponse:
-    result = await _recommendation_service.recommend(
+async def recommend_next_scene(
+    payload: FoundryRecommendationRequest,
+    svc: FoundryServices = Depends(get_foundry_services),
+) -> FoundryRecommendationResponse:
+    result = await svc.recommendation_service.recommend(
         scene_context=payload.scene_context.model_dump(),
         candidates=[candidate.model_dump() for candidate in payload.candidates],
         rights_action=payload.rights_action,
@@ -215,8 +271,11 @@ async def recommend_next_scene(payload: FoundryRecommendationRequest) -> Foundry
 
 
 @router.post("/experiments/assign", response_model=FoundryExperimentAssignResponse)
-async def assign_experiment(payload: FoundryExperimentAssignRequest) -> FoundryExperimentAssignResponse:
-    result = _experiment_service.assign(
+async def assign_experiment(
+    payload: FoundryExperimentAssignRequest,
+    svc: FoundryServices = Depends(get_foundry_services),
+) -> FoundryExperimentAssignResponse:
+    result = svc.experiment_service.assign(
         tenant_id=payload.tenant_id,
         experiment_key=payload.experiment_key,
         user_key=payload.user_key,
@@ -227,25 +286,37 @@ async def assign_experiment(payload: FoundryExperimentAssignRequest) -> FoundryE
 
 
 @router.post("/experiments/feedback")
-async def record_experiment_feedback(payload: FoundryExperimentFeedbackRequest) -> dict[str, Any]:
-    return await _experiment_service.record_feedback(
+async def record_experiment_feedback(
+    payload: FoundryExperimentFeedbackRequest,
+    svc: FoundryServices = Depends(get_foundry_services),
+) -> dict[str, Any]:
+    return await svc.experiment_service.record_feedback(
         tenant_id=payload.tenant_id,
         experiment_key=payload.experiment_key,
         user_key=payload.user_key,
         variant=payload.variant,
         outcome=payload.outcome,
         completion_seconds=payload.completion_seconds,
+        edit_distance=payload.edit_distance or 0.0,
+        satisfaction_score=payload.satisfaction_score,
     )
 
 
 @router.get("/experiments/{experiment_key}/summary")
-async def experiment_summary(experiment_key: str, tenant_id: str = "default") -> dict[str, Any]:
-    return _experiment_service.summary(tenant_id=tenant_id, experiment_key=experiment_key)
+async def experiment_summary(
+    experiment_key: str,
+    tenant_id: str = "default",
+    svc: FoundryServices = Depends(get_foundry_services),
+) -> dict[str, Any]:
+    return svc.experiment_service.summary(tenant_id=tenant_id, experiment_key=experiment_key)
 
 
 @router.post("/memory/normalize")
-async def normalize_memory(payload: FoundryMemoryNormalizeRequest) -> dict[str, Any]:
-    normalized = _memory_adapter.normalize(
+async def normalize_memory(
+    payload: FoundryMemoryNormalizeRequest,
+    svc: FoundryServices = Depends(get_foundry_services),
+) -> dict[str, Any]:
+    normalized = svc.memory_adapter.normalize(
         tenant_id=payload.tenant_id,
         project_id=payload.project_id,
         scene_id=payload.scene_id,
@@ -253,26 +324,34 @@ async def normalize_memory(payload: FoundryMemoryNormalizeRequest) -> dict[str, 
         note=payload.note,
         attachments=payload.attachments,
     )
-    _memory_store.put(normalized)
+    svc.memory_store.put(normalized)
     return {"normalized": normalized.to_dict()}
 
 
 @router.post("/retrieval/query")
-async def retrieval_query(payload: FoundryRetrievalRequest) -> dict[str, Any]:
-    if payload.query_type not in {"director_context", "shot_reference"}:
+async def retrieval_query(
+    payload: FoundryRetrievalRequest,
+    svc: FoundryServices = Depends(get_foundry_services),
+) -> dict[str, Any]:
+    supported = {"director_context", "shot_reference", "payload_filter", "transition_rerank"}
+    if payload.query_type not in supported:
         raise HTTPException(status_code=400, detail="Unsupported query_type")
-    return _retrieval_service.query(
+    return svc.retrieval_service.query(
         tenant_id=payload.tenant_id,
         project_id=payload.project_id,
         query_type=payload.query_type,
         query=payload.query,
         limit=payload.limit,
+        filters=payload.filters,
     )
 
 
 @router.post("/provenance/export-c2pa", response_model=FoundryC2PAExportResponse)
-async def export_c2pa_manifest(payload: FoundryC2PAExportRequest) -> FoundryC2PAExportResponse:
-    result = _c2pa_export_service.export_manifest(
+async def export_c2pa_manifest(
+    payload: FoundryC2PAExportRequest,
+    svc: FoundryServices = Depends(get_foundry_services),
+) -> FoundryC2PAExportResponse:
+    result = svc.c2pa_export_service.export_manifest(
         project_id=payload.project_id,
         scene_id=payload.scene_id,
         asset_id=payload.asset_id,
@@ -286,16 +365,21 @@ async def export_c2pa_manifest(payload: FoundryC2PAExportRequest) -> FoundryC2PA
 
 
 @router.get("/workers/providers")
-async def get_worker_providers() -> dict[str, Any]:
+async def get_worker_providers(
+    svc: FoundryServices = Depends(get_foundry_services),
+) -> dict[str, Any]:
     return {
-        "active_provider": _worker_runtime.resolve_provider(None),
-        "providers": _worker_runtime.list_providers(),
+        "active_provider": svc.worker_runtime.resolve_provider(None),
+        "providers": svc.worker_runtime.list_providers(),
     }
 
 
 @router.post("/workers/dispatch", response_model=FoundryWorkerDispatchResponse)
-async def dispatch_worker_job(payload: FoundryWorkerDispatchRequest) -> FoundryWorkerDispatchResponse:
-    result = _worker_runtime.dispatch_job(
+async def dispatch_worker_job(
+    payload: FoundryWorkerDispatchRequest,
+    svc: FoundryServices = Depends(get_foundry_services),
+) -> FoundryWorkerDispatchResponse:
+    result = svc.worker_runtime.dispatch_job(
         tenant_id=payload.tenant_id,
         project_id=payload.project_id,
         job_type=payload.job_type,
@@ -310,9 +394,10 @@ async def get_worker_job_status(
     job_id: str,
     tenant_id: str,
     project_id: str,
+    svc: FoundryServices = Depends(get_foundry_services),
 ) -> FoundryWorkerStatusResponse:
     try:
-        status = _worker_runtime.get_job_status(
+        status = svc.worker_runtime.get_job_status(
             job_id,
             tenant_id=tenant_id,
             project_id=project_id,
@@ -327,9 +412,10 @@ async def cancel_worker_job(
     job_id: str,
     tenant_id: str,
     project_id: str,
+    svc: FoundryServices = Depends(get_foundry_services),
 ) -> FoundryWorkerStatusResponse:
     try:
-        status = _worker_runtime.cancel_job(
+        status = svc.worker_runtime.cancel_job(
             job_id,
             tenant_id=tenant_id,
             project_id=project_id,
@@ -340,25 +426,66 @@ async def cancel_worker_job(
 
 
 @router.post("/prompts/compile", response_model=FoundryPromptCompileResponse)
-async def compile_prompts(payload: FoundryPromptCompileRequest) -> FoundryPromptCompileResponse:
-    compiled = _prompt_compiler.compile_scene(
-        [shot.model_dump() for shot in payload.shots],
-        engines=payload.engines,
+async def compile_prompts(
+    payload: FoundryPromptCompileRequest,
+    svc: FoundryServices = Depends(get_foundry_services),
+) -> FoundryPromptCompileResponse:
+    started = perf_counter()
+    try:
+        compiled = svc.prompt_compiler.compile_scene(
+            [shot.model_dump() for shot in payload.shots],
+            engines=payload.engines,
+        )
+        compiled_shots = []
+        for shot_input, engine_results in zip(payload.shots, compiled):
+            engines_out = {
+                engine: FoundryEnginePromptResult(
+                    engine=result.engine,
+                    prompt_text=result.prompt_text,
+                    negative_prompt=result.negative_prompt,
+                    metadata=result.metadata,
+                )
+                for engine, result in engine_results.items()
+            }
+            compiled_shots.append(FoundryCompiledShot(shot_id=shot_input.shot_id, engines=engines_out))
+        return FoundryPromptCompileResponse(
+            project_id=payload.project_id,
+            scene_id=payload.scene_id,
+            compiled_shots=compiled_shots,
+        )
+    finally:
+        latency_ms = (perf_counter() - started) * 1000
+        svc.kpi_service.record_latency(latency_ms)
+
+
+@router.post("/rights/evaluate-publish")
+async def evaluate_publish_readiness(
+    payload: dict,
+    svc: FoundryServices = Depends(get_foundry_services),
+) -> dict[str, Any]:
+    return await svc.rights_service.evaluate_publish_readiness(
+        project_id=payload.get("project_id", "unknown"),
+        scene_id=payload.get("scene_id"),
+        shots=payload.get("shots"),
+        clone_risk=payload.get("clone_risk"),
+        ingredients=payload.get("ingredients"),
+        near_duplicate_service=svc.near_duplicate_service,
+        clone_risk_service=svc.clone_risk_service,
     )
-    compiled_shots = []
-    for shot_input, engine_results in zip(payload.shots, compiled):
-        engines_out = {
-            engine: FoundryEnginePromptResult(
-                engine=result.engine,
-                prompt_text=result.prompt_text,
-                negative_prompt=result.negative_prompt,
-                metadata=result.metadata,
-            )
-            for engine, result in engine_results.items()
-        }
-        compiled_shots.append(FoundryCompiledShot(shot_id=shot_input.shot_id, engines=engines_out))
-    return FoundryPromptCompileResponse(
-        project_id=payload.project_id,
-        scene_id=payload.scene_id,
-        compiled_shots=compiled_shots,
-    )
+
+
+@router.get("/kpi/snapshot")
+async def get_kpi_snapshot(
+    svc: FoundryServices = Depends(get_foundry_services),
+) -> dict[str, Any]:
+    return svc.kpi_service.get_kpi_snapshot()
+
+
+@router.post("/ops/vendor-switch-drill")
+async def run_vendor_switch_drill(
+    svc: FoundryServices = Depends(get_foundry_services),
+) -> dict[str, Any]:
+    from app.features.original_ip_foundry.vendor_switch_drill import VendorSwitchDrill
+
+    drill = VendorSwitchDrill(services=svc)
+    return await drill.run_full_drill()

@@ -46,3 +46,33 @@ class RightsGateService:
             "reason_codes": reason_codes,
             "evidence_refs": payload.get("evidence_refs", []),
         }
+
+    def check_publish(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Gate C: Verify content is safe for public distribution."""
+        reason_codes = []
+
+        # Check near-duplicate result
+        near_dup = payload.get("near_duplicate_result") or {}
+        if near_dup.get("decision") == "block":
+            reason_codes.append("NEAR_DUPLICATE_BLOCKED")
+
+        # Check clone risk
+        clone_risk = float(payload.get("clone_risk", 0.0))
+        publish_threshold = float(payload.get("publish_threshold", 0.5))
+        if clone_risk >= publish_threshold:
+            reason_codes.append("CLONE_RISK_PUBLISH_HIGH")
+
+        # Check ingredient licenses
+        ingredients = payload.get("ingredients") or []
+        for ingredient in ingredients:
+            license_val = str(ingredient.get("source_license") or "").strip()
+            if not license_val or license_val.upper() == "UNKNOWN":
+                reason_codes.append("INCOMPLETE_LICENSE_FOR_PUBLISH")
+                break  # one is enough
+
+        decision = "block" if reason_codes else "allow"
+        return {
+            "decision": decision,
+            "reason_codes": reason_codes,
+            "evidence_refs": payload.get("evidence_refs", []),
+        }

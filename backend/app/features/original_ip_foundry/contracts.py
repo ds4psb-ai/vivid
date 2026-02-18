@@ -151,6 +151,8 @@ class FoundryExperimentFeedbackRequest(BaseModel):
     variant: str = Field(..., min_length=1, max_length=60)
     outcome: Literal["accepted", "edited", "rejected"]
     completion_seconds: Optional[int] = Field(default=None, ge=0, le=86400)
+    edit_distance: Optional[float] = Field(default=None, ge=0.0, le=1.0)
+    satisfaction_score: Optional[float] = Field(default=None, ge=0.0, le=1.0)
     model: Optional[str] = Field(default=None, max_length=80)
     input_type: Optional[str] = Field(default="experiment_feedback")
 
@@ -169,9 +171,10 @@ class FoundryMemoryNormalizeRequest(BaseModel):
 class FoundryRetrievalRequest(BaseModel):
     tenant_id: str = Field(default="default", min_length=1, max_length=120)
     project_id: str = Field(..., min_length=1, max_length=120)
-    query_type: Literal["director_context", "shot_reference"]
+    query_type: Literal["director_context", "shot_reference", "payload_filter", "transition_rerank"]
     query: str = Field(..., min_length=1, max_length=500)
     limit: int = Field(5, ge=1, le=30)
+    filters: Optional[dict] = Field(default=None)
     model: Optional[str] = Field(default=None, max_length=80)
     input_type: Optional[str] = Field(default="retrieval")
 
@@ -264,3 +267,28 @@ class FoundryPromptCompileResponse(BaseModel):
     project_id: str
     scene_id: str
     compiled_shots: List[FoundryCompiledShot] = Field(default_factory=list)
+
+
+class ChannelWebhookPayload(BaseModel):
+    event_id: Optional[str] = Field(default=None, max_length=120)
+    user_id: str = Field(..., min_length=1, max_length=120)
+    text: str = Field(default="", max_length=10000)
+    tenant_id: str = Field(default="default", max_length=120)
+    project_id: Optional[str] = Field(default=None, max_length=120)
+    attachments: List[str] = Field(default_factory=list)
+    metadata: dict = Field(default_factory=dict)
+
+
+class ChannelReplyRequest(BaseModel):
+    user_id: str = Field(..., min_length=1, max_length=120)
+    text: str = Field(..., min_length=1, max_length=10000)
+    attachments: List[str] = Field(default_factory=list)
+    metadata: dict = Field(default_factory=dict)
+
+
+class ChannelUploadRequest(BaseModel):
+    user_id: str = Field(..., min_length=1, max_length=120)
+    media_url: str = Field(..., min_length=1, max_length=2000)
+    media_type: str = Field(default="image", max_length=20)
+    caption: str = Field(default="", max_length=500)
+    metadata: dict = Field(default_factory=dict)

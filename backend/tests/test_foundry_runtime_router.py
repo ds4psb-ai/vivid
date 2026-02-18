@@ -6,6 +6,7 @@ from httpx import ASGITransport, AsyncClient
 
 from app.database import get_db
 from app.features.original_ip_foundry.foundry_router import router
+from app.features.original_ip_foundry.foundry_lifespan import _create_services
 
 
 async def _fake_db():
@@ -19,10 +20,17 @@ def _token_payload(email: str = "ted.taeeun.kim@gmail.com") -> dict:
     return {"user_id": "google:test", "email": email, "role": "admin", "verified": True}
 
 
-@pytest.mark.asyncio
-async def test_rights_evaluate_assets_endpoint_returns_decision():
+def _setup_foundry_app() -> FastAPI:
+    """Create test app with foundry services on app.state."""
     app = FastAPI()
     app.include_router(router, prefix="/api/v1/foundry")
+    app.state.foundry = _create_services()
+    return app
+
+
+@pytest.mark.asyncio
+async def test_rights_evaluate_assets_endpoint_returns_decision():
+    app = _setup_foundry_app()
     app.dependency_overrides[get_db] = _fake_db
 
     safe_paths = {
@@ -84,8 +92,7 @@ async def test_rights_evaluate_assets_endpoint_returns_decision():
 
 @pytest.mark.asyncio
 async def test_recommendation_endpoint_returns_continuity_and_reason_codes():
-    app = FastAPI()
-    app.include_router(router, prefix="/api/v1/foundry")
+    app = _setup_foundry_app()
 
     safe_paths = {
         "/api/v1/foundry/rights/evaluate-assets",

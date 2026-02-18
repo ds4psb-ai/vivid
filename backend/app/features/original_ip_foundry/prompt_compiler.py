@@ -6,16 +6,20 @@ from app.features.original_ip_foundry.adapters import (
     FoundryShotPlan,
     KlingEngineAdapter,
     VeoEngineAdapter,
+    SeedanceEngineAdapter,
+    SoraEngineAdapter,
 )
 
 
 class FoundryPromptCompiler:
-    DEFAULT_ENGINES = ["kling", "veo"]
+    DEFAULT_ENGINES = ["kling", "veo", "seedance", "sora"]
 
     def __init__(self) -> None:
         self._adapters: dict[str, BaseEngineAdapter] = {
             "kling": KlingEngineAdapter(),
             "veo": VeoEngineAdapter(),
+            "seedance": SeedanceEngineAdapter(),
+            "sora": SoraEngineAdapter(),
         }
 
     def register_adapter(self, name: str, adapter: BaseEngineAdapter) -> None:

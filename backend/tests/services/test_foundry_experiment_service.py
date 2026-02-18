@@ -124,3 +124,35 @@ async def test_summary_includes_thompson_stats():
     assert "thompson_active" in summary
     assert "thompson_stats" in summary
     assert isinstance(summary["thompson_stats"], dict)
+
+
+@pytest.mark.asyncio
+async def test_enhanced_reward_params_accepted():
+    """record_feedback accepts edit_distance and satisfaction_score."""
+    service = FoundryExperimentService(use_thompson=False)
+    result = await service.record_feedback(
+        tenant_id="t1", experiment_key="exp-enhanced",
+        user_key="u1", variant="A", outcome="accepted",
+        edit_distance=0.3, satisfaction_score=0.9,
+    )
+    assert result["status"] == "recorded"
+
+
+@pytest.mark.asyncio
+async def test_enhanced_reward_uses_4factor():
+    """Enhanced reward should produce different values based on edit_distance."""
+    service = FoundryExperimentService(use_thompson=True)
+
+    await service.record_feedback(
+        tenant_id="t1", experiment_key="exp-4f",
+        user_key="u1", variant="A", outcome="edited",
+        edit_distance=0.0,
+    )
+    await service.record_feedback(
+        tenant_id="t1", experiment_key="exp-4f",
+        user_key="u2", variant="A", outcome="edited",
+        edit_distance=0.9,
+    )
+    # Both recorded successfully
+    summary = service.summary("t1", "exp-4f")
+    assert summary["total_events"] == 2

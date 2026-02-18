@@ -142,3 +142,50 @@ class FoundryRightsService:
             "evidence_refs": list(evidence_refs or []),
         }
 
+    async def evaluate_publish_readiness(
+        self,
+        *,
+        project_id: str,
+        scene_id: str | None = None,
+        shots: list[dict] | None = None,
+        clone_risk: float | None = None,
+        ingredients: list[dict] | None = None,
+        near_duplicate_service=None,
+        clone_risk_service=None,
+    ) -> dict:
+        """Evaluate whether content is ready for public distribution (Gate C)."""
+        near_dup_result: dict = {"decision": "allow", "reason_codes": []}
+
+        # Check near-duplicate if service and shots provided
+        if near_duplicate_service and shots:
+            near_dup_result = near_duplicate_service.check_duplicate(
+                project_id=project_id,
+                scene_id=scene_id or "unknown",
+                shots=shots,
+            )
+
+        # Compute clone risk if not provided
+        effective_clone_risk = clone_risk
+        if effective_clone_risk is None and clone_risk_service:
+            effective_clone_risk = clone_risk_service.compute(
+                candidate_tags=[],
+                project_id=project_id,
+            )
+        if effective_clone_risk is None:
+            effective_clone_risk = 0.0
+
+        publish_result = self._base.check_publish({
+            "near_duplicate_result": near_dup_result,
+            "clone_risk": effective_clone_risk,
+            "ingredients": ingredients or [],
+            "evidence_refs": [f"db:foundry:publish_check:{project_id}"],
+        })
+
+        return {
+            "decision": publish_result["decision"],
+            "reason_codes": publish_result["reason_codes"],
+            "evidence_refs": publish_result["evidence_refs"],
+            "near_duplicate": near_dup_result,
+            "clone_risk": effective_clone_risk,
+        }
+

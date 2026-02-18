@@ -70,3 +70,15 @@ class CloneRiskService:
         unique = len(set(t.lower() for t in tags))
         # 10+ unique tags -> low density risk, 1-2 -> high density risk
         return max(0.0, min(1.0 - (unique / 15.0), 1.0))
+
+    def compute_batch(self, items: list[dict]) -> list[float]:
+        """Bulk clone risk scoring for multiple candidates."""
+        results = []
+        for item in items:
+            score = self.compute(
+                candidate_tags=item.get("candidate_tags", []),
+                project_id=item.get("project_id", "unknown"),
+                reference_licenses=item.get("reference_licenses"),
+            )
+            results.append(score)
+        return results

@@ -3125,6 +3125,29 @@ class ApiClient {
     });
   }
 
+  async getFoundryKPISnapshot(): Promise<FoundryKPISnapshotResponse> {
+    return this.request<FoundryKPISnapshotResponse>("/api/v1/foundry/kpi/snapshot");
+  }
+
+  async getFoundryChannelMonitoring(): Promise<FoundryChannelMonitoringResponse> {
+    return this.request<FoundryChannelMonitoringResponse>("/api/v1/foundry/channels/monitoring");
+  }
+
+  async evaluateFoundryPublishReadiness(
+    payload: FoundryPublishReadinessRequest
+  ): Promise<FoundryPublishReadinessResponse> {
+    return this.request<FoundryPublishReadinessResponse>("/api/v1/foundry/rights/evaluate-publish", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async runFoundryVendorDrill(): Promise<FoundryVendorDrillResponse> {
+    return this.request<FoundryVendorDrillResponse>("/api/v1/foundry/ops/vendor-switch-drill", {
+      method: "POST",
+    });
+  }
+
   // =========================================================================
   // DEPRECATED: Node Execution APIs - Only used by deprecated canvas
   // These will be removed in a future release
@@ -3429,6 +3452,52 @@ export interface FoundryC2PAExportResponse {
   manifest: Record<string, unknown>;
   compliance: Record<string, unknown>;
   warnings: string[];
+}
+
+export interface FoundryKPISnapshotResponse {
+  p95_latency_ms: number | null;
+  p50_latency_ms: number | null;
+  pattern_reuse_rate: number | null;
+  mean_continuity: number | null;
+  continuity_uplift: number | null;
+  sample_counts: {
+    latency: number;
+    continuity: number;
+    pattern_queries: number;
+  };
+}
+
+export interface FoundryChannelMonitoringResponse {
+  active_dedup_entries: number;
+  event_counts: Record<string, number>;
+  supported_channels: string[];
+}
+
+export interface FoundryPublishReadinessRequest {
+  project_id: string;
+  scene_id?: string;
+  shots?: Array<Record<string, unknown>>;
+  clone_risk?: Record<string, unknown>;
+  ingredients?: Array<Record<string, unknown>>;
+}
+
+export interface FoundryPublishReadinessResponse {
+  ready: boolean;
+  gate_results: Record<string, unknown>;
+  blockers: string[];
+}
+
+export interface FoundryVendorDrillResponse {
+  overall_status: string;
+  drills: Array<{
+    drill_name: string;
+    status: string;
+    tests_passed: number;
+    tests_failed: number;
+    details: string[];
+  }>;
+  total_passed: number;
+  total_failed: number;
 }
 
 // --- Academy Access Types ---

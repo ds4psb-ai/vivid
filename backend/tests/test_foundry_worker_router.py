@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
 from app.features.original_ip_foundry.foundry_router import router
+from app.features.original_ip_foundry.foundry_lifespan import _create_services
 
 
 def _token_payload(email: str = "ted.taeeun.kim@gmail.com") -> dict:
@@ -15,6 +16,7 @@ def _token_payload(email: str = "ted.taeeun.kim@gmail.com") -> dict:
 async def test_worker_provider_and_dispatch_routes():
     app = FastAPI()
     app.include_router(router, prefix="/api/v1/foundry")
+    app.state.foundry = _create_services()
 
     safe_paths = {
         "/api/v1/foundry/workers/dispatch",

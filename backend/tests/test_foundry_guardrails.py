@@ -47,7 +47,9 @@ def _create_test_app(*, foundry_enabled: bool, write_enabled: bool, allowlist: s
             mock_settings.SESSION_SECRET.get_secret_value.return_value = "test-secret"
 
         from app.features.original_ip_foundry.foundry_router import router
+        from app.features.original_ip_foundry.foundry_lifespan import _create_services
         app.include_router(router, prefix="/api/v1/foundry", tags=["foundry"])
+        app.state.foundry = _create_services()
 
     return app
 

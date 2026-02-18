@@ -326,6 +326,10 @@ class Settings(BaseSettings):
     AD_FOUNDRY_ACCESS_SCOPE: str = "internal"
     AD_FOUNDRY_WORKER_PROVIDER: str = "agent0"  # agent0 | taskiq | temporal
     AD_FOUNDRY_TASKIQ_BROKER: str = "redis://localhost:6379"
+    # Webhook security — empty string = skip verification (allow all)
+    AD_FOUNDRY_TELEGRAM_WEBHOOK_SECRET: str = ""
+    AD_FOUNDRY_KAKAO_APP_KEY: str = ""
+    AD_FOUNDRY_WEBHOOK_RATE_LIMIT: int = 60  # requests per minute per channel
     # Safe POST/PATCH endpoints allowed even during read-only mode
     AD_FOUNDRY_READONLY_SAFE_PATHS: str = (
         "/api/v1/foundry/rights/evaluate-assets,"

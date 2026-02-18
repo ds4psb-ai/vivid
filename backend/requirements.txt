@@ -70,3 +70,6 @@ PyYAML>=6.0.0
 
 # Background Scheduling (Drift Cron)
 apscheduler>=3.10.0
+
+# Near-duplicate detection (Foundry Wave 3)
+xxhash>=3.4.0

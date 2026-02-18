@@ -252,9 +252,28 @@ async def lifespan(app: FastAPI):
     else:
         logger.info("[STARTUP] Drift Cron disabled (SLACK_WEBHOOK_URL not set)")
 
+    # Initialize Foundry services via lifespan DI (non-fatal)
+    foundry_ctx = None
+    if settings.AD_FOUNDRY_ENABLED:
+        try:
+            from app.features.original_ip_foundry.foundry_lifespan import foundry_lifespan
+            foundry_ctx = foundry_lifespan(app)
+            await foundry_ctx.__aenter__()
+            logger.info("[STARTUP] Foundry services initialized via DI lifespan")
+        except Exception as e:
+            logger.warning(f"[STARTUP] Foundry lifespan init failed (non-fatal): {e}")
+            foundry_ctx = None
+
     logger.info("[STARTUP] Lifespan initialization complete - app is ready")
 
     yield
+
+    # Teardown Foundry lifespan
+    if foundry_ctx:
+        try:
+            await foundry_ctx.__aexit__(None, None, None)
+        except Exception:
+            pass
 
     # Stop Drift Cron scheduler
     if drift_cron:

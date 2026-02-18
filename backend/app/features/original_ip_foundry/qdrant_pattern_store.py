@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 import uuid
+from datetime import datetime
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -90,6 +91,7 @@ class QdrantPatternAtomStore:
                 "transition": atom.get("transition", ""),
                 "frequency": atom.get("frequency", 0),
                 "confidence": atom.get("confidence", 0.0),
+                "created_at": datetime.utcnow().isoformat(),
             }
 
             points.append(qdrant_models.PointStruct(id=point_id, vector=vector, payload=payload))

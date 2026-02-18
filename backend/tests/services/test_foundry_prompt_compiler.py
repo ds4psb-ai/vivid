@@ -29,8 +29,16 @@ def test_compile_shot_returns_default_engines():
 
     assert "kling" in result
     assert "veo" in result
+    assert "seedance" in result
+    assert "sora" in result
     assert isinstance(result["kling"], EnginePromptResult)
     assert isinstance(result["veo"], EnginePromptResult)
+    assert isinstance(result["seedance"], EnginePromptResult)
+    assert isinstance(result["sora"], EnginePromptResult)
+
+
+def test_default_engines_has_four():
+    assert FoundryPromptCompiler.DEFAULT_ENGINES == ["kling", "veo", "seedance", "sora"]
 
 
 def test_kling_prompt_structure():
