@@ -343,6 +343,92 @@ VIVID의 품질 차별화는 “명작을 감상적으로 참조”가 아니라
 
 ---
 
+## 6.6) Model Council Integration Layer (3-Model Consensus)
+
+> **근거 문서**: `docs/reports/2026-02-19-model-council-feasibility-report.md`, `docs/plans/2026-02-19-council-moat-strategy.md`
+
+Council은 §6.5.3 step 3(Feature Extraction) 이후에 개입하여, 추출 산출물을 **해석하고 보강**하는 지능 레이어다. 새로운 파이프라인이 아니라, 기존 파이프라인의 **품질 증폭기**다.
+
+### 6.6.1 역할 배치
+
+| 모델 | 역할 | 질문 유형 | 호출 경로 |
+|------|------|----------|----------|
+| Gemini 3 Pro | Visual Parser | "What" — 시각 파싱 | AD Core 직접 호출 |
+| Opus 4.6 | Deep Analyst | "Why" — 서사/이론 판단 | OpenClaw 구독 토큰 |
+| Codex 5.3 | Data Analyst | "How much" — 정량 분석 | Agent0 구독 토큰 |
+| Gemini Flash | Synthesizer | 합의/불일치 종합 | AD Core 직접 호출 (최저가) |
+
+**핵심 전제**: Opus와 Codex는 영상을 볼 수 없다. Step 3의 비주얼 추출은 Gemini + TwelveLabs + CV가 단독 수행. Council이 개입하는 것은 그 **텍스트 산출물**이다.
+
+### 6.6.2 적용 지점 (선택적, 전면 적용 금지)
+
+| 우선순위 | 적용 지점 | SSOT 참조 | Council 역할 |
+|---------|----------|----------|-------------|
+| **P0** | Pattern Atom Enrichment | §6.5.3 step 4 | Opus: `expected_effect`/`anti_pattern`, Codex: `execution_template` 정량 보정 |
+| **P0** | Gate B OR-gate | §6.4 | 3모델 시각/서사/법적 3축 독립 검증, 하나라도 위반 시 차단 |
+| **P1** | continuity_score 3축 분리 | §7 | Gemini: 시각, Opus: 서사, Codex: 리듬 연속성 |
+| **P2** | Borderline Negotiation | §7.2 확장 | 0.55~0.65 경계선에서 구체적 수정안 합의 |
+
+### 6.6.3 Provider Port (D-09 준수)
+
+Council도 D-09(Provider Port 추상화)를 준수한다.
+
+```python
+class CouncilProvider(Protocol):
+    async def query_visual(self, input: CouncilInput) -> ModelResponse: ...
+    async def query_narrative(self, input: CouncilInput) -> ModelResponse: ...
+    async def query_quantitative(self, input: CouncilInput) -> ModelResponse: ...
+    async def synthesize(self, responses: list[ModelResponse]) -> CouncilVerdict: ...
+```
+
+구현체: `OpenClawCouncilProvider` (기본) / `DirectAPICouncilProvider` (fallback)
+분기 Switch Drill(D-10) 대상에 포함.
+
+### 6.6.4 비용 원칙
+
+1. 구독 토큰 우선, API 직접 과금은 fallback
+2. 전면 적용 금지 — P0 게이트만 Council 사용
+3. Synthesizer는 항상 최저가 모델(Flash)
+
+### 6.6.5 해자 전략 (6축)
+
+| 해자 | 메커니즘 | SSOT 연결 |
+|------|---------|----------|
+| Bootstrap | Council 자체가 Pattern Atom enrichment 도구 | §6.5.3 step 4 |
+| Flywheel | Council 불일치 → 실험 우선순위 부스트 | §9 실험 엔진 |
+| Negotiation | 경계선 후보에 구체적 수정안 제시 | §7.2 확장 |
+| Meta-Council | Council 건강 지표 자동 감시 | §12 KPI |
+| Retrospective | 생성 결과 gap → Prompt Compiler 피드백 루프 | §10 Prompt Compiler |
+| Director Persona | 감독 페르소나를 검색 벡터 변조로 구현 | §8 검색 계층 |
+
+### 6.6.6 §6.5.3 step 4 확장: Council-Enriched Pattern Mining
+
+```
+Step 4: Pattern Mining (Council-Enriched)
+├── 통계 추출 (기존): PatternExtractionService.extract()
+│   → atom_id, frequency, confidence (변경 없음)
+└── Council Enrichment (신규): CouncilService.enrich()
+    ├── Gemini: pattern_type 검증 + preconditions 초안
+    ├── Opus: expected_effect + anti_pattern 생성
+    ├── Codex: execution_template 정량 보정 (코퍼스 통계 기반)
+    └── Synthesizer: confidence_tier 분류 (high/medium/low)
+```
+
+Council 메타데이터는 Pattern Atom에 `council_metadata` 필드로 저장한다:
+
+```json
+{
+  "council_metadata": {
+    "consensus_rate": 0.92,
+    "confidence_tier": "high",
+    "models": ["gemini_3_pro", "opus_4_6", "codex_5_3"],
+    "enrichment_version": "council_v1"
+  }
+}
+```
+
+---
+
 ## 7) 추천/랭킹 SSOT
 
 ### 7.1 기본식
@@ -351,11 +437,22 @@ VIVID의 품질 차별화는 “명작을 감상적으로 참조”가 아니라
 
 > Fallback(v1): `pattern_affinity/clone_risk` 미계산 환경에서는 기존 v1 공식을 사용하되, 4주 내 v2 이관을 완료한다.
 
-### 7.2 하드 게이트
+### 7.2 하드 게이트 + Borderline Negotiation
 
-- `continuity_score < 0.60` 자동 탈락
-- `0.60 <= continuity_score < 0.80` 제한 노출
-- `>= 0.80` 기본 추천군
+| 구간 | 판정 | 동작 |
+|------|------|------|
+| `< 0.55` | 자동 탈락 | 추천 목록에서 제외 |
+| `0.55 <= x < 0.65` | **Negotiation Council** | 3모델이 구체적 수정안 합의 → "여기를 이렇게 고치면 예상 0.7X" 사용자 제시 |
+| `0.65 <= x < 0.80` | 제한 노출 | 추천 가능, 주석 표기 |
+| `>= 0.80` | 기본 추천군 | 자동 추천 |
+
+**Negotiation Protocol** (§6.6 Council 활용):
+1. Gemini: 시각 연속성 0.XX — 조명/프레임 내 위치 판단
+2. Opus: 서사 연속성 0.XX — 캐릭터 동기/감정 흐름 판단 + **구체적 수정안** 제시
+3. Codex: 리듬 연속성 0.XX — 삽입 시 리듬 개선 예상치 계산
+4. Synthesizer: 수정안 합의 → 수정 후 예상 점수와 함께 사용자 제시
+
+> 명확한 합격/불합격은 Council이 불필요하다. **Council의 가치는 경계선에서 극대화된다.**
 
 ### 7.3 증거 출력 계약
 
@@ -446,6 +543,8 @@ VIVID의 품질 차별화는 “명작을 감상적으로 참조”가 아니라
 2. Rights Graph 스키마 + pre/post gate API 배포
 3. Qdrant 4-컬렉션 구축 (`shot_corpus`, `pattern_atoms`, `transition_rules`, `rights_constraints`)
 4. Masterpiece ingestion v0 실행 (최소 1,000 클립 분절)
+5. **Council 전제조건**: `council_provider.py` Port 계약 + Contract Test, OpenClaw→Opus / Agent0→Codex 호출 경로 검증
+6. **Council-Bootstrapped Seeding**: CC0 클립 50개 → bare atom 추출 + Council enrichment 병렬 진행 (목표: Day 9까지 enriched atom 200+)
 
 ### Wave 2 (Day 10-16): Intelligence Activation
 
@@ -453,6 +552,10 @@ VIVID의 품질 차별화는 “명작을 감상적으로 참조”가 아니라
 2. Ranking v2 적용 (`pattern_affinity`, `clone_risk`)
 3. A/B + Thompson 루프 연결
 4. Prompt Compiler 4엔진 계약 고정
+5. **Council Core**: `council.py` 골격 + `council_synthesizer.py` + `council_config.py`
+6. **P0 통합**: Pattern Extraction Council Enrichment (§6.6.6) + Gate B 3모델 OR-gate
+7. **P1 통합**: continuity_score 3축 분리 + Borderline Negotiation 프로토타입 (§7.2)
+8. **A/B 실험**: Council ON/OFF 비교 + Disagreement 기반 실험 우선순위 로직
 
 ### Wave 3 (Day 17-23): B2C Channel Hardening
 
@@ -460,10 +563,12 @@ VIVID의 품질 차별화는 “명작을 감상적으로 참조”가 아니라
 2. Kakao adapter 통합(베타)
 3. 실험/피드백 이벤트 파이프라인 안정화
 4. QC/근거/권리 리포트 관리자 화면 배포
+5. **Retrospective Council**: 생성 결과 vs 의도 gap 분석 → `prompt_compiler.py` 피드백 루프
+6. **Meta-Council 주간 감사**: `kpi_service.py`에 council_diversity/bias_drift/synthesizer_fidelity 추가
 
 ### Wave 4 (Day 24-30): Launch Readiness
 
-1. Vendor Switch Drill (OpenClaw/Agent0 대체 리허설) 1회
+1. Vendor Switch Drill (OpenClaw/Agent0 대체 리허설) 1회 + **Council Provider Switch Drill 1회**
 2. near-duplicate 차단 + clone risk gate 고도화
 3. 파일럿 그룹 온보딩(유료 또는 LOI)
 4. Launch Candidate 승인
@@ -471,6 +576,8 @@ VIVID의 품질 차별화는 “명작을 감상적으로 참조”가 아니라
 ---
 
 ## 12) KPI / 릴리즈 게이트
+
+### 12.1 핵심 KPI
 
 - 추천 API p95 < 2.5s
 - 검색 p95 < 900ms
@@ -481,10 +588,26 @@ VIVID의 품질 차별화는 “명작을 감상적으로 참조”가 아니라
 - pattern 적용군 continuity uplift +0.08 이상
 - clone_risk 차단 누락 0건
 
-**30일 런치 타겟:**
+### 12.2 Council 건강 KPI (§6.6 연동)
+
+| 지표 | 주기 | 기준 | 조치 |
+|------|------|------|------|
+| `council_diversity_score` | 주간 | > 0.2 | < 0.2이면 모델 역할 재설계 |
+| `council_bias_drift` | 주간 | < 0.7 | > 0.7이면 가중치 재조정 |
+| `synthesizer_fidelity` | 주간 | > 0.6 | < 0.6이면 Synthesizer 프롬프트 점검 |
+| `council_outcome_correlation` | 월간 | > 0.5 (Spearman) | < 0.5이면 Council 기준 자체 재검토 |
+| `council_on_accept_uplift` | 주간 | > +10% vs OFF | < +5%이면 Council 적용 범위 축소 검토 |
+| `negotiation_fixable_rate` | 주간 | > 30% | 경계선 후보 중 수정안 제시 비율 |
+
+### 12.3 30일 런치 타겟
+
 - Day 30 기준 파일럿 10팀 이상 활성
 - pattern_atoms 누적 10,000+ (권리 태그 포함)
+- **Council-enriched atoms 1,000+** (bare atom과 별도 카운트)
 - launch candidate에서 gate reject false-negative 0건
+- **Council ON/OFF A/B에서 ON accept_rate +10%**
+- **Meta-Council 감사 2회+, diversity_score > 0.3**
+- **Council Provider Switch Drill 완료 1회**
 
 ---
 

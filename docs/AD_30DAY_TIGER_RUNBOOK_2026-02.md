@@ -48,28 +48,65 @@
 ### Day 0-2: War-Room
 - 팀 역할/승인권자/온콜 확정
 - Channel/Memory/Worker 계약 테스트 파이프라인 구축
+- **Council 전제조건**: OpenClaw→Opus 4.6 호출 검증, Agent0→Codex 5.3 dispatch 검증
+- **Council Port 계약**: `council_provider.py` 초안 + Contract Test Suite
+- **Kill switch**: `AD_COUNCIL_ENABLED` 환경변수 (`AD_FOUNDRY_ENABLED`과 독립)
 
 ### Day 3-9: Foundation
 - Rights Graph + pre/post gate
 - Qdrant 4-컬렉션
 - OpenClaw/Agent0 포트 연결
 - Masterpiece ingestion v0 (1,000 클립)
+- **Council-Bootstrapped Seeding** (Ingestion과 병렬):
+  - CC0 클립 50개 선정 (장르별 5개 × 10장르)
+  - `PatternExtractionService.extract()` → bare atom
+  - `CouncilService.enrich()` → expected_effect/anti_pattern/execution_template
+  - 목표: Day 9까지 Council-enriched atom 200+
+- **Enriched atom 품질 검수**: Meta-Council 감사 1회, diversity/fidelity 기준값 설정
 
 ### Day 10-16: Intelligence
 - Pattern Atom 추출
 - ranking v2 (pattern_affinity, clone_risk)
 - A/B + Thompson 운영 시작
+- **Council Core 구현** (Day 10-11):
+  - `council.py`: asyncio.gather(gemini, opus, codex) 병렬
+  - `council_synthesizer.py`: 합의/불일치 → confidence_tier
+  - `council_config.py`: 모델/역할/가중치 설정
+- **P0 통합** (Day 12-13):
+  - `pattern_extraction_service.py` → Council enrichment 연결
+  - `rights_service.py` → Gate B 3모델 OR-gate
+- **P1 통합** (Day 14-15):
+  - `recommendation_service.py` → continuity_score 3축 분리
+  - Borderline Negotiation (0.55~0.65) 프로토타입
+- **A/B 실험** (Day 15-16):
+  - experiment_key: "council_on" vs "council_off"
+  - council_disagreement 기반 실험 우선순위 로직
+  - 성공 기준: Council-enriched accept_rate > baseline +10%
 
-### Day 17-23: B2C 채널
+### Day 17-23: B2C 채널 + Council 심화
 - Telegram/WebChat 안정화
 - Kakao adapter 베타
 - 이벤트 유실/중복 모니터링
+- **Retrospective Council** (Day 17-19):
+  - 생성 결과물 vs 의도 gap 분석 파이프라인
+  - `prompt_compiler.py` 피드백 루프 연결
+  - `engine_constraint_schemas.py` 자동 보정 시작
+- **Meta-Council Weekly Run** (Day 20-22):
+  - `kpi_service.py`에 council_diversity/bias_drift/synthesizer_fidelity 추가
+  - 첫 번째 주간 감사 실행
+  - 결과에 따라 모델 역할/가중치 조정
 
 ### Day 24-30: Launch
-- Vendor switch drill
+- Vendor switch drill + **Council Provider Switch Drill 1회**
 - near-duplicate 차단 자동화
 - 런북/권리분쟁 대응서 완성
 - 파일럿 유료/LOI 확보
+- **Council 런치 게이트 확인**:
+  - [ ] Council-enriched pattern_atoms 1,000+
+  - [ ] Council ON/OFF A/B에서 ON accept_rate +10%
+  - [ ] Gate B Council false-negative 0건
+  - [ ] Borderline Negotiation 피드백 50건+
+  - [ ] Meta-Council 감사 2회+, diversity_score > 0.3
 
 ---
 
@@ -136,6 +173,8 @@
 
 ## 6) 지표 목표 (Day 30)
 
+### 6.1 핵심 지표
+
 - 추천 API p95 < 2.5s
 - 검색 p95 < 900ms
 - continuity >= 0.80 추천 비율 60%+
@@ -143,6 +182,15 @@
 - pattern_reuse_rate 25%+
 - pattern 적용군 continuity uplift +0.08+
 - 유료 파일럿 또는 LOI 확보
+
+### 6.2 Council 해자 지표
+
+- Council-enriched atoms: 1,000+ (bare atom과 별도 카운트)
+- Council ON accept_rate uplift: +10% vs OFF baseline
+- council_diversity_score: > 0.3
+- Negotiation "fixable" 전환율: 30%+ (경계선 후보 중)
+- Retrospective prompt 보정 건수: 50+
+- Council Provider Switch Drill: 완료 1회
 
 ---
 
