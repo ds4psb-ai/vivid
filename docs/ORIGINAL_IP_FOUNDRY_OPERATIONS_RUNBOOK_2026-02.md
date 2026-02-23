@@ -130,7 +130,7 @@ Sora 제거 절차:
 3. `prompt_compiler.py` DEFAULT_ENGINES에서 `"sora"` 제거
 4. `SoraEngineAdapter` 코드는 deprecated 마킹 후 60일 유예 기간 유지
 5. 60일 후 코드 제거 (clean removal)
-6. 제거 사유 문서화: 멀티샷 미지원 + 권리 거부 과잉 + commodity 상황
+6. 제거 사유 문서화: API 프로덕션 부적합(Sora 2는 2025-09-30 출시되었으나, Plus/Pro 전용 + rate limit 5-50 RPM) + 권리 정책 충돌(IP 생성 차단) + 수동 멀티샷 한계(vs Kling Smart Storyboard) + commodity 상황 차별 가치 부재
 
 > **코드 참조**: `backend/app/features/original_ip_foundry/prompt_compiler.py`
 > **사유 상세**: `AD_AMBIENT_CREATIVE_CANVAS_VISION_2026_H2.md` §11 Engine Strategy
@@ -211,6 +211,6 @@ Fragment 관련 호출은 `fragment_type`, `placement_confidence`, `materializat
 - [ ] `creative_fill_rate` 30%+ (파일럿 프로젝트 기준)
 - [ ] Qdrant `blueprint_fragments` 컬렉션 정상 + payload index 확인
 - [ ] `AD_SORA_DEPRECATED=true` 확인 + Prompt Compiler에서 Sora 호출 0건
-- [ ] 3-engine (Kling/Seedance/Veo) Prompt Compiler 정상 동작 확인
+- [ ] 3-engine (Kling 3.0/Seedance 2.0/Veo 3.1) Prompt Compiler 정상 동작 확인
 - [ ] Fragment 폭주 시나리오 대응 리허설 1회 완료
 - [ ] Canvas 상태 불일치 reconciliation job 테스트 완료

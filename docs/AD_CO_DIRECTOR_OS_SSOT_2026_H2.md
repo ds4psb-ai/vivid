@@ -36,7 +36,7 @@ Fragment Capture → Canvas Placement → Progressive Materialization
 2. **Auto-Placement AI**가 Blueprint Canvas(100분 sparse 타임라인)에 최적 배치
 3. **Gap Detection**이 서사 구조적 결핍을 감지하고 제안
 4. **Progressive Materialization**이 양방향(Memo↔Storyboard↔KeyVisual↔Prompt↔Video)으로 점진 구체화
-5. 멀티샷 프롬프트를 3-Engine(Kling 3.0/Seedance 2.0/Veo 3)으로 자동 컴파일
+5. 멀티샷 프롬프트를 3-Engine(Kling 3.0/Seedance 2.0/Veo 3.1)으로 자동 컴파일
 6. 결과를 A/B/Thompson 루프로 학습
 
 ### North Star Metric: `creative_fill_rate`
@@ -60,7 +60,9 @@ Canvas가 얼마나 채워졌는가 — 창작의 진행도를 직접 측정한�
 | D-01 | `creative_fill_rate`를 북극성 지표로 고정, `continuity_score`를 품질 게이트로 유지 |
 | D-02 | OpenClaw를 **프로젝트 메모리 SSoT 런타임**으로 채택 (파일 기반 메모리 + 하이브리드 검색) |
 | D-03 | Agent0는 **병렬 실행/백오피스 워커 오케스트레이션** 용도로 채택 (도메인 지능은 AD 레이어에 유지, Taskiq/Temporal 대체 경로 유지) |
-| D-04 | 모델 역할 분리: Gemini 3 Pro(장문 맥락/비디오 이해) + TwelveLabs(샷 임베딩/검색) + 생성엔진(Kling 3.0/Seedance 2.0/Veo 3) |
+| D-04 | 모델 역할 분리: Gemini 3 Pro(장문 맥락/비디오 이해) + TwelveLabs Marengo Embed 3.0(샷 임베딩/검색) + 생성엔진(Kling 3.0/Seedance 2.0/Veo 3.1) |
+
+> **참고**: Gemini 3.1 Pro Preview(2026-02-19, `gemini-3.1-pro-preview`, Sparse MoE, ARC-AGI-2 77.1%)가 사용 가능. GA 전환 시 마이그레이션 평가.
 | D-05 | ElevenLabs는 기본 스택에서 제외 (현재 스코프는 생성엔진 네이티브 오디오 우선) |
 | D-06 | Qdrant를 기본 검색 계층으로 유지, Vespa는 랭킹 복잡도 임계치 시 승격 |
 | D-07 | Original-IP Foundry는 **권리 그래프(Rights Graph) + 생성 전/후 릴리즈 게이트**를 필수로 둔다 |
@@ -155,7 +157,7 @@ Cinema Grammar KB는 추천/코칭뿐 아니라 **Blueprint Canvas의 Auto-Place
    - 승인/기각/수정 로그 기반 학습 루프
    - 권리 안전한 Original-IP 재창조 파이프라인
 3. 결론: **사업성 있음.** 단, "툴 래퍼 SaaS"가 아니라 "조감독 운영체제 + 권리 게이팅 OS"로 포지셔닝해야 한다.
-4. 2026년 2월 기준 Seedance 2.0/Kling 3.0/Veo 3의 등장으로 멀티샷 일관성이 commodity. 승부처는 '영감 → 블루프린트 조립' 워크플로.
+4. 2026년 2월 기준 Seedance 2.0/Kling 3.0/Veo 3.1의 등장으로 멀티샷 일관성이 commodity. 승부처는 '영감 → 블루프린트 조립' 워크플로.
 
 ### 3.2 승부가 나는 핵심 IP(지적자산)
 
@@ -205,15 +207,15 @@ flowchart LR
 
   BC --> PM["Progressive Materialization\n(Memo↔Storyboard↔KeyVisual↔Prompt↔Video)"]
 
-  PM --> G3["Gemini 3 Pro\n(장문 맥락/비디오 이해)"]
-  PM --> TL["TwelveLabs\n(샷 임베딩/검색)"]
+  PM --> G3["Gemini 3 Pro\n(→3.1 Pro preview 평가중)\n(장문 맥락/비디오 이해)"]
+  PM --> TL["TwelveLabs\nMarengo Embed 3.0\n(샷 임베딩/검색)"]
   G3 --> RK["Ranking Core v3"]
   TL --> QD["Qdrant\n(5-collection)"]
   QD --> RK
   BC --> RK
 
   RK --> PC["Prompt Compiler"]
-  PC --> EN["Kling 3.0 / Seedance 2.0 / Veo 3"]
+  PC --> EN["Kling 3.0 / Seedance 2.0 / Veo 3.1"]
   EN --> PV["Preview + Human QC"]
 
   PV --> FB["Feedback & Experiment Events"]
@@ -353,6 +355,8 @@ OpenClaw 공식 문서 기준, 다음을 그대로 활용한다.
 
 **정의:** OpenClaw는 VIVID의 "감독 기억 장치 + 세션 허브 + Canvas 상태 저장소"다.
 
+> **운영 리스크 업데이트 (2026-02)**: 창립자 Steinberger가 OpenAI로 이동(2026-02-14)했으나, 프로젝트는 **독립 재단(OpenAI 스폰서)으로 전환** 완료. GitHub 60K+ stars, 활발한 유지보수 지속. 재단 전환으로 단일 창립자 의존 리스크는 오히려 감소. Switch Drill(D-10) 정례 수행으로 대체 가능성은 유지.
+
 ### 5.2 Agent0 (선택적이지만 실무 효율 높음)
 
 Agent0 공식 문서 기준 프로젝트/시크릿/툴/자기개선 루프를 활용해 아래 백오피스 작업을 분산한다.
@@ -426,7 +430,7 @@ Agent0 공식 문서 기준 프로젝트/시크릿/툴/자기개선 루프를 �
 ### 6.4.1 C2PA 호환 Export (Phase 2)
 
 - 엔드포인트: `POST /api/v1/foundry/provenance/export-c2pa`
-- 출력: `spec_version`, `manifest`, `compliance`, `warnings`
+- 출력: `spec_version` (≥ 2.3), `manifest`, `compliance`, `warnings`
 - 목적:
   1. `provenance_trace`를 C2PA claim/assertion 구조로 내보내 글로벌 검증 호환성 확보
   2. EU AI Act Art.50 대응용 기계판독 가능 provenance 패키지 확보
@@ -559,7 +563,7 @@ Council은 §6.5.3 step 3(Feature Extraction) 이후에 개입하여, 추출 산
 
 | 모델 | 역할 | Empirical Pass | Theoretical Pass (§2-H) | 호출 경로 |
 |------|------|---------------|------------------------|----------|
-| Gemini 3 Pro | Visual Parser | "What" — 시각 파싱 | EditingGrammarKB 대조 — 180도/30도 룰, match on action 위반 플래그 | AD Core 직접 호출 |
+| Gemini 3 Pro (→3.1 Pro preview 평가중) | Visual Parser | "What" — 시각 파싱 | EditingGrammarKB 대조 — 180도/30도 룰, match on action 위반 플래그 | AD Core 직접 호출 |
 | Opus 4.6 | Deep Analyst (2-pass) | VDG+클러스터 기반 서사/감정 판단 | NarrativeTheoryKB 대조 — dramatic question 해결 여부, 캐릭터 동기 일관성 | OpenClaw 구독 토큰 (VPS) |
 | Codex 5.3 xhigh | Data Analyst + KB Indexer | 정량 분석 (ASL, 리듬, 전환 빈도) | EditingGrammarKB 정량 교차검증 — "이론 권장값 vs 실제 성과값" 편차 계산 | Agent0 구독 토큰 (VPS) |
 | Gemini Flash | Synthesizer | Empirical 합의 | **Empirical × Theoretical 교차 합성** → confidence_tier + theory_alignment | AD Core 직접 호출 (최저가) |
@@ -821,53 +825,70 @@ Ranking에 fill_rate_impact를 포함함으로써, **Canvas의 빈 틈을 구조
 
 ### 2026 현실: 멀티샷 일관성은 Commodity
 
-Seedance 2.0, Kling 3.0, Veo 3의 등장으로 멀티샷 일관성은 더 이상 차별화 요소가 아니다. 승부처는 "어떤 영상을 만들까"가 아니라 "일상의 영감을 어떻게 100분 블루프린트로 조립하는가"다.
+Seedance 2.0, Kling 3.0, Veo 3.1의 등장으로 멀티샷 일관성은 더 이상 차별화 요소가 아니다. 승부처는 "어떤 영상을 만들까"가 아니라 "일상의 영감을 어떻게 100분 블루프린트로 조립하는가"다.
 
 ### 엔진 상세
 
-#### Seedance 2.0
+#### Seedance 2.0 (Released 2026-02-10)
 
 | 항목 | 사양 |
 |------|------|
-| 입력 | 4-modal (텍스트/이미지/비디오/오디오 참조) |
+| 아키텍처 | **Dual-Branch Diffusion Transformer** |
+| 입력 | 4-modal, **최대 12 참조: 이미지 9장 + 비디오 3개 + 오디오 3개** (`@image1`/`@video2`/`@audio3` 문법) |
 | Director Control | 렌즈 전환(lens switch), 카메라 패스(camera path), 모션 제어 |
+| 물리 시뮬레이션 | **Physics-aware training** — 중력/관성/천 드레이프 등 물리 법칙 반영 |
 | 멀티샷 | 네이티브 지원 — 캐릭터/배경 일관성 |
-| 해상도 | 최대 1080p |
-| 길이 | 최대 15초 |
-| 강점 | 가장 정밀한 카메라 워크 제어. AD Co-Director의 shot grammar 지시를 가장 정확하게 반영 |
+| 해상도 | **최대 2K (cinema-grade)** |
+| 길이 | **최대 ~20초** |
+| API 상태 | **공식 API 2026-02-24 예정, 현재 fal.ai 등 3rd-party 통해 접근 가능** |
+| 강점 | 가장 정밀한 카메라 워크 제어 + 물리 기반 사실성. AD Co-Director의 shot grammar 지시를 가장 정확하게 반영 |
 
-#### Kling 3.0
+#### Kling 3.0 (Released 2026-02-05)
 
 | 항목 | 사양 |
 |------|------|
+| 해상도 | **Native 4K** |
+| 모델 변형 | **Pro** (고품질) / **Standard** (비용효율) |
 | 입력 | 멀티모달 (텍스트/이미지/비디오) |
-| 멀티샷 | 6-shot storyboard 네이티브 — 하나의 프롬프트로 6연속 샷 생성 |
+| 길이 | **3~15초** (샷당 최소 3초) |
+| 멀티샷 | **Smart Storyboard** (AI 자동 분할) + **Custom Storyboard** (수동 샷 제어) — 최대 6샷 시퀀스 |
+| API params | `multi_shot`, `multi_prompt[index/prompt/duration]`, `cfg_scale(0~1)`, `element_list` |
 | 캐릭터 일관성 | 완벽한 캐릭터 유지 (face/body/clothing) |
 | 움직임 | 고품질 인물 움직임, 자연스러운 물리 시뮬레이션 |
-| 강점 | Blueprint Canvas의 인접 셀들을 한 번에 생성하는 데 최적. 캐릭터 중심 시퀀스에 강력 |
+| 오디오 | **네이티브 오디오 생성** (다국어/방언 지원) |
+| 화면비 | 16:9, 9:16, 1:1 |
+| 강점 | Blueprint Canvas의 인접 셀들을 Smart Storyboard로 한 번에 생성하는 데 최적. 캐릭터 중심 시퀀스에 강력 |
 
-#### Veo 3
+#### Veo 3.1 (Production, Gemini API)
 
 | 항목 | 사양 |
 |------|------|
-| 플랫폼 | Google Vertex AI |
-| 오디오 | 네이티브 오디오 생성 (대사/효과음/환경음 통합) |
+| 모델 ID | `veo-3.1-generate-preview` (기본), `veo-3.1-fast` (저지연) |
+| 플랫폼 | Google Gemini API (Vertex AI 포함) |
+| 해상도 | **720p** (기본), **1080p** (8s), **4K** (8s) |
 | 길이 | 4/6/8초 duration 파라미터 |
-| 강점 | 음향까지 통합된 유일한 엔진. 사운드가 중요한 씬에 우선 배정 |
+| Extension | **7초 연장 × 최대 20회 = ~148초 total** — Blueprint Canvas 장편 시퀀스에 핵심 |
+| 참조 입력 | `referenceImages` (최대 3장), first/last frame 지정 가능 |
+| negativePrompt | **지원** |
+| 오디오 | 네이티브 오디오 생성 (대사/효과음/환경음 통합) |
+| SynthID | **자동 워터마크 삽입** (Google DeepMind SynthID) |
+| 강점 | 음향 통합 + Extension으로 장편 연속 시퀀스 구성 가능. 사운드가 중요한 씬에 우선 배정 |
 
 ### Sora 제거 사유
 
-1. **멀티샷 미지원**: 2026-02 기준 단일 샷 생성만 가능. Blueprint Canvas 워크플로에서 인접 셀 일관성 보장 불가 — 근본적 비호환
-2. **권리 거부 과잉**: 저작권 캐릭터/음악 거부 정책이 Original-IP Foundry의 합법 재창조 워크플로에서도 과도하게 발동. CC0/CC-BY 소스 기반 창작에서도 불필요한 차단 빈발
-3. **비용 대비 효용**: Seedance 2.0/Kling 3.0/Veo 3이 멀티샷/오디오/카메라 제어를 모두 커버하는 상황에서 Sora만의 차별 가치 부재
+1. **API 프로덕션 부적합**: Sora 2(2025-09-30 출시)는 멀티샷을 지원하지만, API 접근이 Plus/Pro 구독 전용이며 rate limit(5-50 RPM)이 프로덕션 규모에 부족. Free tier도 2026-01-10부로 폐지됨
+2. **권리 정책 충돌**: "copyrighted characters or intellectual property" 생성을 차단하는 콘텐츠 정책이 Original-IP Foundry의 합법 재창조 워크플로와 근본적으로 충돌. CC0/CC-BY 소스 기반 창작에서도 과도한 차단 발생
+3. **수동 멀티샷 한계**: 멀티샷 생성 시 샷별 수동 타이밍 지정 필요 — Kling 3.0 Smart Storyboard의 AI 자동 분할 대비 워크플로 효율성 현저히 떨어짐
+4. **비용 대비 효용**: $0.10-0.50/초 과금 구조에서 비용 효율이 불명확. Seedance 2.0/Kling 3.0/Veo 3.1이 멀티샷/오디오/카메라 제어를 모두 커버하는 상황에서 Sora만의 차별 가치 부재
 
 ### Prompt Compiler 엔진 배정 전략
 
 ```
 Fragment materialization (Level 3→4) 시:
-├── 카메라 워크 정밀 제어 필요 → Seedance 2.0
-├── 연속 샷 시퀀스 (2+ shots) → Kling 3.0
-├── 사운드 통합 필요 → Veo 3
+├── 카메라 워크 정밀 제어 필요 → Seedance 2.0 (2K, ~20초, @image/@video/@audio 참조 활용)
+├── 연속 샷 시퀀스 (2+ shots) → Kling 3.0 (Smart/Custom Storyboard, Pro/Standard 선택)
+├── 사운드 통합 필요 → Veo 3.1 (네이티브 오디오 + Extension 활용 시 ~148초 연속 가능)
+├── 장편 연속 시퀀스 → Veo 3.1 Extension (7초 × 최대 20회 체인)
 └── 일반 → 비용/품질 최적 엔진 자동 선택
 ```
 
@@ -908,7 +929,7 @@ Fragment materialization (Level 3→4) 시:
 1. Pattern Atom 추출 파이프라인 운영화
 2. **Ranking v3 적용**: `fill_rate_impact` 추가, continuity 가중치 0.40→0.20 조정, `director_style_fit` 0.10→0.15
 3. A/B + Thompson 루프 연결
-4. Prompt Compiler 3엔진 계약 고정 (Seedance 2.0/Kling 3.0/Veo 3 adapter 업데이트)
+4. Prompt Compiler 3엔진 계약 고정 (Seedance 2.0/Kling 3.0/Veo 3.1 adapter 업데이트)
 5. **Council Core**: `council.py` 골격 + `council_synthesizer.py` + `council_config.py`
 6. **P0 통합**: Pattern Extraction Council Enrichment (§6.6.6) + Gate B 3모델 OR-gate
 7. **P1 통합**: continuity_score 3축 분리 + Borderline Negotiation 프로토타입 (§7.2)
@@ -992,83 +1013,91 @@ Fragment materialization (Level 3→4) 시:
 
 1. Gemini API docs (Gemini 3 모델 및 파라미터): https://ai.google.dev/gemini-api/docs/models
 2. Gemini 3 Pro preview model card: https://ai.google.dev/gemini-api/docs/models/gemini#gemini-3-models
-3. Veo 3 API parameters (duration 4/6/8 sec, native audio): https://docs.cloud.google.com/vertex-ai/generative-ai/docs/model-reference/veo-video-generation
-4. Seedance 2.0 공식 런치 (4-modal input, Director Control, multi-shot, 15초 1080p): https://seed.bytedance.com/en/blog/official-launch-of-seedance-2-0
-5. Kling 3.0 공식 발표 (6-shot storyboard, 캐릭터 일관성, 멀티모달): https://www.prnewswire.com/news-releases/kuaishou-launches-kling-ai-3-0-model-and-kling-ai-studio-for-global-creators-and-businesses-302490441.html
-6. Claude Memory Tool (지원 모델/동작): https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool
-7. OpenAI Codex CLI docs: https://developers.openai.com/codex/cli/
-8. OpenAI Codex background mode docs: https://developers.openai.com/codex/background/
-9. OpenAI Codex settings docs: https://developers.openai.com/codex/cli/settings/
-10. OpenAI Codex update (gpt-5.3-codex availability): https://help.openai.com/en/articles/6825453-chatgpt-rlease-notes
+2-1. Gemini 3.1 Pro Preview (2026-02-19, Sparse MoE, ARC-AGI-2 77.1%): https://ai.google.dev/gemini-api/docs/models/gemini-3.1-pro-preview
+3. Veo 3.1 Gemini API docs (model IDs, extension, referenceImages, negativePrompt, SynthID): https://ai.google.dev/gemini-api/docs/video
+4. Seedance 2.0 공식 페이지 (Dual-Branch Diffusion Transformer, 2K, ~20초, 12 refs): https://seed.bytedance.com/en/seedance2_0
+5. Seedance 2.0 공식 런치 블로그 (4-modal input, Director Control, physics-aware): https://seed.bytedance.com/en/blog/official-launch-of-seedance-2-0
+6. Kling 3.0 공식 발표 (Native 4K, Smart/Custom Storyboard, Pro/Standard): https://www.prnewswire.com/news-releases/kuaishou-launches-kling-ai-3-0-model-and-kling-ai-studio-for-global-creators-and-businesses-302490441.html
+7. Kling 3.0 API docs (multi_shot, multi_prompt, cfg_scale, element_list): https://docs.freepik.com/api-reference/video/kling-v3/overview
+8. Kling 3.0 CineD 기술 리뷰 (Native 4K, photorealism, multi-shot, integrated audio): https://www.cined.com/kling-3-0-ai-video-model-introduced-native-4k-enhanced-photorealism-multi-shot-sequencing-and-integrated-audio/
+9. Veo 3.1 Developers Blog (Gemini API, extension, creative capabilities): https://developers.googleblog.com/introducing-veo-3-1-and-new-creative-capabilities-in-the-gemini-api/
+10. Claude Memory Tool (지원 모델/동작): https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool
+11. OpenAI Codex CLI docs: https://developers.openai.com/codex/cli/
+12. OpenAI Codex background mode docs: https://developers.openai.com/codex/background/
+13. OpenAI Codex settings docs: https://developers.openai.com/codex/cli/settings/
+14. OpenAI Codex update (gpt-5.3-codex availability): https://help.openai.com/en/articles/6825453-chatgpt-rlease-notes
 
 ### 메모리/에이전트/검색
 
-11. Claude Code changelog (Opus 4.6 + memory updates): https://raw.githubusercontent.com/anthropics/claude-code/main/CHANGELOG.md
-12. OpenClaw founder move + foundation continuity (Reuters/TechCrunch): https://finance.yahoo.com/news/openclaw-founder-steinberger-joins-openai-223554158.html
-13. OpenClaw Memory concept: https://docs.openclaw.ai/concepts/memory
-14. OpenClaw architecture: https://docs.openclaw.ai/architecture
-15. OpenClaw Telegram channel: https://docs.openclaw.ai/channels/telegram
-16. Agent0 Memory docs: https://www.agent-zero.ai/p/docs/memory/
-17. Agent0 official docs (projects): https://www.agent-zero.ai/p/docs/projects/
-18. Agent0 changelog (0.9.6/0.9.8): https://www.agent-zero.ai/p/docs/changelog/0.9.8/
-19. Agent0 GitHub: https://github.com/agent0ai/agent-zero
-20. TwelveLabs docs (embeddings): https://docs.twelvelabs.io/docs/guides/create-embeddings
-21. TwelveLabs + Qdrant tutorial: https://www.twelvelabs.io/blog/twelve-labs-qdrant-api
-22. Qdrant concepts: https://qdrant.tech/documentation/concepts/
-23. Qdrant multivector/late interaction: https://qdrant.tech/documentation/tutorials-search-engineering/using-multivector-representations/
-24. Vespa phased ranking: https://docs.vespa.ai/en/phased-ranking.html
+15. Claude Code changelog (Opus 4.6 + memory updates): https://raw.githubusercontent.com/anthropics/claude-code/main/CHANGELOG.md
+16. OpenClaw founder move + independent foundation transition (Reuters/TechCrunch): https://finance.yahoo.com/news/openclaw-founder-steinberger-joins-openai-223554158.html
+17. OpenClaw Memory concept: https://docs.openclaw.ai/concepts/memory
+18. OpenClaw architecture: https://docs.openclaw.ai/architecture
+19. OpenClaw Telegram channel: https://docs.openclaw.ai/channels/telegram
+20. Agent0 Memory docs: https://www.agent-zero.ai/p/docs/memory/
+21. Agent0 official docs (projects): https://www.agent-zero.ai/p/docs/projects/
+22. Agent0 changelog (v0.9.8.1, MCP 통합): https://www.agent-zero.ai/p/docs/changelog/0.9.8/
+23. Agent0 GitHub: https://github.com/agent0ai/agent-zero
+24. TwelveLabs docs (Marengo Embed 3.0, Embed API v2): https://docs.twelvelabs.io/docs/guides/create-embeddings
+25. TwelveLabs + Qdrant tutorial: https://www.twelvelabs.io/blog/twelve-labs-qdrant-api
+26. Qdrant concepts: https://qdrant.tech/documentation/concepts/
+27. Qdrant multivector/late interaction: https://qdrant.tech/documentation/tutorials-search-engineering/using-multivector-representations/
+28. Vespa phased ranking: https://docs.vespa.ai/en/phased-ranking.html
 
 ### 마스터피스 패턴 데이터화(학술/데이터셋)
 
-25. CineScale (792K frames, shot scale): https://www.sciencedirect.com/science/article/pii/S2352340921002869
-26. CineScale2 (angle/level, ~25K frames): https://www.sciencedirect.com/science/article/pii/S2352340923007126
-27. CineScale project site: https://cinescale.github.io/shotscale/
-28. MovieNet (ECCV 2020, 1.1K movies, cinematic style tags): https://movienet.github.io/projects/eccv20movienet.html
-29. MovieShots (ECCV 2020, 46K shots / 7K trailers): https://movienet.github.io/projects/eccv20shot.html
-30. MovieBench (CVPR 2025, hierarchical movie/scene/shot annotations): https://openaccess.thecvf.com/content/CVPR2025/html/Wu_MovieBench_A_Hierarchical_Movie_Level_Dataset_for_Long_Video_Generation_CVPR_2025_paper.html
-31. MovieBench project repository: https://github.com/showlab/MovieBench
-32. MultiShotMaster (arXiv 2025, multi-shot controllable generation/data curation): https://arxiv.org/html/2512.03041v1
+29. CineScale (792K frames, shot scale): https://www.sciencedirect.com/science/article/pii/S2352340921002869
+30. CineScale2 (angle/level, ~25K frames): https://www.sciencedirect.com/science/article/pii/S2352340923007126
+31. CineScale project site: https://cinescale.github.io/shotscale/
+32. MovieNet (ECCV 2020, 1.1K movies, cinematic style tags): https://movienet.github.io/projects/eccv20movienet.html
+33. MovieShots (ECCV 2020, 46K shots / 7K trailers): https://movienet.github.io/projects/eccv20shot.html
+34. MovieBench (CVPR 2025, hierarchical movie/scene/shot annotations): https://openaccess.thecvf.com/content/CVPR2025/html/Wu_MovieBench_A_Hierarchical_Movie_Level_Dataset_for_Long_Video_Generation_CVPR_2025_paper.html
+35. MovieBench project repository: https://github.com/showlab/MovieBench
+36. MultiShotMaster (arXiv 2025, multi-shot controllable generation/data curation): https://arxiv.org/html/2512.03041v1
 
 ### 권리/라이선스
 
-33. Telegram Bot API: https://core.telegram.org/bots/api
-34. Kakao Talk Message concepts: https://developers.kakao.com/docs/latest/en/kakaotalk-message
-35. Kakao Talk Message REST API: https://developers.kakao.com/docs/latest/en/kakaotalk-message/rest-api
-36. U.S. Copyright Office AI Report Part 2 (copyrightability): https://www.copyright.gov/ai/Copyright-and-Artificial-Intelligence-Part-2-Copyrightability-Report.pdf
-37. U.S. Copyright fair use FAQ: https://www.copyright.gov/help/faq/faq-fairuse.html
-38. Creative Commons licenses: https://creativecommons.org/licenses/
-39. CC0 public domain dedication: https://creativecommons.org/publicdomain/zero/1.0/
-40. C2PA Technical Specification: https://spec.c2pa.org/specifications/specifications/2.2/specs/C2PA_Specification.html
-41. C2PA Open Source SDK: https://opensource.contentauthenticity.org/docs/
-42. Qdrant update points API (ordering/wait): https://api.qdrant.tech/v-1-14-x/api-reference/points/set-payload
-43. Qdrant update vectors API (ordering/wait): https://api.qdrant.tech/v-1-14-x/api-reference/points/update-vectors
-44. Qdrant points concepts (payload & filters): https://qdrant.tech/documentation/concepts/points/
-45. EU AI Act timeline (application schedule): https://digital-strategy.ec.europa.eu/en/policies/regulatory-framework-ai
-46. Taskiq docs: https://taskiq-python.github.io/
-47. Taskiq package/releases: https://pypi.org/project/taskiq/
+37. Telegram Bot API: https://core.telegram.org/bots/api
+38. Kakao Talk Message concepts: https://developers.kakao.com/docs/latest/en/kakaotalk-message
+39. Kakao Talk Message REST API: https://developers.kakao.com/docs/latest/en/kakaotalk-message/rest-api
+40. U.S. Copyright Office AI Report Part 2 (copyrightability): https://www.copyright.gov/ai/Copyright-and-Artificial-Intelligence-Part-2-Copyrightability-Report.pdf
+41. U.S. Copyright fair use FAQ: https://www.copyright.gov/help/faq/faq-fairuse.html
+42. Creative Commons licenses: https://creativecommons.org/licenses/
+43. CC0 public domain dedication: https://creativecommons.org/publicdomain/zero/1.0/
+44. C2PA Technical Specification: https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html
+45. C2PA Open Source SDK: https://opensource.contentauthenticity.org/docs/
+46. Qdrant update points API (ordering/wait): https://api.qdrant.tech/master/api-reference/points/set-payload
+47. Qdrant update vectors API (ordering/wait): https://api.qdrant.tech/master/api-reference/points/update-vectors
+48. Qdrant points concepts (payload & filters): https://qdrant.tech/documentation/concepts/points/
+49. EU AI Act timeline (application schedule): https://digital-strategy.ec.europa.eu/en/policies/regulatory-framework-ai
+50. Taskiq docs: https://taskiq-python.github.io/
+51. Taskiq package/releases: https://pypi.org/project/taskiq/
 
 ### Cinema Grammar & LLM 연구 (§2-H 근거)
 
-48. Shen et al. 2025 — Narrative theory LLM adaptation for movie domain: https://aclanthology.org/2025.conll-1.13.pdf
-49. L-Storyboard 2025 — Shot-level unified language representation for LLM editing: https://arxiv.org/abs/2505.12237
-50. Cinema Multiverse Lounge (CHI 2025) — Multi-agent film appreciation: https://dl.acm.org/doi/10.1145/3706598.3713641
-51. FilmAgent (SIGGRAPH Asia 2024) — Multi-agent film automation in virtual 3D: https://arxiv.org/abs/2501.12909
-52. Deep learning in film production systematic review 2019-2025: https://www.sciencedirect.com/science/article/abs/pii/S1875952125001569
-53. KG+LLM fusion practices (Frontiers in Computer Science 2025): https://www.frontiersin.org/journals/computer-science/articles/10.3389/fcomp.2025.1590632/full
-54. LLM-empowered RecSys taxonomy (Tsinghua Science & Technology 2025): https://www.sciopen.com/local/article_pdf/10.26599/TST.2025.9010137.pdf
+52. Shen et al. 2025 — Narrative theory LLM adaptation for movie domain: https://aclanthology.org/2025.conll-1.13.pdf
+53. L-Storyboard 2025 — Shot-level unified language representation for LLM editing: https://arxiv.org/abs/2505.12237
+54. Cinema Multiverse Lounge (CHI 2025) — Multi-agent film appreciation: https://dl.acm.org/doi/10.1145/3706598.3713641
+55. FilmAgent (SIGGRAPH Asia 2024) — Multi-agent film automation in virtual 3D: https://arxiv.org/abs/2501.12909
+56. Deep learning in film production systematic review 2019-2025: https://www.sciencedirect.com/science/article/abs/pii/S1875952125001569
+57. KG+LLM fusion practices (Frontiers in Computer Science 2025): https://www.frontiersin.org/journals/computer-science/articles/10.3389/fcomp.2025.1590632/full
+58. LLM-empowered RecSys taxonomy (Tsinghua Science & Technology 2025): https://www.sciopen.com/local/article_pdf/10.26599/TST.2025.9010137.pdf
 
 ### 시네마 문법 교재/참조
 
-55. Daniel Arijon — Grammar of the Film Language: https://www.silmanjamespress.com/shop/filmmaking-directing/grammar-of-the-film-language/
-56. Film Theory: Creating a Cinematic Grammar (Columbia University Press): https://academic.oup.com/columbia-scholarship-online/book/16986
-57. Continuity editing computational model (AAAI): https://cdn.aaai.org/ojs/9288/9288-13-12816-1-2-20201228.pdf
-58. MasterClass — Continuity editing techniques 2026: https://www.masterclass.com/articles/continuity-editing-in-film-explained
+59. Daniel Arijon — Grammar of the Film Language: https://www.silmanjamespress.com/shop/filmmaking-directing/grammar-of-the-film-language/
+60. Film Theory: Creating a Cinematic Grammar (Columbia University Press): https://academic.oup.com/columbia-scholarship-online/book/16986
+61. Continuity editing computational model (AAAI): https://cdn.aaai.org/ojs/9288/9288-13-12816-1-2-20201228.pdf
+62. MasterClass — Continuity editing techniques 2026: https://www.masterclass.com/articles/continuity-editing-in-film-explained
 
 ### 생성엔진 상세 문서
 
-59. Seedance 2.0 Director Control (lens switch, camera path): https://seed.bytedance.com/en/blog/official-launch-of-seedance-2-0
-60. Kling 3.0 AI Studio (6-shot storyboard, character consistency): https://www.prnewswire.com/news-releases/kuaishou-launches-kling-ai-3-0-model-and-kling-ai-studio-for-global-creators-and-businesses-302490441.html
-61. Veo 3 native audio generation (Vertex AI): https://docs.cloud.google.com/vertex-ai/generative-ai/docs/model-reference/veo-video-generation
+63. Seedance 2.0 공식 페이지 (Dual-Branch Diffusion Transformer, 12 refs, physics-aware): https://seed.bytedance.com/en/seedance2_0
+64. Seedance 2.0 Director Control (lens switch, camera path): https://seed.bytedance.com/en/blog/official-launch-of-seedance-2-0
+65. Kling 3.0 AI Studio (Smart/Custom Storyboard, Native 4K, Pro/Standard): https://www.prnewswire.com/news-releases/kuaishou-launches-kling-ai-3-0-model-and-kling-ai-studio-for-global-creators-and-businesses-302490441.html
+66. Kling 3.0 API reference (multi_shot, multi_prompt, cfg_scale): https://docs.freepik.com/api-reference/video/kling-v3/overview
+67. Veo 3.1 Gemini API (extension, referenceImages, negativePrompt): https://ai.google.dev/gemini-api/docs/video
+68. Veo 3.1 Developers Blog (creative capabilities): https://developers.googleblog.com/introducing-veo-3-1-and-new-creative-capabilities-in-the-gemini-api/
 
 ---
 

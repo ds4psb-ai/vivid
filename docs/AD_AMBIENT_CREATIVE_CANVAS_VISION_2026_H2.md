@@ -365,15 +365,16 @@ KakaoTalk Adapter ─┘
 
 | 엔진 | 핵심 능력 | 2026 현황 |
 |------|----------|----------|
-| **Seedance 2.0** | 4-modal input, Director Control (lens switch, camera path), multi-shot | 15초, 1080p, 이미지/비디오/오디오 참조 입력 |
-| **Kling 3.0** | 6-shot storyboard, 완벽한 캐릭터 일관성 | 멀티모달, 고품질 움직임 |
-| **Veo 3** | 네이티브 오디오 생성, 4/6/8초 duration | 음향까지 통합된 유일한 엔진 |
+| **Seedance 2.0** | 4-modal input, Director Control (lens switch, camera path), multi-shot, Dual-Branch Diffusion Transformer | **~20초, 2K, 12 multimodal refs** (이미지 9 + 비디오 3 + 오디오 3, `@image/@video/@audio` 문법), physics-aware training |
+| **Kling 3.0** | Smart/Custom Storyboard, 완벽한 캐릭터 일관성, Pro/Standard 모델 변형 | **Native 4K, 3~15초 multi-shot**, `multi_shot`/`multi_prompt`/`cfg_scale`/`element_list` API, 네이티브 오디오(다국어), 16:9/9:16/1:1 |
+| **Veo 3.1** | 네이티브 오디오 생성, Extension (~148초), referenceImages, negativePrompt | **720p/1080p/4K**, 4/6/8초 + 7초×20회 extension, `veo-3.1-generate-preview`/`veo-3.1-fast`, SynthID 자동 워터마크 |
 
 ### Sora 제거 사유
 
-1. **멀티샷 미지원**: 2026-02 기준 단일 샷 생성만 가능. Blueprint Canvas 워크플로와 근본적 비호환
-2. **권리 거부 과잉**: 저작권 캐릭터/음악 거부 정책이 Original-IP Foundry의 합법 재창조 워크플로에서도 과도하게 발동. 창작 자유도 제한
-3. **비용 대비 효용**: 멀티샷 일관성이 commodity된 상황에서 Sora만의 차별 가치 부재
+1. **API 프로덕션 부적합**: Sora 2(2025-09-30 출시)는 멀티샷을 지원하지만, API 접근이 Plus/Pro 구독 전용이며 rate limit(5-50 RPM)이 프로덕션 규모에 부족. Free tier도 2026-01-10부로 폐지됨
+2. **권리 정책 충돌**: "copyrighted characters or intellectual property" 생성을 차단하는 콘텐츠 정책이 Original-IP Foundry의 합법 재창조 워크플로와 근본적으로 충돌. CC0/CC-BY 소스 기반 창작에서도 과도한 차단 발생
+3. **수동 멀티샷 한계**: 멀티샷 생성 시 샷별 수동 타이밍 지정 필요 — Kling 3.0 Smart Storyboard의 AI 자동 분할 대비 워크플로 효율성 현저히 떨어짐
+4. **비용 대비 효용**: $0.10-0.50/초 과금 구조에서 비용 효율이 불명확. Seedance 2.0/Kling 3.0/Veo 3.1이 멀티샷/오디오/카메라 제어를 모두 커버하는 상황에서 Sora만의 차별 가치 부재
 
 ### Prompt Compiler 영향
 
@@ -382,10 +383,10 @@ KakaoTalk Adapter ─┘
 DEFAULT_ENGINES = ["kling", "veo", "seedance", "sora"]
 
 # After: 3 engines
-DEFAULT_ENGINES = ["kling", "seedance", "veo"]
+DEFAULT_ENGINES = ["kling", "seedance", "veo"]  # Veo = veo-3.1-generate-preview
 ```
 
-> **코드 참조**: `backend/app/features/original_ip_foundry/prompt_compiler.py` — Sora adapter deprecation 필요
+> **코드 참조**: `backend/app/features/original_ip_foundry/prompt_compiler.py` — Sora adapter deprecation 필요, Veo adapter를 Veo 3.1 모델 ID로 업데이트
 
 ---
 

@@ -9,7 +9,7 @@
 
 - **OLD**: 시퀀스 연속성 중심 — "다음 씬을 추천해줘"라는 선형 워크플로. `continuity_score`가 유일한 북극성
 - **NEW**: 비선형 영감 조립 중심 — "아무 때나 영감을 던지면 100분 블루프린트에 자동 배치". `creative_fill_rate`가 1순위
-- **2026 현실**: Seedance 2.0 / Kling 3.0 / Veo 3로 멀티샷 일관성이 commodity화됨. 연속성은 엔진이 해결하는 인프라 문제
+- **2026 현실**: Seedance 2.0 / Kling 3.0 / Veo 3.1로 멀티샷 일관성이 commodity화됨. 연속성은 엔진이 해결하는 인프라 문제
 - **승부처**: "어떤 샷을 만들까"가 아니라 "일상의 영감을 어떻게 100분 블루프린트로 조립하는가"
 - **연속성은 당연한 인프라지, 북극성이 아니다** — 창작의 진행도(fill_rate)가 감독에게 실질적 가치를 전달한다
 
@@ -30,8 +30,8 @@
 
 ### 3. Orchestration Layer
 
-- **3 engines**: Kling 3.0, Seedance 2.0, Veo 3 **(Sora REMOVED)**
-- **Sora 제거 사유**: 멀티샷 미지원, 권리 거부 과잉, commodity 상황에서 차별 가치 부재
+- **3 engines**: Kling 3.0 (Native 4K, Smart/Custom Storyboard), Seedance 2.0 (2K, ~20초), Veo 3.1 (Extension ~148초) **(Sora REMOVED)**
+- **Sora 제거 사유**: Sora 2(2025-09 출시)는 멀티샷 지원하나, API 프로덕션 부적합(rate limit 5-50 RPM) + 권리 정책 충돌(IP 생성 차단) + 수동 멀티샷(vs Kling Smart Storyboard) + commodity 상황 차별 가치 부재
 - **Prompt Compiler**: 3-engine compilation (`DEFAULT_ENGINES = ["kling", "seedance", "veo"]`)
 - **Engine success criterion**: continuity 게이트 통과 (Level 3→4 전환 시)
 

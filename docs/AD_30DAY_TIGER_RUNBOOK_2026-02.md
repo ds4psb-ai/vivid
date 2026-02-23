@@ -13,7 +13,7 @@
 90일 플랜을 30일로 압축해, 다음 3가지를 동시에 달성한다.
 
 1. **Canvas + Fragment**: Blueprint Canvas 가동 + Fragment Ingestion Pipeline 운영화 + Auto-Placement 70%+ 수락률
-2. **Materialization + 3 Engines**: Progressive Materialization 경로 확보 + 3엔진(Kling 3.0, Seedance 2.0, Veo 3) Prompt Compiler 안정화 (Sora 제거)
+2. **Materialization + 3 Engines**: Progressive Materialization 경로 확보 + 3엔진(Kling 3.0, Seedance 2.0, Veo 3.1) Prompt Compiler 안정화 (Sora 제거)
 3. **Rights + Continuity Gate**: Rights Graph + clone_risk 게이트 운영 + continuity를 품질 게이트로 유지
 
 ---
@@ -108,8 +108,8 @@
   - CoachingSource A/B/C 실험 설계 준비 (A=Empirical, C=Fused 우선)
 - **Progressive Materialization v0**: Level 0→1→2 경로 구현 (Memo→Storyboard→KeyVisual), Level 3→4는 Day 17+ 이후 활성화
 - **Gap Detection v0**: 구조적 gap만 우선 감지 (Structural Gap), NarrativeTheoryKB 통합
-- **Seedance 2.0 Director Control adapter 업데이트**: lens switch, camera path 신규 파라미터 반영
-- **Kling 3.0 6-shot storyboard adapter 업데이트**: 멀티샷 스토리보드 워크플로 대응
+- **Seedance 2.0 adapter 업데이트**: lens switch, camera path, **12 multimodal refs** (`@image1`~`@image9`, `@video1`~`@video3`, `@audio1`~`@audio3`), 해상도 2K, 길이 ~20초 파라미터 반영, Dual-Branch Diffusion Transformer 활용
+- **Kling 3.0 adapter 업데이트**: **Smart Storyboard** (AI 자동 분할) + **Custom Storyboard** (수동 샷 제어), `multi_shot`/`multi_prompt[index/prompt/duration]`/`cfg_scale(0~1)`/`element_list` API params, Pro/Standard 모델 선택, Native 4K, 3~15초, 네이티브 오디오(다국어)
 
 ### Day 17-23: B2C 채널 + Canvas UX
 - Telegram/WebChat 안정화
@@ -301,12 +301,12 @@
 7. Agent0 projects/memory: https://www.agent-zero.ai/p/docs/projects/ , https://www.agent-zero.ai/p/docs/memory/
 8. Qdrant multivector: https://qdrant.tech/documentation/tutorials-search-engineering/using-multivector-representations/
 9. MovieBench (CVPR 2025): https://openaccess.thecvf.com/content/CVPR2025/html/Wu_MovieBench_A_Hierarchical_Movie_Level_Dataset_for_Long_Video_Generation_CVPR_2025_paper.html
-10. Qdrant update vectors API (ordering/wait): https://api.qdrant.tech/v-1-14-x/api-reference/points/update-vectors
-11. Qdrant update points API (ordering/wait): https://api.qdrant.tech/v-1-14-x/api-reference/points/set-payload
+10. Qdrant update vectors API (ordering/wait): https://api.qdrant.tech/master/api-reference/points/update-vectors
+11. Qdrant update points API (ordering/wait): https://api.qdrant.tech/master/api-reference/points/set-payload
 12. Qdrant points concepts: https://qdrant.tech/documentation/concepts/points/
 13. Taskiq docs: https://taskiq-python.github.io/
 14. Taskiq package: https://pypi.org/project/taskiq/
-15. C2PA specification 2.2: https://spec.c2pa.org/specifications/specifications/2.2/specs/C2PA_Specification.html
+15. C2PA specification 2.2: https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html
 16. C2PA open-source docs: https://opensource.contentauthenticity.org/docs/
 17. EU AI Act timeline: https://digital-strategy.ec.europa.eu/en/policies/regulatory-framework-ai
 
