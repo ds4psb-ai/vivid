@@ -1,6 +1,6 @@
 # Vivid Docs Index (Slim Core)
 
-> Updated: 2026-02-18  
+> Updated: 2026-02-23  
 > 목적: 문서 혼선을 줄이기 위해 **루트=핵심, 나머지=도메인/레거시**로 강제 분리
 
 ## 1) Core Canonical Docs (루트 유지 4개)
@@ -9,6 +9,7 @@
 2. `/Users/ted/vivid/docs/ORIGINAL_IP_FOUNDRY_OPERATIONS_RUNBOOK_2026-02.md`
 3. `/Users/ted/vivid/docs/AD_30DAY_TIGER_RUNBOOK_2026-02.md`
 4. `/Users/ted/vivid/docs/2026_PRIORITY_ROADMAP.md`
+5. `/Users/ted/vivid/docs/plans/2026-02-23-persona-fountain-research.md`
 
 ## 2) Active Working Areas (루트 폴더만 유지)
 

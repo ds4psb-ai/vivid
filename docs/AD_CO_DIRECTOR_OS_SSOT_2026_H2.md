@@ -72,6 +72,7 @@ Canvas가 얼마나 채워졌는가 — 창작의 진행도를 직접 측정한�
 | D-11 | Council은 **경험 데이터(VDG+클러스터)**와 **이론 데이터(Cinema Grammar KB)**를 독립 축으로 처리한다. 두 축의 판단을 Synthesizer가 합성한다. |
 | D-12 | **Blueprint Canvas**를 프로젝트별 100분 타임라인 SSoT로 채택한다 (5분×20셀 sparse grid, OpenClaw Memory 저장) |
 | D-13 | **Progressive Materialization**은 양방향(상향/하향)을 지원한다 — Memo↔Storyboard↔KeyVisual↔Prompt↔Video |
+| D-14 | **Persona Fountain**을 Foundry의 개인화 레이어로 채택한다. 미연시 스타일 storylet 경험으로 사용자 PersonaDNA를 수집하고, `persona_alignment` 팩터(12%)를 추천 공식 v3에 주입한다. Feature flag `FOUNTAIN_ENABLED`로 제어. |
 
 ---
 
@@ -607,6 +608,37 @@ class CouncilProvider(Protocol):
 구현체: `OpenClawCouncilProvider` (기본) / `DirectAPICouncilProvider` (fallback)
 분기 Switch Drill(D-10) 대상에 포함.
 
+### 6.7 Persona Fountain Integration
+
+Foundry 파이프라인에 사용자 페르소나를 통제변인으로 주입하는 레이어.
+
+#### 데이터 흐름
+```
+미연시 UX (Storylet Choices) → trait_accumulator → PersonaDNA 합성
+  → UserPreferenceProfile 확장 (creative_tendencies, visual_preference_embedding)
+  → PersonaAlignmentScorer → Ranking v3 persona_alignment factor (12%)
+```
+
+#### persona_alignment 계산식
+```
+persona_alignment = 0.40 * auteur_affinity_match
+                  + 0.30 * OCEAN_emotion_tone_match
+                  + 0.20 * creative_tendency_overlap
+                  + 0.10 * visual_embedding_similarity
+```
+
+#### Cold Start 전략
+| 상태 | 처리 |
+|------|------|
+| Fountain 미완료 + 시그널 0 | persona_alignment = 0.5 (중립) |
+| Fountain 미완료 + 시그널 존재 | preference_learning_service 암묵적 프로필 대체 |
+| Fountain 완료 | Full persona_alignment 계산 |
+
+#### 자기참조 루프
+Foundry 생성 엔진 출력(이미지/비디오) → Fountain storylet 배경으로 재활용. 사용자 고유의 visual identity가 Fountain 경험을 물들인다.
+
+참조: `docs/plans/2026-02-23-persona-fountain-research.md`
+
 ### 6.6.4 비용 원칙
 
 1. 구독 토큰 우선, API 직접 과금은 fallback
@@ -676,9 +708,19 @@ Council 메타데이터는 Pattern Atom에 `council_metadata` 필드로 저장�
 
 ### 7.1 기본식
 
-`final_score_v3 = 0.20*continuity + 0.18*mise_en_scene + 0.14*story_intent_fit + 0.15*director_style_fit + 0.08*execution_feasibility + 0.15*pattern_affinity + 0.15*fill_rate_impact - 0.08*clone_risk`
+`final_score_v3 = 0.20*continuity + 0.15*mise_en_scene + 0.12*story_intent_fit + 0.15*director_style_fit + 0.08*execution_feasibility + 0.08*pattern_affinity + 0.12*fill_rate_impact + 0.12*persona_alignment - 0.08*clone_risk`
 
-> Fallback(v2): `fill_rate_impact` 미계산 환경에서는 기존 v2 공식을 사용하되, 4주 내 v3 이관을 완료한다.
+- `continuity`: 시각/서사/리듬 연속성 (유지 0.20)
+- `mise_en_scene`: 미장센 품질 (0.18→0.15)
+- `story_intent_fit`: 서사 의도 적합도 (0.14→0.12)
+- `director_style_fit`: 감독 스타일 적합도 (유지 0.15)
+- `execution_feasibility`: 실행 가능성 (유지 0.08)
+- `pattern_affinity`: 패턴 적합도 (0.15→0.08)
+- `fill_rate_impact`: Canvas gap 해소 기여도 (0.15→0.12)
+- `persona_alignment`: **NEW** — Persona Fountain PersonaDNA 기반 사용자 개인화 (0.12)
+- `clone_risk`: 근접복제 위험 지표 (유지 -0.08)
+
+> Fallback(v2): `fill_rate_impact`/`persona_alignment` 미계산 환경에서는 기존 v2 공식을 사용하되, 4주 내 v3 이관을 완료한다.
 
 ### 7.2 하드 게이트 + Borderline Negotiation
 
@@ -778,6 +820,7 @@ Ranking에 fill_rate_impact를 포함함으로써, **Canvas의 빈 틈을 구조
 - FragmentPlacement A/B: Auto-Placement 알고리즘 비교 (규칙 기반 vs ML 기반 vs Cinema Grammar KB 가중)
 - MaterializationPath A/B: Level 0→4 최적 경로 비교 (순차 vs 건너뛰기 vs 양방향)
 - GapSuggestion A/B: Gap 제안 전략 비교 (Structural 우선 vs Emotional 우선 vs 감독 스타일 맞춤)
+- PersonaAlignment A/B/C: A=baseline (persona_alignment 미사용, 0.5 고정), B=implicit only (preference_learning_service 기반), C=fountain_full (Persona Fountain PersonaDNA 기반)
 
 ### 9.2 보상 함수
 
@@ -976,6 +1019,9 @@ Fragment materialization (Level 3→4) 시:
 - **`fragment_capture_rate` 5+/day** (생활 속 캡처 활성도)
 - **`auto_placement_accuracy` 70%+** (자동 배치 수락률)
 - **`materialization_velocity` < 4h** (Fragment → Video 평균 소요 시간)
+- **`persona_completion_rate` >= 60%** (Fountain 세션 완료율)
+- **`persona_recommendation_uplift` >= 10%** (persona_alignment ON 그룹 추천 수락률 증가)
+- **`dna_card_share_rate` >= 15%** (Creative DNA Card 공유율 — 바이럴)
 
 ### 12.2 Council 건강 KPI (§6.6 연동)
 

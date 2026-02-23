@@ -20,6 +20,8 @@ AD_CANVAS_ENABLED=true|false          # Blueprint Canvas 전체 활성화
 AD_FRAGMENT_INGESTION_ENABLED=true|false  # Fragment Ingestion Pipeline 활성화
 AD_AUTO_PLACEMENT_ENABLED=true|false   # Auto-Placement AI 활성화
 AD_SORA_DEPRECATED=true               # Sora 어댑터 비활성화 (hard deprecation)
+AD_PERSONA_FOUNTAIN_ENABLED=false     # Persona Fountain 전체 활성화. false 시 persona_alignment = 0.5 (중립)
+AD_FOUNTAIN_LLM_GENERATION=false      # Fountain storylet LLM 동적 생성 on/off. false 시 캐시된 storylet만 사용
 ```
 
 - **긴급 차단(권장 1순위)**: `AD_FOUNDRY_ENABLED=false`
@@ -50,7 +52,12 @@ AD_SORA_DEPRECATED=true               # Sora 어댑터 비활성화 (hard deprec
    - Auto-Placement 활성화 + Progressive Materialization 전체 경로 오픈
    - `auto_placement_accuracy` >= 0.70 확인 후 진입
 
-4. **Stage R (Read-only)**
+4. **Stage P (Persona)**
+   - `AD_PERSONA_FOUNTAIN_ENABLED=true`
+   - Fountain 세션 활성화 + PersonaAlignmentScorer 주입 + A/B 실험 시작
+   - `persona_completion_rate` >= 0.60 확인 후 GA 전환
+
+5. **Stage R (Read-only)**
    - `WRITE_ENABLED=false`
    - 읽기/추천/평가용 POST만 허용 (safe path whitelist)
 
@@ -121,7 +128,17 @@ Fragment Ingestion Pipeline 각 단계의 성능 목표.
 
 ---
 
-## 2.5 Engine Deprecation Protocol (Sora)
+## 2.6 Persona Fountain SLO
+
+| 지표 | 목표 | 위반 시 |
+|------|------|---------|
+| Storylet 생성 TTFB (SSE) | p95 < 3s | `AD_FOUNTAIN_LLM_GENERATION=false` (캐시 폴백) |
+| DNA 합성 지연 | p95 < 5s | 비동기 처리 + 폴링으로 전환 |
+| 세션당 크레딧 소비 | <= 45 credits | 배경 이미지 생성 스킵 |
+
+---
+
+## 2.7 Engine Deprecation Protocol (Sora)
 
 Sora 제거 절차:
 
@@ -157,6 +174,11 @@ Sora 제거 절차:
 - `placement_confidence` (0.0 ~ 1.0, Auto-Placement 신뢰도)
 - `materialization_level` (0~4, Progressive Materialization 단계)
 - `canvas_fill_rate` (0.0 ~ 1.0, 현재 프로젝트 Canvas 채움율)
+- **Persona Fountain spans:**
+  - `fountain.session` (session_id, user_id, auteur_worlds, status)
+  - `fountain.storylet_generation` (storylet_id, auteur_world, probe_key, latency_ms)
+  - `fountain.dna_synthesis` (user_id, fountain_version, ocean_delta, credits_used)
+  - `fountain.persona_alignment` (candidate_id, user_id, score, components)
 
 오류/차단 시 `failure_code`, `block_reason` 누락 금지.
 권장: C2PA export 호출은 `input_type=provenance`로 고정해 추적한다.
@@ -186,6 +208,8 @@ Fragment 관련 호출은 `fragment_type`, `placement_confidence`, `materializat
   - **Fragment 폭주**: 단일 프로젝트에서 분당 100+ Fragment 수신 → `FRAGMENT_INGESTION_ENABLED=false` for project + rate limit 적용
   - **Placement 드리프트**: `auto_placement_accuracy` < 0.30 (30% 미만 수락률) → `AUTO_PLACEMENT_ENABLED=false` → manual placement fallback + 알고리즘 재검토
   - **Canvas 상태 불일치**: OpenClaw Memory와 Qdrant `blueprint_fragments` 간 데이터 불일치 → reconciliation job 즉시 실행 + 불일치 셀 목록 추출 + 수동 복구
+  - **Persona drift**: `persona_diversity_score < 0.2` → `AD_PERSONA_FOUNTAIN_ENABLED=false` → 원인 분석
+  - **Storylet generation hang**: `AD_FOUNTAIN_LLM_GENERATION=false` → 캐시 폴백
 
 ---
 

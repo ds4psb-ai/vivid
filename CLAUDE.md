@@ -111,6 +111,20 @@ curl -s -X POST "https://api.vercel.com/v13/deployments?skipAutoDetectionConfirm
 [] 2026 Best Practices applied (React 19, Pydantic v2, SSE streaming)
 ```
 
+### Persona Fountain Checklist
+```
+[] DB migration (fountain_sessions, fountain_storylet_cache)
+[] FountainService + Router (/api/v1/fountain/*)
+[] StoryletEngine (Sealed Capsule LLM generation)
+[] DNASynthesizer (trait_accumulator → PersonaDNA)
+[] PersonaAlignmentService injected into Foundry
+[] Frontend: FountainShell + StoryletScene + DNAReveal
+[] Self-referential loop (Foundry output → Fountain backgrounds)
+[] Tests: 50+ (fountain_service, router, alignment, integration)
+[] Feature flag FOUNTAIN_ENABLED (default: False)
+[] evidence_refs tracked as List[str]
+```
+
 ---
 
 ## Auto Research Mode
@@ -162,6 +176,7 @@ When reporting reasoning, provide assumptions/checklists/decision criteria summa
 | Train Workflow | Train-based step execution |
 | Singularity | Template gallery |
 | Human Cloud | Request-production flow |
+| Persona Fountain | Interactive VN → PersonaDNA → Foundry persona_alignment |
 
 ### Tech Stack
 - **Frontend**: Next.js 16, React 19, TypeScript, Tailwind
@@ -240,6 +255,9 @@ issue() → capsule execution → deduct()/refund()
 | `backend/app/routers/run_token.py` | Run Token |
 | `backend/app/services/capsule_executor.py` | Capsule Executor |
 | `frontend/src/lib/api.ts` | Typed API Client |
+| `backend/app/features/persona_fountain/fountain_service.py` | Persona Fountain Core |
+| `backend/app/features/original_ip_foundry/persona_alignment_service.py` | Foundry Persona Scorer |
+| `backend/app/models_fountain.py` | FountainSession, StoryletCache |
 
 ---
 
@@ -251,6 +269,7 @@ issue() → capsule execution → deduct()/refund()
 | `13_CREDITS_AND_BILLING_SPEC_V1.md` | Credit system |
 | `15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md` | Architecture philosophy |
 | `docs/DIMENSION_APP_DEVELOPER_GUIDE.md` | App development guide |
+| `docs/plans/2026-02-23-persona-fountain-research.md` | Persona Fountain design |
 
 ---
 

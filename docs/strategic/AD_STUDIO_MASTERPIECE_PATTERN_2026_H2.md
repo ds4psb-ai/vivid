@@ -51,6 +51,13 @@
 - **Rights pre-screen on Fragment ingestion** (새로 추가) — Fragment 수집 시점에 IP 위험 조기 분류
 - C2PA/SynthID provenance 정책 유지
 
+### 6. Persona Alignment Layer (NEW)
+
+- **Persona Fountain**: 미연시 스타일 storylet 경험으로 사용자 PersonaDNA 수집
+- **PersonaAlignmentScorer**: auteur affinity(40%) + OCEAN(30%) + tendency(20%) + visual(10%)
+- **Self-Referential Loop**: Foundry 출력 → Fountain 배경 재활용
+- **Feature Flag**: `FOUNTAIN_ENABLED` (default: False)
+
 ## 3. Release Gate Policy (Hard Rule)
 
 ### Gate A (1순위): Fill Rate + Materialization
@@ -75,6 +82,16 @@
 
 - Gate A + B 통과 이후에만 속도 최적화 승인
 - 속도 개선은 `fill_rate` / `continuity` 회귀가 0임을 증명해야 함
+
+### Gate D (Persona): Personalization Quality
+
+| 조건 | 결과 |
+|------|------|
+| `persona_completion_rate >= 0.60` | Fountain UX 건강 |
+| `recommendation_uplift >= 0.10` (A/B) | persona_alignment 효과 확인 → GA |
+| Gate D 미달 | Fountain 비활성화, baseline 폴백 |
+
+> Gate D는 **Gate A+B 통과 프로젝트에서만** 적용. Fountain 미완료 사용자는 Gate D 대상 아님.
 
 ## 4. 2026 H2 Roadmap (Canvas-Centric)
 
@@ -113,6 +130,13 @@
 - `creative_fill_rate` 30%+ 달성 검증
 - 대량 프로젝트 회귀 테스트
 - 운영 런북/알림 최종 확정
+
+### 2027 Q1: Persona Fountain Launch
+
+- Phase 1 (W1-2): DB + Core Service + API
+- Phase 2 (W3): LLM Storylet Engine + SSE + Frontend
+- Phase 3 (W4): Foundry Injection + A/B
+- Phase 4 (W5): Self-Referential Loop + Polish
 
 ## 5. Immediate Backlog (Now)
 

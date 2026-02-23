@@ -320,6 +320,16 @@ Director captures MORE fragments (lower friction, higher value)
 
 **핵심**: 기존 도구는 "결과물(영상)"에서 경쟁한다. VIVID는 **"창작 과정(Blueprint 조립)"**에서 경쟁한다. 결과물은 commodity — 과정이 해자다.
 
+#### Persona Flywheel (Persona Fountain)
+
+```
+사용자 → Fountain VN 경험 → PersonaDNA 수집
+  → Foundry persona_alignment → 개인화된 IP 추천
+  → IP 생성 → Fountain 배경으로 재활용 → 더 풍부한 VN 경험
+```
+
+Fountain이 Flywheel에 추가하는 가치: **사용자가 사용할수록 Fountain 경험이 개인화되고, 개인화된 추천이 Foundry 사용을 증가시킨다.** Spotify Wrapped 스타일의 Creative DNA Card 공유가 오가닉 유입을 촉진한다.
+
 ### 데이터 해자 축적
 
 | 자산 | 축적 방식 | 경쟁자 복제 난이도 |
@@ -402,6 +412,10 @@ AD_AMBIENT_CREATIVE_CANVAS_VISION_2026_H2.md  ← 본 문서 (Why)
     ├── AD_30DAY_TIGER_RUNBOOK_2026-02.md      (How — 30일 실행)
     └── ORIGINAL_IP_FOUNDRY_OPERATIONS_RUNBOOK_2026-02.md (How — 운영)
 ```
+
+| 관련 문서 | 설명 |
+|----------|------|
+| `docs/plans/2026-02-23-persona-fountain-research.md` | Persona Fountain 설계 — UX, DB, Foundry 통합, 자기참조 루프 |
 
 ### 문서 간 용어 통일
 
