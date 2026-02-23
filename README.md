@@ -1,263 +1,476 @@
-# Crebit Studio (Dimension Tools + Train Workflow + Agent Chat)
+# VIVID — Ambient Creative Canvas OS
 
-This repo builds the chat-first agent, dimension miniapps, and train-style workflow UI described in the Crebit docs. The focus is a fast, minimal base for:
+> Assemble everyday inspiration into a 100-minute blueprint.
 
-- Chokki Agent (chat-first): tool-aware chat + artifact previews (SSE streaming)
-- Dimension tools (miniapps) for prompt/storyboard/image/reference
-- Train workflow UI (Flow) for chaining tools with 3-option connectors
-- Legacy canvas assets remain under `frontend/src/app/_deprecated`
+[![CI](https://github.com/ds4psb-ai/vivid/actions/workflows/ci.yml/badge.svg)](https://github.com/ds4psb-ai/vivid/actions)
+![Python 3.11](https://img.shields.io/badge/Python-3.11-blue)
+![Node 22+](https://img.shields.io/badge/Node-22+-green)
+![Next.js 16](https://img.shields.io/badge/Next.js-16.1-black)
+![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red)
 
-## Scope distilled from Crebit docs (current code)
+[Vision](docs/AD_AMBIENT_CREATIVE_CANVAS_VISION_2026_H2.md) ·
+[SSOT](docs/AD_CO_DIRECTOR_OS_SSOT_2026_H2.md) ·
+[Quality Patterns](docs/strategic/AD_STUDIO_MASTERPIECE_PATTERN_2026_H2.md) ·
+[30-Day Runbook](docs/AD_30DAY_TIGER_RUNBOOK_2026-02.md) ·
+[Operations](docs/ORIGINAL_IP_FOUNDRY_OPERATIONS_RUNBOOK_2026-02.md)
 
-- Train workflow: tool chain planning + connector choices + sequential execution
-- Dimension tools: teaching capsules backed by Gemini models (BYOK supported)
-- Agent chat: SSE streaming + artifact previews
-- Legacy canvas model: nodes + edges + versioning (kept for back-compat only)
-- NotebookLM/Opal outputs flow through **Sheets Bus → DB SoR** (Derived only)
-- NotebookLM은 **지식/가이드 레이어** (클러스터 노트북, 오마주/변주 가이드, 템플릿 적합도 제안)
-- Video 이해는 Gemini 구조화 출력으로 **DB SoR**에 적재 후 NotebookLM 소스로 사용
-- Pattern Library/Trace records the repeatable auteur rules
-- NotebookLM/Opal Ultra 구독 전제 (다중 출력/다국어 활용)
-- 흐름/역할 정본: `08_PIPELINES_AND_USER_FLOWS.md`, 원칙 정본: `15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
+---
 
-## Story-First Features (NEW: 2025-12-30, legacy UI)
+## Table of Contents
 
-바이럴 콘텐츠 제작을 위한 서사 중심 제어 시스템 (현재 UI는 `_deprecated`에 위치):
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [Key Concepts](#key-concepts)
+  - [Blueprint Canvas](#blueprint-canvas)
+  - [Fragment & Ingestion](#fragment--ingestion)
+  - [Progressive Materialization](#progressive-materialization)
+  - [3-Engine Video Compilation](#3-engine-video-compilation)
+  - [Model Council](#model-council)
+  - [Original-IP Foundry](#original-ip-foundry)
+- [Tech Stack](#tech-stack)
+- [Quick Start](#quick-start)
+- [Project Structure](#project-structure)
+- [API Overview](#api-overview)
+- [Dimension Miniapps](#dimension-miniapps)
+- [Documentation](#documentation)
+- [Deployment](#deployment)
+- [Roadmap](#roadmap)
+- [License](#license)
 
-- **CanvasNarrativePanel**: 부조화 설계, 감정 곡선, 훅 스타일 3-Tab 구조
-- **HookVariantSelector**: 8종 훅 스타일 (충격/호기심/감정/역설 등) + A/B 테스트
-- **DNAComplianceViewer**: 브랜드 DNA 가이드라인 준수 리포트
-- **MetricsDashboard**: 바이럴 성과 분석 + 인사이트 대시보드
+---
 
-**핵심 타입**: `frontend/src/types/storyFirst.ts` (HookVariant, NarrativeArc, Sequence 등)
+## Overview
 
-## Agent Chat (Chokki) - **Hardened v2 (2026-01-08)**
+VIVID is an **Ambient Creative Canvas OS** — a non-linear creative operating system that lets directors and writers assemble a feature-length blueprint from everyday inspiration.
 
-- **Framework**: Tool-aware chat agent with standard SSE streaming.
-- **Robustness**: 
-  - Thread-safe event loop with `RLock` and bounded buffers.
-  - Memory leak protection via bounded buffers and TTL-based cleanup.
-  - **Peripheral Integration**: Full event mapping for Dimension/HumanCloud tools (`agent.teaching_*`, `agent.workflow_*`).
-- **UX**: 
-  - Adaptive intent routing (Korean/English/Trend keywords).
-  - Explicit UI feedback for all tool executions (no "ghost" actions).
-  - Session restoration and state persistence.
-- Global chat accordion is available in `AppShell` (all pages).
-- Train workflow integration is live (Flow UI uses agent events).
+The core insight: **directors don't create linearly**. They snap a photo at a cafe, capture an idea mid-conversation, get inspired by a frame at 3 AM. A 100-minute timeline fills out non-sequentially, like missing teeth.
 
-## Tech baseline
+Existing tools assume "sit at a desk, build Scene 1 first." VIVID breaks this assumption.
 
-- Frontend: Next.js + train workflow UI (+ legacy ReactFlow in `_deprecated`)
-- Backend: FastAPI + async SQLAlchemy
-- Storage: Postgres JSONB for sessions/telemetry (canvas graphs are legacy)
-- Data Bus (MVP): Google Sheets (staging) → DB (source of record)
+### Core Pipeline
 
-## Docs index (핵심)
+```
+Fragment Capture → Canvas Placement → Progressive Materialization → 3-Engine Compilation
+```
 
-- 문서 맵: `00_DOCS_INDEX.md`
+### North Star Metric
 
-**Developer Guides (NEW 2026-01-08)**:
-- [`docs/DIMENSION_APP_DEVELOPER_GUIDE.md`](docs/DIMENSION_APP_DEVELOPER_GUIDE.md) - **앱 개발자 공통 가이드 (SSoT)**
-- [`docs/AGENT_ARCHITECTURE.md`](docs/AGENT_ARCHITECTURE.md) - Agent system architecture with Mermaid diagrams
-- [`docs/API_REFERENCE.md`](docs/API_REFERENCE.md) - Complete API documentation with curl examples
-- [`docs/FRONTEND_COMPONENTS.md`](docs/FRONTEND_COMPONENTS.md) - Dimension panel component guide
-- [`docs/TESTING_GUIDE.md`](docs/TESTING_GUIDE.md) - Testing strategy and examples
-- [`docs/DEVELOPER_STATUS_GUIDE.md`](docs/DEVELOPER_STATUS_GUIDE.md) - Current development status
+```
+creative_fill_rate = filled_cells / total_cells
+```
 
-**Canonical Anchors**:
-- `15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md`
-- `08_PIPELINES_AND_USER_FLOWS.md`
-- `docs/archive/04_CAPSULE_NODE_SPEC.md`
-- `docs/archive/19_VIDEO_UNDERSTANDING_PIPELINE_CODEX.md`
-- `docs/archive/06_SHEETS_SCHEMA_V1.md`
-- `docs/archive/07_NOTEBOOKLM_OUTPUT_SPEC_V1.md`
-- `docs/archive/09_DB_PROMOTION_RULES_V1.md`
-- `docs/archive/24_CLAIM_EVIDENCE_TRACE_SPEC_V1.md`
+How much of the canvas is filled — a direct measure of creative progress.
 
-## Local setup
+### Quality Gate
 
-### 1) Infra (Postgres + Redis + Qdrant)
+`continuity_score >= 0.80` — enforced only at video generation (Level 3→4), not during canvas filling. Creative freedom first; continuity is infrastructure, not the goal.
+
+### 4-Layer Ecosystem
+
+| Layer | Component | Description |
+|:-----:|-----------|-------------|
+| **4** | Trust & Governance | Tool tiers (Experimental → Verified → Certified), sandbox, audit |
+| **3** | RAG / Knowledge | Qdrant hybrid search + Cinema Grammar KB |
+| **2** | Human Cloud | Request → Creator matching → Delivery |
+| **1** | Tool Workshop | Dimension miniapps, revenue sharing |
+
+---
+
+## Architecture
+
+```mermaid
+flowchart LR
+  U["Director / Writer"] --> TG["Telegram Bot"]
+  U --> WEB["Web UI"]
+  U --> API["API"]
+
+  TG --> CA["Channel Adapters"]
+  WEB --> CA
+  API --> CA
+
+  CA --> FC["Fragment Classifier"]
+  FC --> RS["Rights Pre-screen"]
+  RS --> AP["Auto-Placement AI"]
+  AP --> BC["Blueprint Canvas\n(OpenClaw Memory)"]
+
+  BC <--> GD["Gap Detection"]
+
+  BC --> PM["Progressive\nMaterialization"]
+  PM --> G3["Gemini 3 Pro"]
+  PM --> TL["TwelveLabs\nMarengo Embed 3.0"]
+
+  G3 --> RK["Ranking Core v3"]
+  TL --> QD["Qdrant\n(5 collections)"]
+  QD --> RK
+  BC --> RK
+
+  RK --> PC["Prompt Compiler"]
+  PC --> EN["3-Engine\nKling 3.0 / Seedance 2.0 / Veo 3.1"]
+  EN --> PV["Preview + Human QC"]
+
+  PV --> FB["Feedback Loop"]
+  FB --> RK
+  FB --> BC
+
+  RG["Rights Graph"] --> RK
+  RG --> PV
+
+  AG0["Agent0 Workers"] --> QD
+  AG0 --> RG
+  AG0 --> BC
+```
+
+Key flow: Fragments enter through channel adapters, get classified and rights-screened, then auto-placed onto the Blueprint Canvas. Gap Detection identifies narrative holes. Progressive Materialization advances fragments from memo to video through 5 levels. The 3-Engine compiler produces final output, gated by quality checks and rights verification.
+
+---
+
+## Key Concepts
+
+### Blueprint Canvas
+
+A 100-minute sparse timeline represented as a 5-min × 20-cell grid.
+
+| Property | Description |
+|----------|-------------|
+| **Sparse** | Starts mostly empty; fills over time |
+| **Non-sequential** | Any cell can be filled first — start at minute 32 if you want |
+| **Multi-resolution** | Each cell progresses: memo → storyboard → key visual → prompt → video |
+| **Persistent** | Stored in OpenClaw Workspace Memory |
+
+### Fragment & Ingestion
+
+A **Fragment** is the atomic unit of inspiration — anything a director captures.
+
+**7 types**: `text_memo`, `voice_memo`, `photo`, `video_clip`, `url_bookmark`, `sketch`, `prompt_draft`
+
+**Channels**: Telegram (primary), Web UI, API → normalized via `ChannelEvent v1` → classify → rights pre-screen → auto-place onto canvas.
+
+**SLO**: < 5s end-to-end (channel receive → canvas placement).
+
+### Progressive Materialization
+
+Bidirectional 5-level concretization:
+
+```
+Level 0: Memo           "Rain-soaked street, protagonist walks alone"
+    ↕
+Level 1: Storyboard     [rough sketches + shot composition notes]
+    ↕
+Level 2: Key Visual     [AI-generated still / concept art]
+    ↕
+Level 3: Prompt         [compiled per-engine prompt set]
+    ↕
+Level 4: Video          [generated video clip — final output]
+```
+
+Council validates level transitions. Continuity is enforced only at Level 3→4.
+
+### 3-Engine Video Compilation
+
+| Engine | Resolution | Duration | Key Strength |
+|--------|-----------|----------|--------------|
+| **Seedance 2.0** | 2K | ~20s | Director Control (lens switch, camera path) + physics-aware |
+| **Kling 3.0** | Native 4K | 3-15s | Smart Storyboard — AI auto-split up to 6 shots |
+| **Veo 3.1** | 1080p / 4K | 4-8s + ext ~148s | Native audio + SynthID watermark |
+
+Sora was removed: API rate limits unsuitable for production (5-50 RPM), IP policy conflicts with Original-IP Foundry workflows, manual multi-shot vs Kling's AI auto-split, and no differentiated value given the 3-engine coverage.
+
+### Model Council
+
+3-model consensus for quality assurance:
+
+| Model | Role | Focus |
+|-------|------|-------|
+| **Gemini 3 Pro** | Visual Parser | Shot grammar, editing rules, 180°/30° compliance |
+| **Opus 4.6** (2-pass) | Deep Analyst | Narrative coherence, character motivation, emotion flow |
+| **Codex 5.3 xhigh** | Data Analyst | Quantitative analysis — ASL rhythm, transition stats, theory cross-validation |
+| **Gemini Flash** | Synthesizer | Empirical × theoretical fusion → final verdict |
+
+**Cinema Grammar KB** — three knowledge bases grounding Council judgments in 100 years of film theory:
+
+- `EditingGrammarKB`: continuity, montage, 180°/30° rules, match on action, ASL rhythm
+- `NarrativeTheoryKB`: setup/conflict/payoff, dramatic question, emotion curves
+- `StylePatternKB`: director-specific patterns (Hitchcock suspense, Bong vertical composition, etc.)
+
+**3-class taxonomy**: Invariant (theory-aligned, high performance) · Power Mutation (theory-breaking but effective) · Dead Rule (theory-aligned, low performance)
+
+### Original-IP Foundry
+
+Rights-safe original IP creation — not copying, but mining reusable **Pattern Atoms** from licensed references.
+
+- **Rights Graph**: source license tracking, allowed actions, provenance chain
+- **3 Gates**: Pre-gen (block policy violations) → Post-gen (similarity/blacklist check) → Publish (no evidence = no publish)
+- **Pattern Atoms**: decomposed shot grammar (composition, camera motion, edit rhythm, emotion arc) extracted from rights-cleared references
+- **C2PA v2.3**: provenance export for global verification (Phase 2)
+
+---
+
+## Tech Stack
+
+| Layer | Technology | Version |
+|-------|-----------|---------|
+| **Frontend** | Next.js | 16.1 |
+| | React | 19.2 |
+| | TypeScript | 5.x |
+| | Tailwind CSS | 4.x |
+| | XState | 5.x |
+| | Zustand | 5.x |
+| **Backend** | FastAPI | ≥ 0.109 |
+| | Python | 3.11 |
+| | SQLAlchemy (async) | 2.0 |
+| | Pydantic | v2 |
+| **Database** | PostgreSQL (pgvector) | 16 |
+| | Qdrant | latest |
+| | Redis | latest |
+| **AI / LLM** | Gemini 3 Pro | (→ 3.1 Pro preview evaluating) |
+| **Video Engines** | Seedance 2.0, Kling 3.0, Veo 3.1 | — |
+| **Memory** | OpenClaw | latest |
+| **Embeddings** | TwelveLabs Marengo Embed 3.0 | — |
+| **Orchestration** | Agent0 (worker swarm) | — |
+| **Deployment** | Vercel (frontend), Railway (backend) | — |
+| **CI/CD** | GitHub Actions | — |
+
+### Qdrant Collections
+
+| Collection | Purpose |
+|------------|---------|
+| `shot_corpus` | Segment vectors + timecode + shot grammar payload |
+| `pattern_atoms` | Pattern embeddings + metadata (effect, preconditions, anti-patterns) |
+| `transition_rules` | Shot transition probabilities + continuity stability ranges |
+| `rights_constraints` | License, blacklist elements, allowed action index |
+| `blueprint_fragments` | Fragment embeddings + type/metadata + canvas placement info |
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+- Docker & Docker Compose
+- Node.js 22+
+- Python 3.11+
+
+### 1. Infrastructure
 
 ```bash
 docker-compose up -d
 ```
 
-### 2) Backend
+Starts PostgreSQL (port 5433), Redis (port 6380), and Qdrant (port 6333).
+
+### 2. Backend
 
 ```bash
 cd backend
 python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env
+cp .env.example .env          # configure your API keys
+alembic upgrade head           # run migrations
 uvicorn app.main:app --reload --port 8100
 ```
 
-Optional: seed the 6 auteur templates and capsule specs
+Optional — seed auteur templates:
+
 ```bash
 python scripts/seed_auteur_data.py
+# or set SEED_AUTEUR_DATA=true in .env
 ```
 
-Or set in `.env`:
-```bash
-SEED_AUTEUR_DATA=true
-```
-
-Optional: enable external adapters (NotebookLM/Opal)
-```bash
-ENABLE_EXTERNAL_ADAPTERS=true
-NOTEBOOKLM_API_URL=https://example.com/notebooklm
-NOTEBOOKLM_API_KEY=your_key_here
-OPAL_API_URL=https://example.com/opal
-OPAL_API_KEY=your_key_here
-EXTERNAL_ADAPTER_TIMEOUT=15
-EXTERNAL_ADAPTER_RETRIES=1
-```
-
-Optional: promote Sheets Bus → DB SoR
-```bash
-# set SHEETS_MODE and URLs in backend/.env
-python scripts/promote_from_sheets.py
-```
-Note: if you use Notebook Library, set `CREBIT_NOTEBOOK_LIBRARY_CSV_URL` (and optional `CREBIT_NOTEBOOK_ASSETS_CSV_URL`) or ranges too.
-
-Demo: promote mock sheets data (CSV files in `backend/mock_sheets`)
-```bash
-backend/venv/bin/python backend/scripts/promote_demo.py
-```
-
-Demo (clean tables first):
-```bash
-backend/venv/bin/python backend/scripts/promote_demo.py --drop-all
-```
-
-Demo (custom mock dir):
-```bash
-backend/venv/bin/python backend/scripts/promote_demo.py --mock-dir /path/to/mock_sheets
-```
-
-### 3) Frontend
+### 3. Frontend
 
 ```bash
 cd frontend
 npm install
-cp .env.example .env.local
+cp .env.example .env.local     # set NEXT_PUBLIC_API_URL=http://127.0.0.1:8100
 npm run dev
 ```
 
-Optional (private templates/canvases):
+### 4. Verify
+
 ```bash
-# in .env.local
-NEXT_PUBLIC_USER_ID=demo-user
+cd backend && source venv/bin/activate && pytest --tb=short -q   # backend tests
+cd frontend && npm run build                                      # frontend build
 ```
 
-Optional (admin-only data visibility):
+### Ports
+
+| Service | Port |
+|---------|------|
+| Frontend | 3100 |
+| Backend | 8100 |
+| PostgreSQL | 5433 |
+| Redis | 6380 |
+| Qdrant | 6333 |
+
+---
+
+## Project Structure
+
+```
+vivid/
+├── backend/
+│   ├── app/
+│   │   ├── routers/
+│   │   │   ├── dimension/          # Dimension miniapp routers
+│   │   │   ├── run_token.py        # Run Token API
+│   │   │   └── ...
+│   │   ├── features/
+│   │   │   └── original_ip_foundry/  # Foundry: rights, patterns, recommendations
+│   │   ├── rag/                    # Hybrid RAG (Qdrant + BM25)
+│   │   ├── agents/                 # Agent tools, intent factory
+│   │   ├── services/               # Capsule executor, credit system
+│   │   └── generation_client.py    # Shot/Prompt contract
+│   ├── alembic/                    # DB migrations
+│   └── tests/
+├── frontend/
+│   ├── src/
+│   │   ├── app/                    # Next.js App Router pages
+│   │   ├── components/             # UI components (dimension panels, etc.)
+│   │   └── lib/                    # API client, tokens, utilities
+│   └── public/
+├── config/
+│   └── apps/content/dimensions/    # YAML SSoT configs for each miniapp
+├── docs/                           # Strategic & operational docs
+└── .github/workflows/ci.yml        # CI pipeline
+```
+
+---
+
+## API Overview
+
+### Dimension
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/dimension/{app}/generate` | Generate content via dimension miniapp |
+| POST | `/api/dimension/{app}/analyze` | Analyze reference material |
+
+### Agent Chat
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/v1/agent/chat` | Chat with Vivid Agent (SSE streaming) |
+| POST | `/api/v1/agent/upload` | Upload media for agent processing |
+| GET | `/api/v1/agent/sessions/{id}` | Retrieve session state |
+
+### Workflow
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/workflow/templates` | List workflow templates |
+| POST | `/api/v1/workflow/plan` | Create execution plan |
+| POST | `/api/v1/workflow/session/{id}/advance` | Advance workflow step |
+
+### Credits & Run Token
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/credits/balance` | Check credit balance |
+| POST | `/api/v1/run-token/issue` | Issue run token |
+| POST | `/api/v1/run-token/{run_id}/deduct` | Deduct after execution |
+| POST | `/api/v1/run-token/{run_id}/refund` | Refund on failure |
+
+### Original-IP Foundry
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/v1/foundry/rights/evaluate-assets` | Evaluate asset rights |
+| POST | `/api/v1/foundry/patterns/extract` | Extract pattern atoms |
+| POST | `/api/v1/foundry/recommendations/next-scene` | Get next-scene recommendation |
+| POST | `/api/v1/foundry/experiments/assign` | A/B experiment assignment |
+| POST | `/api/v1/foundry/provenance/export-c2pa` | Export C2PA provenance |
+
+**Auth**: Google OAuth + session cookie (`X-User-Id` header as dev fallback).
+
+---
+
+## Dimension Miniapps
+
+20+ miniapps for specialized creative tasks, each defined by a YAML config in `config/apps/content/dimensions/`.
+
+| App | Key Capability |
+|-----|---------------|
+| 1D Origin | Veo prompt generation |
+| 2D Blueprint | Storyboard creation |
+| 3D Ambience | Image prompt generation |
+| 4D Moment | Reference analysis |
+| AD Studio | Full AD co-direction |
+| Kling | Kling video generation |
+| Veo | Veo video generation |
+| Sound | Audio/music generation |
+| Story | Narrative writing |
+| Prompt | Prompt alchemy |
+| Mirror | Abyss mirror (style analysis) |
+| Character | Character consistency |
+| Storyboard | Visual storyboarding |
+| QC | Quality check |
+| NanoBanana | Korean image generation |
+
+---
+
+## Documentation
+
+### Strategic Documents (SSoT)
+
+| Document | Purpose |
+|----------|---------|
+| [Vision](docs/AD_AMBIENT_CREATIVE_CANVAS_VISION_2026_H2.md) | Why — Ambient Creative Canvas OS paradigm |
+| [SSOT](docs/AD_CO_DIRECTOR_OS_SSOT_2026_H2.md) | How — full architecture, decisions D-01 to D-13, tech stack |
+| [Quality Patterns](docs/strategic/AD_STUDIO_MASTERPIECE_PATTERN_2026_H2.md) | MOP-v2 5-layer architecture, release gates |
+| [30-Day Runbook](docs/AD_30DAY_TIGER_RUNBOOK_2026-02.md) | Execution — Wave 0-4 timeline, daily cadence |
+| [Operations](docs/ORIGINAL_IP_FOUNDRY_OPERATIONS_RUNBOOK_2026-02.md) | Feature flags, staged rollout, kill switches |
+
+### Additional Documents
+
+| Document | Purpose |
+|----------|---------|
+| [Docs Index](docs/00_DOCS_INDEX.md) | Full document map |
+| [Architecture Codex](15_CREBIT_ARCHITECTURE_EVOLUTION_CODEX.md) | Design philosophy |
+| [Model Council Spec](docs/MODEL_COUNCIL_OPERATIONS_SPEC_2026-02.md) | Council operations detail |
+
+---
+
+## Deployment
+
+### Frontend — Vercel
+
+API-based deployment is recommended over CLI for stability.
+
 ```bash
-# in .env.local
-NEXT_PUBLIC_ADMIN_MODE=true
+# Trigger production deployment via Vercel API
+# See deployment guide for token setup and full instructions
+curl -s -X POST "https://api.vercel.com/v13/deployments" \
+  -H "Authorization: Bearer $VERCEL_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"crebit","project":"crebit","gitSource":{"type":"github","org":"ds4psb-ai","repo":"vivid","ref":"main"},"target":"production"}'
 ```
 
-## Codex MCP (project-local)
+### Backend — Railway
 
-- Project-scoped MCP config lives in `.codex/config.toml` and `.mcp.json` (no global edits).
-- Verify Stitch is registered:
-  ```bash
-  codex mcp list
-  ```
-- ADC / permissions / service check:
-  ```bash
-  PROJECT_ID="your-project-id" ADC_EMAIL="you@example.com" ./scripts/stitch_mcp_check.sh
-  ```
-  If you have no ADC token yet, run once:
-  ```bash
-  gcloud auth application-default login
-  ```
-
-## Ports (non-conflicting with komission)
-
-- Frontend: http://localhost:3100
-- Backend: http://localhost:8100
-- Postgres: localhost:5433 (db: crebit_canvas)
-
-Active services:
-- Redis: 6380
-
-Reserved if you add services later:
-- Neo4j: 7475 / 7688
-
-## API (current routers)
-
-- POST /api/dimension/1d/generate (1D Origin - Veo Prompt)
-- POST /api/dimension/2d/create (2D Blueprint - Storyboard)
-- POST /api/dimension/3d/generate (3D Ambience - Image Prompt)
-- POST /api/dimension/4d/analyze (4D Moment - Reference Analysis)
-- POST /api/v1/agent/chat
-- POST /api/v1/agent/upload
-- GET /api/v1/agent/sessions/{id}
-- POST /api/v1/agent/sessions/{id}/approve
-- POST /api/v1/agent/sessions/{id}/reject
-- GET /api/v1/tools
-- GET /api/v1/tools/for-agent
-- GET /api/v1/tools/dimension/{1D|2D|3D|4D|5D}
-- GET /api/v1/workflow/templates
-- POST /api/v1/workflow/plan
-- GET /api/v1/workflow/tools
-- GET /api/v1/workflow/session/{id}
-- POST /api/v1/workflow/session/{id}/advance
-- GET /api/v1/credits/balance
-- GET /api/v1/credits/transactions
-- POST /api/v1/credits/topup
-- POST /api/v1/credits/deduct (internal)
-- GET /api/v1/auth/session
-- POST /api/v1/auth/logout
-- POST /api/v1/run-token/issue
-- POST /api/v1/run-token/validate
-- POST /api/v1/run-token/{run_id}/deduct
-- POST /api/v1/run-token/{run_id}/refund
-- GET /api/v1/run-token/status/{run_id}
-- POST /api/v1/internal/credit-reserve (mTLS)
-- POST /api/v1/internal/credit-commit (mTLS)
-- POST /api/v1/internal/credit-rollback (mTLS)
-- GET /api/v1/singularity/templates (차원의 특이점 - 템플릿 갤러리)
-- GET /api/v1/singularity/templates/{id}
-- POST /api/v1/singularity/templates/{id}/use
-- POST /api/v1/singularity/templates/{id}/rate
-
-Auth: Google OAuth + session cookie (X-User-Id header is dev fallback).
-
-## Graph data shape (legacy canvas)
-
-```json
-{
-  "nodes": [
-    {
-      "id": "node-id",
-      "type": "input",
-      "position": { "x": 0, "y": 0 },
-      "data": { "label": "Character Input", "subtitle": "..." }
-    },
-    {
-      "id": "capsule-1",
-      "type": "capsule",
-      "position": { "x": 360, "y": 220 },
-      "data": {
-        "label": "Auteur Capsule",
-        "subtitle": "auteur.bong-joon-ho",
-        "capsuleId": "auteur.bong-joon-ho",
-        "capsuleVersion": "1.0.0",
-        "params": {
-          "style_intensity": 0.7,
-          "pacing": "medium"
-        },
-        "locked": true
-      }
-    }
-  ],
-  "edges": [
-    {
-      "id": "edge-id",
-      "source": "node-a",
-      "target": "node-b"
-    }
-  ]
-}
+```bash
+cd backend && railway up --service vivid --detach
 ```
+
+> The `Dockerfile` lives in `backend/`. Always `cd backend` before running.
+
+---
+
+## Roadmap
+
+30-day sprint to Launch Candidate (from Tiger Runbook):
+
+| Wave | Days | Focus |
+|------|------|-------|
+| **0** | 0-2 | War-Room — team setup, contract definitions, Canvas/Fragment schema design |
+| **1** | 3-9 | Foundation — Rights Graph, Qdrant 5 collections, Fragment Ingestion v0, Blueprint Canvas MVP, Sora removal |
+| **2** | 10-16 | Intelligence — Ranking v3, Council Core, Pattern Atom extraction, Progressive Materialization v0, Gap Detection v0 |
+| **3** | 17-23 | Channel Hardening — Telegram Fragment UX, Web Canvas UI, Retrospective Council, Meta-Council audit |
+| **4** | 24-30 | Launch Readiness — Vendor Switch Drill, pilot onboarding, fill rate 30%+ verification |
+
+Full details: [AD 30-Day Tiger Runbook](docs/AD_30DAY_TIGER_RUNBOOK_2026-02.md)
+
+---
+
+## License
+
+Proprietary. All rights reserved.
