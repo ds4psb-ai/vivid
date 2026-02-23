@@ -6,7 +6,7 @@
 ![Python 3.11](https://img.shields.io/badge/Python-3.11-blue)
 ![Node 22+](https://img.shields.io/badge/Node-22+-green)
 ![Next.js 16](https://img.shields.io/badge/Next.js-16.1-black)
-![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow)
 
 [Vision](docs/AD_AMBIENT_CREATIVE_CANVAS_VISION_2026_H2.md) ·
 [SSOT](docs/AD_CO_DIRECTOR_OS_SSOT_2026_H2.md) ·
@@ -473,4 +473,4 @@ Full details: [AD 30-Day Tiger Runbook](docs/AD_30DAY_TIGER_RUNBOOK_2026-02.md)
 
 ## License
 
-Proprietary. All rights reserved.
+This project is licensed under the [MIT License](LICENSE).
