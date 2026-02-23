@@ -96,7 +96,7 @@ flowchart LR
   BC <--> GD["Gap Detection"]
 
   BC --> PM["Progressive\nMaterialization"]
-  PM --> G3["Gemini 3 Pro"]
+  PM --> G3["Gemini 3.1 Pro"]
   PM --> TL["TwelveLabs\nMarengo Embed 3.0"]
 
   G3 --> RK["Ranking Core v3"]
@@ -181,7 +181,7 @@ Sora was removed: API rate limits unsuitable for production (5-50 RPM), IP polic
 
 | Model | Role | Focus |
 |-------|------|-------|
-| **Gemini 3 Pro** | Visual Parser | Shot grammar, editing rules, 180°/30° compliance |
+| **Gemini 3.1 Pro** | Visual Parser | Shot grammar, editing rules, 180°/30° compliance |
 | **Opus 4.6** (2-pass) | Deep Analyst | Narrative coherence, character motivation, emotion flow |
 | **Codex 5.3 xhigh** | Data Analyst | Quantitative analysis — ASL rhythm, transition stats, theory cross-validation |
 | **Gemini Flash** | Synthesizer | Empirical × theoretical fusion → final verdict |
@@ -222,7 +222,7 @@ Rights-safe original IP creation — not copying, but mining reusable **Pattern 
 | **Database** | PostgreSQL (pgvector) | 16 |
 | | Qdrant | latest |
 | | Redis | latest |
-| **AI / LLM** | Gemini 3 Pro | (→ 3.1 Pro preview evaluating) |
+| **AI / LLM** | Gemini 3.1 Pro | — |
 | **Video Engines** | Seedance 2.0, Kling 3.0, Veo 3.1 | — |
 | **Memory** | OpenClaw | latest |
 | **Embeddings** | TwelveLabs Marengo Embed 3.0 | — |
